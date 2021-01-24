@@ -1,0 +1,36 @@
+<h1>{{ title }}</h1>
+<mat-card *ngIf="app.state.profile as profile">
+    <h1>Profile</h1>
+    <mat-card-header>
+        <img *ngIf="profile.image;else emp" 
+            mat-card-avatar
+            [src]="profile.image">
+        <mat-card-title>{{ profile.display || 'No name' }}</mat-card-title>
+        <mat-card-subtitle>{{ now | date:'short' }}</mat-card-subtitle>
+      </mat-card-header>
+    <mat-card-actions>
+        <button mat-icon-button (click)="edit(settingsFileds.profile)">
+            <mat-icon>edit</mat-icon>
+        </button>
+    </mat-card-actions>
+</mat-card>
+<mat-card>
+    <mat-card-title>
+        <span>kids</span>
+    </mat-card-title>
+    <mat-card-actions>
+        <button mat-icon-button (click)="edit(settingsFileds.kids)">
+            <mat-icon>edit</mat-icon>
+        </button>
+    </mat-card-actions>
+</mat-card>
+<mat-card>
+    <mat-card-title>
+        <span>gifts</span>
+    </mat-card-title>
+    <mat-card-actions>
+        <button mat-icon-button (click)="edit(settingsFileds.gifts)">
+            <mat-icon>edit</mat-icon>
+        </button>
+    </mat-card-actions>
+</mat-card>

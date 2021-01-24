@@ -1,0 +1,16 @@
+.new-kid {
+    text-align: center;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    .new-kid-avatar {
+        margin: 1rem;
+        object-fit: cover;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+    }
+}
+
+mat-card {
+    margin-bottom: 1rem;
+}

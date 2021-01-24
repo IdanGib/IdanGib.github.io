@@ -1,0 +1,48 @@
+:host {
+    display: block;
+    padding: 1rem;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: center;
+    .pic {
+        border-radius: 50%;
+    }
+    .star {
+        mat-icon {
+            color: gold;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+            font-size: 5rem;
+            width: 5rem;
+            height: 5rem;
+        }
+    }
+    .stars-number {
+        font-size: 2rem;
+    }
+    .rate {
+        padding: 2rem;
+        align-self: stretch;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-evenly;
+        button {    
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+            mat-icon {
+                transform-origin: center;
+                transform: scale(2);
+                &.up {
+                    color: green;
+                }
+                &.down {
+                    color: red;
+                }
+            }
+        }
+ 
+    }
+}

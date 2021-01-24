@@ -1,0 +1,9 @@
+<h1 mat-dialog-title>{{ title }}</h1>
+<div mat-dialog-content>
+    <app-edit-gifts *ngIf="content.gifts" [data]="content.gifts"></app-edit-gifts>
+    <app-edit-profile *ngIf="content.profile" [data]="content.profile"></app-edit-profile>
+    <app-edit-kids *ngIf="content.kids" [data]="content.kids"></app-edit-kids>
+</div>
+<div mat-dialog-actions>
+  <button mat-button mat-dialog-close>Close</button>
+</div>

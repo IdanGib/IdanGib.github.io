@@ -1,0 +1,22 @@
+:host {
+    display: block;
+    padding: 1rem;
+}
+mat-card {
+    margin-bottom: 1rem;
+    .spacer {
+        flex: 1 1 auto;
+    }
+    .star {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .kid {
+        display: flex;
+        align-items: center;
+        img {
+            margin-right: 1rem;
+        }
+    }
+}
