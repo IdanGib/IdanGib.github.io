@@ -1,0 +1,19 @@
+<div class="container">
+	<div class="screen">
+		<video #v width="300" height="300" muted autoplay></video>
+		<canvas #c width="300" height="300"></canvas>
+	</div>
+	<button mat-stroked-button color="primary"
+	 (click)="takePhoto(v)">
+		TAKE PHOTO
+	</button>
+	<button mat-stroked-button color="secondary"
+	(click)="open()">
+	   OPEN
+   </button>
+   <button mat-stroked-button color="secondary"
+	(click)="close()">
+	  CLOSE
+  </button>
+
+</div>

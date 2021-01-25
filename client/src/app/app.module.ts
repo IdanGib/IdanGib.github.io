@@ -23,7 +23,7 @@ import { EditProfileComponent } from './edit-dialog/edit-profile/edit-profile.co
 import { FormsModule } from '@angular/forms';
 import {MatInputModule} from '@angular/material/input';
 import {MatListModule} from '@angular/material/list';
-
+import { CameraModule } from 'src/app/camera/camera.module';
 @NgModule({
   declarations: [
     AppComponent,
@@ -48,7 +48,8 @@ import {MatListModule} from '@angular/material/list';
     MatDialogModule,
     MatInputModule,
     MatFormFieldModule,
-    MatListModule
+    MatListModule,
+    CameraModule
   ],
   providers: [AppService],
   bootstrap: [AppComponent]
