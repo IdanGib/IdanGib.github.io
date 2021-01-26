@@ -1,8 +1,13 @@
 <div class="container">
 	<div class="screen">
 		<video #v playsinline muted autoplay></video>
-		<canvas #c ></canvas>
+		<img *ngIf="photo" [src]="photo" class="photo">
+		<canvas #c hidden="true"></canvas>
 	</div>
+	<button *ngIf="photo" mat-stroked-button color="primary"
+	 (click)="dismiss()">
+		DISMISS
+	</button>
 	<button mat-stroked-button color="primary"
 	 (click)="takePhoto(v)">
 		TAKE PHOTO
@@ -15,5 +20,4 @@
 	(click)="close()">
 	  CLOSE
   </button>
-
 </div>

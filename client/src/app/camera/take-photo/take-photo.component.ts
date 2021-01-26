@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-
+const MAX_VIDEO_SIZE = 300;
 @Component({
   selector: 'app-take-photo',
   templateUrl: './take-photo.component.html',
@@ -10,16 +10,17 @@ export class TakePhotoComponent implements OnInit, AfterViewInit {
   @ViewChild('c') canvasRef: ElementRef;
 
   stream: MediaStream;
-
+  photo: string;
   constructor() { }
 
   ngOnInit(): void {
-    
+    this.open();
   }
   async getMedia(constraints: MediaStreamConstraints): Promise<MediaStream> {
     let stream = null;
   
     try {
+      this.close();
       stream = await navigator.mediaDevices.getUserMedia(constraints);
       /* use the stream */
     } catch(err) {
@@ -29,9 +30,14 @@ export class TakePhotoComponent implements OnInit, AfterViewInit {
   }
 
   getSize(w: number, h: number): { w: number, h: number } {
-    const r = (h / w);
-    const size = 300;
-    return { w: size, h: (r * size) };
+    const max = Math.max(w, h);
+    const s = MAX_VIDEO_SIZE;
+    if( max > s) {
+      const min = Math.min(w, h);
+      const sr = s * (min / max);
+      return (max === w) ? { w: s, h: sr } : { w: sr, h: s };
+    }
+    return { w, h };
   }
 
   takePhoto(video: HTMLVideoElement) {
@@ -41,9 +47,14 @@ export class TakePhotoComponent implements OnInit, AfterViewInit {
     canvas.height = size.h;
     canvas.getContext("2d").drawImage(video, 0, 0, size.w, size.h);
     var img = canvas.toDataURL("image/png");
-    console.log(img);
+    this.photo = img;
+    this.close();
   }
-
+  dismiss() {
+    this.photo = null;
+    this.close();
+    this.open();
+  }
   async open() {
     const deviceId = await this.getVideoDeviceId();
     this.stream = await this.getMedia({ video: { facingMode: "user", deviceId  } });
@@ -54,7 +65,6 @@ export class TakePhotoComponent implements OnInit, AfterViewInit {
       video.height = size.h;
     };
     video.srcObject = this.stream;
-    console.log(video);
   }
   close() {
     this.stream?.getTracks().forEach(t => t.stop());

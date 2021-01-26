@@ -1,23 +1,25 @@
 .container {
-    display: flex;
-    flex-direction: column;
-    justify-items: center;
-}
-.screen {
-    display: flex;
-    flex-direction: column;
-    justify-items: center;
     position: relative;
-    height: 300px;
-    width: 100%;
-
-    video, canvas {
-
-        left: 0;
-        right: 0;
-        top: 0;
-        bottom: 0;
-        margin: auto;
-        position: absolute;
+    display: flex;
+    flex-direction: column;
+    justify-items: center;
+    align-items: center;
+    .screen {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-items: center;
+        align-items: center;
+        canvas {
+            opacity: 0;
+        }
+        img {
+            position: absolute;
+            bottom: 0;
+        }
+    }
+    .photo {
+        max-width: 100%;
     }
 }
+
