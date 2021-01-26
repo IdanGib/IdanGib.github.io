@@ -5,12 +5,7 @@
     <div class="display">
         <h1>{{ kid.display }}</h1>
     </div>
-    <div class="star">
-        <mat-icon>star_rate</mat-icon>
-    </div>
-    <div class="stars-number">
-        {{ kid.stars }}
-    </div>
+    <app-star [count]='kid.stars'></app-star>
     <div class="rate">
         <button mat-icon-button (click)="rate(-1)">
             <mat-icon class="down">thumb_down_alt</mat-icon>

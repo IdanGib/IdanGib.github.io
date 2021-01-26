@@ -24,6 +24,8 @@ import { FormsModule } from '@angular/forms';
 import {MatInputModule} from '@angular/material/input';
 import {MatListModule} from '@angular/material/list';
 import { CameraModule } from 'src/app/camera/camera.module';
+import { StarComponent } from './entities/star/star.component';
+import { GiftComponent } from './entities/gift/gift.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -33,7 +35,9 @@ import { CameraModule } from 'src/app/camera/camera.module';
     EditDialogComponent,
     EditGiftsComponent,
     EditKidsComponent,
-    EditProfileComponent
+    EditProfileComponent,
+    StarComponent,
+    GiftComponent
   ],
   imports: [
     BrowserModule,

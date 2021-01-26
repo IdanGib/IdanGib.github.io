@@ -1,15 +1,11 @@
-<h1>{{ title }}</h1>
 <mat-nav-list>
-    <mat-card mat-list-item  *ngFor="let kid of state.kids" 
+    <div class="kid-wrapper" mat-list-item  *ngFor="let kid of state.kids" 
     [routerLink]="[ '/kid/' + kid.display ]">
-    <div class="kid">
-        <img mat-card-avatar [src]="kid.image">
-        <span>{{ kid.display }}</span>
-        <span class="spacer"></span>
-        <div class="star">
-            <mat-icon>star_rate</mat-icon>
-            <span>{{ kid.stars }}</span>  
+        <div class="kid">
+            <img class="avatar" [src]="kid.image">
+            <span class='name'>{{ kid.display }}</span>
+            <span class="spacer"></span>
+            <app-star [count]='kid.stars'></app-star>
         </div>
     </div>
-    </mat-card>
 </mat-nav-list>
