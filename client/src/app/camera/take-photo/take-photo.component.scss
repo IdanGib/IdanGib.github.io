@@ -50,6 +50,27 @@
             bottom: 0;
         }
     }
-
+    .actions, .text-detection {
+        position: absolute;
+        width: 100%;
+        bottom: 0;
+        padding: 1rem;
+        display: flex;
+        color: white;
+        justify-content: center;
+        background-color: #00000077;
+        button {
+            margin: 0.5rem;
+        }
+    }
+    .text-detection  {
+        flex-direction: column;
+        .text {
+            padding: 1rem;
+        }
+        .progress {
+            padding: 1rem;
+        }
+    }
 }
 

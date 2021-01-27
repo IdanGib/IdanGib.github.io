@@ -9,12 +9,31 @@
 		</div>
 		<canvas #c hidden="true"></canvas>
 	</div>
-	<button *ngIf="photo" mat-stroked-button color="primary"
-	 (click)="dismiss()">
-		DISMISS
-	</button>
-	<button *ngIf="!photo && v.srcObject" mat-stroked-button color="primary"
-	 (click)="takePhoto(v)">
-		TAKE PHOTO
-	</button>
+	<div *ngIf="!progress" class="actions">
+		<button *ngIf="photo" mat-stroked-button
+		(click)="dismiss()">
+		   DISMISS
+	   </button>
+	   <button *ngIf="!photo && v.srcObject" mat-stroked-button
+		(click)="takePhoto(v)">
+		   TAKE PHOTO
+	   </button>
+	   <button *ngIf="photo" mat-stroked-button
+		   (click)="detecText(photo)">
+		   Convert to text
+	  </button>
+	</div>
+	<div *ngIf="progress" class="text-detection">
+		<div *ngIf="text" class="text">
+			{{ text }}
+		</div>
+		<div>
+			<button *ngIf="photo" mat-stroked-button
+				(click)="dismiss()">
+				DISMISS
+			</button>
+			<div class="progress">progress:<span>{{ progress }}</span></div>
+		</div>
+	</div>
+
 </div>

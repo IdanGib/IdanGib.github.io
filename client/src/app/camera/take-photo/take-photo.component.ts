@@ -1,4 +1,8 @@
-import { AfterViewInit, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, 
+  Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+
+declare const Tesseract: any;
+
 @Component({
   selector: 'app-take-photo',
   templateUrl: './take-photo.component.html',
@@ -6,6 +10,7 @@ import { AfterViewInit, Component, ElementRef, Input, OnDestroy, OnInit, ViewChi
 })
 export class TakePhotoComponent implements OnInit, AfterViewInit, OnDestroy {
   private _size: number;
+  text: string;
   @Input() isProfile: boolean;
   @Input() set maxSize(s: number) {
     const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
@@ -18,7 +23,9 @@ export class TakePhotoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   stream: MediaStream;
   photo: string;
-  constructor() { }
+  constructor() {}
+
+  progress: number;
 
   ngOnInit(): void {
    
@@ -48,6 +55,8 @@ export class TakePhotoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   takePhoto(video: HTMLVideoElement) {
+    this.progress = 0;
+    this.text = null;
     const canvas: HTMLCanvasElement = this.canvasRef.nativeElement;
     const size = this.getSize(video.videoWidth, video.videoHeight);
     canvas.width = size.w;
@@ -57,7 +66,28 @@ export class TakePhotoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.photo = img;
     this.close();
   }
+
+  detecText(img: string) {
+    if(!img) {
+      return;
+    }
+    Tesseract.recognize(
+      img,
+      'eng',
+      { logger: (m: any) => {
+        this.progress = Math.floor(100 * m.progress); 
+      } }
+    ).then(({ data: { text } }) => {
+      console.log(text);
+      this.text = text;
+    }).catch((err: any) => {
+      console.error(err);
+    });
+  }
+
   dismiss() {
+    this.progress = 0;
+    this.text = null;
     this.photo = null;
     this.close();
     this.open();
@@ -69,7 +99,7 @@ export class TakePhotoComponent implements OnInit, AfterViewInit, OnDestroy {
     const device = await this.getVideoDevice();
     const deviceId = device.deviceId;
     if(deviceId) {
-      this.stream = await this.getMedia({ video: { facingMode: "user", deviceId  } });
+      this.stream = await this.getMedia({ video: { /*facingMode: "user",*/ deviceId  } });
       if(this.stream) {
         video.onplaying = () => {
           const size = this.getSize(video.videoWidth, video.videoHeight);
