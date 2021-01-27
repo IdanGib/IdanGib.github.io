@@ -99,7 +99,7 @@ export class TakePhotoComponent implements OnInit, AfterViewInit, OnDestroy {
     const device = await this.getVideoDevice();
     const deviceId = device.deviceId;
     if(deviceId) {
-      this.stream = await this.getMedia({ video: { facingMode: "environment", deviceId  } });
+      this.stream = await this.getMedia({ video: { facingMode: "user", deviceId  } });
       if(this.stream) {
         video.onplaying = () => {
           const size = this.getSize(video.videoWidth, video.videoHeight);
