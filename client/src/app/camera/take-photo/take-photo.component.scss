@@ -10,16 +10,46 @@
         flex-direction: column;
         justify-items: center;
         align-items: center;
+        video {
+            &.hide {
+                opacity: 0;
+            }
+            background-color: transparent;
+        }
         canvas {
             opacity: 0;
         }
-        img {
+        .profile-img {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            display: flex;
+            justify-content: center;
+            .photo-profile-sm,
+            .photo-profile-md,
+            .photo-profile-lg {
+                object-fit: cover;
+                border-radius: 50%;
+                box-shadow: 0px 0px 4px 0 rgb(0 0 0 / 60%);
+            }
+            .photo-profile-sm {
+                width: 64px;
+                height: 64px;
+            }
+            .photo-profile-md {
+                width: 96px;
+                height: 96px;
+            }
+            .photo-profile-lg {
+                width: 128px;
+                height: 128px;
+            }
+        }
+        .photo {
             position: absolute;
             bottom: 0;
         }
     }
-    .photo {
-        max-width: 100%;
-    }
+
 }
 

@@ -1,11 +1,18 @@
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-const MAX_VIDEO_SIZE = 300;
+import { AfterViewInit, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 @Component({
   selector: 'app-take-photo',
   templateUrl: './take-photo.component.html',
   styleUrls: ['./take-photo.component.scss']
 })
-export class TakePhotoComponent implements OnInit, AfterViewInit {
+export class TakePhotoComponent implements OnInit, AfterViewInit, OnDestroy {
+  private _size: number;
+  @Input() isProfile: boolean;
+  @Input() set maxSize(s: number) {
+    const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+    const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+    this._size = Math.min(vw, vh, s);
+  }
+
   @ViewChild('v') videoRef: ElementRef;
   @ViewChild('c') canvasRef: ElementRef;
 
@@ -14,7 +21,7 @@ export class TakePhotoComponent implements OnInit, AfterViewInit {
   constructor() { }
 
   ngOnInit(): void {
-    this.open();
+   
   }
   async getMedia(constraints: MediaStreamConstraints): Promise<MediaStream> {
     let stream = null;
@@ -31,7 +38,7 @@ export class TakePhotoComponent implements OnInit, AfterViewInit {
 
   getSize(w: number, h: number): { w: number, h: number } {
     const max = Math.max(w, h);
-    const s = MAX_VIDEO_SIZE;
+    const s = this._size;
     if( max > s) {
       const min = Math.min(w, h);
       const sr = s * (min / max);
@@ -56,44 +63,54 @@ export class TakePhotoComponent implements OnInit, AfterViewInit {
     this.open();
   }
   async open() {
-    const deviceId = await this.getVideoDeviceId();
-    this.stream = await this.getMedia({ video: { facingMode: "user", deviceId  } });
+    console.log('open camera');
     const video: HTMLVideoElement = this.videoRef.nativeElement;
-    video.onplaying = () => {
-      const size = this.getSize(video.videoWidth, video.videoHeight);
-      video.width = size.w;
-      video.height = size.h;
-    };
-    video.srcObject = this.stream;
+    video.srcObject = null;
+    const device = await this.getVideoDevice();
+    const deviceId = device.deviceId;
+    if(deviceId) {
+      this.stream = await this.getMedia({ video: { facingMode: "user", deviceId  } });
+      if(this.stream) {
+        video.onplaying = () => {
+          const size = this.getSize(video.videoWidth, video.videoHeight);
+          video.width = size.w;
+          video.height = size.h;
+        };
+        video.srcObject = this.stream;
+      }
+    }
+
   }
   close() {
     this.stream?.getTracks().forEach(t => t.stop());
   }
 
   ngAfterViewInit() {
-    
+    this.open();
   }
 
-  async getVideoDeviceId(): Promise<string> {
+  async getVideoDevice(): Promise<MediaDeviceInfo> {
     if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
-      console.log("enumerateDevices() not supported.");
-      return Promise.reject(null);
+      return null;
     }
     
     // List cameras and microphones.
     
     return navigator.mediaDevices.enumerateDevices()
     .then((devices) => {
-      devices.forEach((device) => {
+      for(let device of devices) {
         if(device.kind === 'videoinput') {
-          return Promise.resolve(device.deviceId);
+          return device;
         }
-      });
+      }
+      return null;
     })
     .catch((err) => {
       console.log(err.name + ": " + err.message);
       return null;
     });
   }
-
+  ngOnDestroy() {
+    this.close();
+  }
 }
