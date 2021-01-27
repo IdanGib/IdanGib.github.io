@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, ElementRef, 
-  Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+  Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'app-take-photo',
@@ -8,7 +9,7 @@ import { AfterViewInit, Component, ElementRef,
 })
 export class TakePhotoComponent implements OnInit, AfterViewInit, OnDestroy {
   private _size: number;
-
+  @Output() image = new Subject<string>();
   @Input() isProfile: boolean;
   @Input() set maxSize(s: number) {
     const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
@@ -66,6 +67,13 @@ export class TakePhotoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.close();
     this.open();
   }
+
+  approve() {
+    if(this.photo) {
+      this.image.next(this.photo);
+    }
+  }
+
   async open() {
     console.log('open camera');
     const video: HTMLVideoElement = this.videoRef.nativeElement;
@@ -73,7 +81,7 @@ export class TakePhotoComponent implements OnInit, AfterViewInit, OnDestroy {
     const device = await this.getVideoDevice();
     const deviceId = device.deviceId;
     if(deviceId) {
-      this.stream = await this.getMedia({ video: { facingMode: "environment", deviceId  } });
+      this.stream = await this.getMedia({ video: true /*{ facingMode: "environment", deviceId  }*/ });
       if(this.stream) {
         video.onplaying = () => {
           const size = this.getSize(video.videoWidth, video.videoHeight);

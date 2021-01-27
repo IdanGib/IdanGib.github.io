@@ -14,6 +14,10 @@
 		(click)="dismiss()">
 		   DISMISS
 	   </button>
+	   <button *ngIf="photo" mat-stroked-button
+	   (click)="ok()">
+		  OK
+	  </button>
 	   <button *ngIf="!photo && v.srcObject" mat-stroked-button
 		(click)="takePhoto(v)">
 		   TAKE PHOTO
