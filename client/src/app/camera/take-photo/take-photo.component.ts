@@ -1,8 +1,6 @@
 import { AfterViewInit, Component, ElementRef, 
   Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 
-declare const Tesseract: any;
-
 @Component({
   selector: 'app-take-photo',
   templateUrl: './take-photo.component.html',
@@ -10,14 +8,13 @@ declare const Tesseract: any;
 })
 export class TakePhotoComponent implements OnInit, AfterViewInit, OnDestroy {
   private _size: number;
-  text: string;
+
   @Input() isProfile: boolean;
   @Input() set maxSize(s: number) {
     const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
     const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
     this._size = Math.min(vw, vh, s);
   }
-
   @ViewChild('v') videoRef: ElementRef;
   @ViewChild('c') canvasRef: ElementRef;
 
@@ -25,10 +22,9 @@ export class TakePhotoComponent implements OnInit, AfterViewInit, OnDestroy {
   photo: string;
   constructor() {}
 
-  progress: number;
 
   ngOnInit(): void {
-   
+    
   }
   async getMedia(constraints: MediaStreamConstraints): Promise<MediaStream> {
     let stream = null;
@@ -55,8 +51,6 @@ export class TakePhotoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   takePhoto(video: HTMLVideoElement) {
-    this.progress = 0;
-    this.text = null;
     const canvas: HTMLCanvasElement = this.canvasRef.nativeElement;
     const size = this.getSize(video.videoWidth, video.videoHeight);
     canvas.width = size.w;
@@ -67,27 +61,7 @@ export class TakePhotoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.close();
   }
 
-  detecText(img: string) {
-    if(!img) {
-      return;
-    }
-    Tesseract.recognize(
-      img,
-      'eng',
-      { logger: (m: any) => {
-        this.progress = Math.floor(100 * m.progress); 
-      } }
-    ).then(({ data: { text } }) => {
-      console.log(text);
-      this.text = text;
-    }).catch((err: any) => {
-      console.error(err);
-    });
-  }
-
   dismiss() {
-    this.progress = 0;
-    this.text = null;
     this.photo = null;
     this.close();
     this.open();
@@ -116,7 +90,8 @@ export class TakePhotoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    // this.open();
+    this.maxSize = this._size || 300;
+    this.open();
   }
 
   async getVideoDevice(): Promise<MediaDeviceInfo> {
