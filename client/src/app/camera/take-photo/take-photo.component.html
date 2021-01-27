@@ -10,6 +10,10 @@
 		<canvas #c hidden="true"></canvas>
 	</div>
 	<div *ngIf="!progress" class="actions">
+		<button *ngIf="!v.srcObject" mat-stroked-button
+		(click)="open()">
+		   open
+	   </button>
 		<button *ngIf="photo" mat-stroked-button
 		(click)="dismiss()">
 		   DISMISS

@@ -52,9 +52,9 @@
     }
     .actions, .text-detection {
         position: absolute;
-        width: 100%;
+        left: 0;
+        right: 0;
         bottom: 0;
-        padding: 1rem;
         display: flex;
         color: white;
         justify-content: center;
