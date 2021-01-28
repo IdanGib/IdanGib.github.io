@@ -1,1 +1,40 @@
-<p>edit-gifts works!</p>
+<div>
+    <div class="new-gift">
+        <div>
+            <img
+            class="new-gift-avatar"
+            (click)="editImage(newGift)"
+            [src]="newGift.image">
+        </div>
+
+        <mat-form-field appearance="fill" color="accent">
+            <mat-label>Name</mat-label>
+            <input matInput [(ngModel)]="newGift.name">
+        </mat-form-field>
+        <mat-form-field appearance="fill" color="accent">
+            <mat-label>Stars</mat-label>
+            <input matInput [(ngModel)]="newGift.stars" type="number">
+        </mat-form-field>
+        <app-star [count]="newGift.stars"></app-star>
+        <div>
+            <button mat-fab 
+                [disabled]="invalidName"
+                color="accent"
+                (click)="add(newGift)">
+                <mat-icon>add</mat-icon>
+            </button>
+        </div>
+    </div>
+    <mat-card *ngFor="let gift of data;let index=index">
+        <mat-card-header>
+            <img mat-card-avatar [src]="gift.image">
+            <mat-card-title>{{ gift.name }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-actions>
+            <button mat-icon-button 
+                (click)="delete(index)">
+                <mat-icon>delete</mat-icon>
+            </button>
+        </mat-card-actions>
+    </mat-card>
+</div>

@@ -5,10 +5,12 @@ import { EditKidsComponent } from './edit-dialog/edit-kids/edit-kids.component';
 import { EditProfileComponent } from './edit-dialog/edit-profile/edit-profile.component';
 import { KidComponent } from './screens/kid/kid.component';
 import { SettingsComponent } from './screens/settings/settings.component';
+import { StoreComponent } from './screens/store/store.component';
 import { SummaryComponent } from './screens/summary/summary.component';
 
 const routes: Routes = [
   { path: '', component: SummaryComponent },
+  { path: 'store/:kid', component: StoreComponent },
   { path: 'settings/kids', component: EditKidsComponent },
   { path: 'settings/gifts', component: EditGiftsComponent },
   { path: 'settings/profile', component: EditProfileComponent },

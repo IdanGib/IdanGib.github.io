@@ -1,6 +1,5 @@
 :host {
     display: block;
-    padding: 1rem;
 }
 
 .container {
@@ -8,13 +7,18 @@
     flex-direction: column;
     flex-wrap: wrap;
     align-items: center;
+    position: relative;
+    .shopping-cart {
+        position: absolute;
+        right: 4px;
+        top: 4px;
+    }
     .pic {
         border-radius: 50%;
         width: 256px;
         height: 256px;
     }
     .rate {
-        padding: 2rem;
         align-self: stretch;
         display: flex;
         flex-direction: row;
