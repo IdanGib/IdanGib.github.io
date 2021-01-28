@@ -26,6 +26,7 @@ import {MatListModule} from '@angular/material/list';
 import { CameraModule } from 'src/app/camera/camera.module';
 import { StarComponent } from './entities/star/star.component';
 import { GiftComponent } from './entities/gift/gift.component';
+
 @NgModule({
   declarations: [
     AppComponent,

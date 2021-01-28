@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { AppService } from 'src/app/app.service';
 
 @Component({
   selector: 'app-edit-gifts',
@@ -7,9 +8,11 @@ import { Component, Input, OnInit } from '@angular/core';
 })
 export class EditGiftsComponent implements OnInit {
   @Input() data: any;
-  constructor() { }
+  constructor(private app: AppService) { }
 
   ngOnInit(): void {
+    this.data = this.data || this.app.state.gifts;
   }
+
 
 }

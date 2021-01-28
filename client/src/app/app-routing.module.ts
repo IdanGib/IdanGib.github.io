@@ -1,16 +1,20 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { TakePhotoComponent } from './camera/take-photo/take-photo.component';
+import { EditGiftsComponent } from './edit-dialog/edit-gifts/edit-gifts.component';
+import { EditKidsComponent } from './edit-dialog/edit-kids/edit-kids.component';
+import { EditProfileComponent } from './edit-dialog/edit-profile/edit-profile.component';
 import { KidComponent } from './screens/kid/kid.component';
 import { SettingsComponent } from './screens/settings/settings.component';
 import { SummaryComponent } from './screens/summary/summary.component';
 
 const routes: Routes = [
   { path: '', component: SummaryComponent },
+  { path: 'settings/kids', component: EditKidsComponent },
+  { path: 'settings/gifts', component: EditGiftsComponent },
+  { path: 'settings/profile', component: EditProfileComponent },
   { path: 'settings', component: SettingsComponent },
   { path: 'kid/:id', component: KidComponent },
-  { path: 'camera', component: TakePhotoComponent },
-  { path: '**', component: SummaryComponent }
+  { path: '**', redirectTo: '' }
 ];
 
 @NgModule({

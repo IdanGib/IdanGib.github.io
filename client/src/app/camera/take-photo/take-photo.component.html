@@ -1,11 +1,12 @@
-<div class="container">
+
+<div class="wrapper">
 	<div class="screen">
 		<video #v [class.hide]="!v.srcObject" playsinline muted autoplay></video>
-		<img *ngIf="photo" [src]="photo" class="photo">
-		<div class="profile-img">
+		<img *ngIf="photo" [src]="photo" class="photo" [class.photo-profile-lg]="profile">
+		<div class="profile-img" >
 			<!--img *ngIf="photo" [src]="photo" class="photo-profile-sm">
-			<img *ngIf="photo" [src]="photo" class="photo-profile-md"-->
-			<img *ngIf="photo" [src]="photo" class="photo-profile-lg">
+			<img *ngIf="photo" [src]="photo" class="photo-profile-md">
+			<img *ngIf="photo" [src]="photo" class="photo-profile-lg"-->
 		</div>
 		<canvas #c hidden="true"></canvas>
 	</div>
@@ -15,9 +16,13 @@
 		   DISMISS
 	   </button>
 	   <button *ngIf="photo" mat-stroked-button
-	   (click)="ok()">
+	   (click)="approve()">
 		  OK
 	  </button>
+	  <button *ngIf="photo" mat-stroked-button
+	  (click)="profile=!profile">
+		{{ profile? 'REGULAR' : 'PROFILE' }}
+	 </button>
 	   <button *ngIf="!photo && v.srcObject" mat-stroked-button
 		(click)="takePhoto(v)">
 		   TAKE PHOTO

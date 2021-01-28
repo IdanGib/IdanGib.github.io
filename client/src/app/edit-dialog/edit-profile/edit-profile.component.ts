@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { AppService } from 'src/app/app.service';
 import { Profile } from 'src/app/logic/interfaces';
 
 @Component({
@@ -8,9 +9,10 @@ import { Profile } from 'src/app/logic/interfaces';
 })
 export class EditProfileComponent implements OnInit {
   @Input() data: Profile;
-  constructor() { }
+  constructor(private app: AppService) { }
 
   ngOnInit(): void {
+    this.data = this.data || this.app.state.profile;
   }
 
 }

@@ -9,6 +9,7 @@ import { Subject } from 'rxjs';
 })
 export class TakePhotoComponent implements OnInit, AfterViewInit, OnDestroy {
   private _size: number;
+  profile: boolean;
   @Output() image = new Subject<string>();
   @Input() isProfile: boolean;
   @Input() set maxSize(s: number) {
