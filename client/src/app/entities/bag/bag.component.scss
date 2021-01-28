@@ -1,0 +1,14 @@
+:host {
+    display: inline-block;
+    position: relative;
+}
+
+.bag {
+    position: absolute;
+    background: white;
+    z-index: 1;
+    white-space: nowrap;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px 0 black;
+    padding: 8px;
+}

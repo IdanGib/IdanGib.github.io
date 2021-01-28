@@ -28,6 +28,7 @@ import { StarComponent } from './entities/star/star.component';
 import { GiftComponent } from './entities/gift/gift.component';
 import { GiftDialog, StoreComponent } from './screens/store/store.component';
 import { BagComponent } from './entities/bag/bag.component';
+import {MatMenuModule} from '@angular/material/menu';
 
 @NgModule({
   declarations: [
@@ -59,7 +60,8 @@ import { BagComponent } from './entities/bag/bag.component';
     MatInputModule,
     MatFormFieldModule,
     MatListModule,
-    CameraModule
+    CameraModule,
+    MatMenuModule
   ],
   providers: [AppService],
   bootstrap: [AppComponent]

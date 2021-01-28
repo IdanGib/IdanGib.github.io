@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AppService } from 'src/app/app.service';
-import { KidProfile, State } from 'src/app/logic/interfaces';
+import { Gift, KidProfile, State } from 'src/app/logic/interfaces';
 
 @Component({
   selector: 'app-summary',
@@ -18,4 +18,7 @@ export class SummaryComponent implements OnInit {
     this.state.kids = this.state.kids.sort((k1, k2) => k2.stars - k1.stars);
   }
 
+  giftclick(gift: Gift, kid: KidProfile) {
+    console.log(gift.name, kid.display);
+  }
 }

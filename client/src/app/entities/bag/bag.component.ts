@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit, Output } from '@angular/core';
+import { Subject } from 'rxjs';
+import { Gift, KidProfile } from 'src/app/logic/interfaces';
 
 @Component({
   selector: 'app-bag',
@@ -6,9 +8,14 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./bag.component.scss']
 })
 export class BagComponent implements OnInit {
-
+  @Input() toggle: boolean;
+  @Input() kid: KidProfile;
+  @Output() giftClick = new Subject<Gift>();
   constructor() { }
-
+  toggleBag(event: any) {
+    this.toggle = !this.toggle;
+    event?.stopPropagation();
+  }
   ngOnInit(): void {
   }
 
