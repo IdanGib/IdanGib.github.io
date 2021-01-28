@@ -26,7 +26,7 @@ import {MatListModule} from '@angular/material/list';
 import { CameraModule } from 'src/app/camera/camera.module';
 import { StarComponent } from './entities/star/star.component';
 import { GiftComponent } from './entities/gift/gift.component';
-import { StoreComponent } from './screens/store/store.component';
+import { GiftDialog, StoreComponent } from './screens/store/store.component';
 import { BagComponent } from './entities/bag/bag.component';
 
 @NgModule({
@@ -42,7 +42,8 @@ import { BagComponent } from './entities/bag/bag.component';
     StarComponent,
     GiftComponent,
     StoreComponent,
-    BagComponent
+    BagComponent,
+    GiftDialog
   ],
   imports: [
     BrowserModule,

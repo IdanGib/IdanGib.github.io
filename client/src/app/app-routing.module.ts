@@ -10,7 +10,7 @@ import { SummaryComponent } from './screens/summary/summary.component';
 
 const routes: Routes = [
   { path: '', component: SummaryComponent },
-  { path: 'store/:kid', component: StoreComponent },
+  { path: 'store', component: StoreComponent },
   { path: 'settings/kids', component: EditKidsComponent },
   { path: 'settings/gifts', component: EditGiftsComponent },
   { path: 'settings/profile', component: EditProfileComponent },
