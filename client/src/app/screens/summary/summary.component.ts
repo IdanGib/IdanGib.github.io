@@ -1,10 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { AppService } from 'src/app/app.service';
-import { GiftDialogData } from 'src/app/dialogs/gift-dialog/gift-dialog.component';
 import { Gift, KidProfile, State } from 'src/app/logic/interfaces';
-import { GiftDialog } from '../store/store.component';
-
+import { GiftDialogComponent } from 'src/app/dialogs/gift-dialog/gift-dialog.component';
 @Component({
   selector: 'app-summary',
   templateUrl: './summary.component.html',
@@ -22,16 +20,26 @@ export class SummaryComponent implements OnInit {
   }
 
   giftclick(gift: Gift, kid: KidProfile) {
-    const ref = this.dialog.open(GiftDialog, { data: {
+    const ref = this.dialog.open(GiftDialogComponent, { data: {
       actions: [
-        { label: 'redeem', click: () => {
-            
-        }},
-        { label: 'close', click: () => {
-          ref.close();
-        }}
+        { 
+            label: 'redeem', 
+            click: () => {
+              const index = kid.bag.findIndex(f => f.name === gift.name);
+              if(kid.bag[index]) {
+                kid.bag.splice(index, 1);
+                this.app.saveState();
+                ref.close();
+              }
+ 
+            }
+        },
+        { 
+          label: 'close',
+          click: () => {  ref.close(); }
+        }
       ],
       gift: gift
-    } })
+    } });
   }
 }
