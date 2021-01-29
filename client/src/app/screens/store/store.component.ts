@@ -1,6 +1,7 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { AppService } from 'src/app/app.service';
+import { GiftComponent } from 'src/app/entities/gift/gift.component';
 import { Gift, KidProfile } from 'src/app/logic/interfaces';
 
 @Component({
@@ -11,8 +12,10 @@ import { Gift, KidProfile } from 'src/app/logic/interfaces';
       <mat-action-list>
         <button *ngFor="let kid of data.kids" 
           (click)="data.buy(kid)"
-          mat-list-item>
-          {{ kid.display + ' ( ' +  kid.stars + ' stars )' }} 
+          mat-list-item> 
+          {{ kid.display }}
+          <mat-icon [style.color]="'gold'">star</mat-icon>
+          {{ kid.stars }}
         </button>
       </mat-action-list>
     </div>
@@ -28,8 +31,6 @@ import { Gift, KidProfile } from 'src/app/logic/interfaces';
     buy: (kid: KidProfile) => void
   }) {}
 }
-
-
 @Component({
   selector: 'app-store',
   templateUrl: './store.component.html',
@@ -46,7 +47,11 @@ export class StoreComponent implements OnInit {
   ngOnInit(): void {
     this.gifts = this.app.state.gifts;
   }
-
+  info(gift: Gift) {
+    this.dialog.open(GiftComponent, {
+      width: '90%', 
+       data: { gift } })
+  }
   buy(gift: Gift) {
     const canBuy =  this.app.state.kids.filter(k => k.stars >= gift.stars);
     const dref = this.dialog.open(GiftDialog, {

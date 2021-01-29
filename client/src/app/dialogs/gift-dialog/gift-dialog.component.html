@@ -1,0 +1,8 @@
+<app-gift [gift]="data.gift"></app-gift>
+<mat-dialog-actions>
+    <button *ngFor="let action of data.actions" 
+        (click)="action.click(data.gift)"
+        mat-button>
+        {{ action.label }}
+    </button>
+</mat-dialog-actions>

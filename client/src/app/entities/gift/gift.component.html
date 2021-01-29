@@ -1,1 +1,14 @@
-<p>gift works!</p>
+<mat-card class="gift-card">
+  <img mat-card-image class="gift-card-image" [src]="gift.image">
+    <mat-card-header>
+      <mat-card-title>{{ gift.name }}</mat-card-title>
+      <mat-card-subtitle>
+          <span class="stars-count">{{ gift.stars }}</span><span>Stars</span>
+      </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+    </mat-card-content>
+    <mat-card-actions>
+
+    </mat-card-actions>
+  </mat-card>

@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Inject, Input, OnInit } from '@angular/core';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { Gift } from 'src/app/logic/interfaces';
 
 @Component({
   selector: 'app-gift',
@@ -6,10 +8,10 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./gift.component.scss']
 })
 export class GiftComponent implements OnInit {
-
+  @Input() gift: Gift;
   constructor() { }
 
   ngOnInit(): void {
+    this.gift = this.gift;
   }
-
 }

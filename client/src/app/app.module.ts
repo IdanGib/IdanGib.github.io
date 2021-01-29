@@ -15,7 +15,6 @@ import { SettingsComponent } from './screens/settings/settings.component';
 import { KidComponent } from './screens/kid/kid.component';
 import { SummaryComponent } from './screens/summary/summary.component';
 import {AppService } from 'src/app/app.service';
-import { EditDialogComponent } from './edit-dialog/edit-dialog.component';
 import {MatDialogModule} from '@angular/material/dialog';
 import { EditGiftsComponent } from './edit-dialog/edit-gifts/edit-gifts.component';
 import { EditKidsComponent } from './edit-dialog/edit-kids/edit-kids.component';
@@ -29,6 +28,8 @@ import { GiftComponent } from './entities/gift/gift.component';
 import { GiftDialog, StoreComponent } from './screens/store/store.component';
 import { BagComponent } from './entities/bag/bag.component';
 import {MatMenuModule} from '@angular/material/menu';
+import { KidDialogComponent } from './dialogs/kid-dialog/kid-dialog.component';
+import { GiftDialogComponent } from './dialogs/gift-dialog/gift-dialog.component';
 
 @NgModule({
   declarations: [
@@ -36,7 +37,6 @@ import {MatMenuModule} from '@angular/material/menu';
     SettingsComponent,
     KidComponent,
     SummaryComponent,
-    EditDialogComponent,
     EditGiftsComponent,
     EditKidsComponent,
     EditProfileComponent,
@@ -44,7 +44,9 @@ import {MatMenuModule} from '@angular/material/menu';
     GiftComponent,
     StoreComponent,
     BagComponent,
-    GiftDialog
+    GiftDialog,
+    KidDialogComponent,
+    GiftDialogComponent
   ],
   imports: [
     BrowserModule,

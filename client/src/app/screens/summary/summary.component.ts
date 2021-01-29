@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { AppService } from 'src/app/app.service';
+import { GiftDialogData } from 'src/app/dialogs/gift-dialog/gift-dialog.component';
 import { Gift, KidProfile, State } from 'src/app/logic/interfaces';
+import { GiftDialog } from '../store/store.component';
 
 @Component({
   selector: 'app-summary',
@@ -10,7 +13,7 @@ import { Gift, KidProfile, State } from 'src/app/logic/interfaces';
 export class SummaryComponent implements OnInit {
   title = 'Summary';
   state: State;
-  constructor(public app: AppService) { }
+  constructor(public app: AppService, private dialog: MatDialog) { }
 
   ngOnInit(): void {
     
@@ -19,6 +22,16 @@ export class SummaryComponent implements OnInit {
   }
 
   giftclick(gift: Gift, kid: KidProfile) {
-    console.log(gift.name, kid.display);
+    const ref = this.dialog.open(GiftDialog, { data: {
+      actions: [
+        { label: 'redeem', click: () => {
+            
+        }},
+        { label: 'close', click: () => {
+          ref.close();
+        }}
+      ],
+      gift: gift
+    } })
   }
 }

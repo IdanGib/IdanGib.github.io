@@ -2,3 +2,23 @@ h1 {
     text-align: center;
     padding: 24px;
 }
+.gift {
+    display: flex;
+    flex-direction: row;
+    box-sizing: border-box;
+    margin: 4px;
+    h2 {
+        text-transform: capitalize;
+    }
+    .img {
+        width: 128px;
+        height: 128px;
+        border-radius: 8px;
+        margin-right: 16px;
+    }
+    .info {
+        display: flex;
+        flex-direction: column;
+        flex-grow:1;
+    }
+}
