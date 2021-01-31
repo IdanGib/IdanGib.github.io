@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { AppService } from 'src/app/app.service';
 import { DialogComponent } from 'src/app/camera/dialog/dialog.component';
-import { Gift } from 'src/app/logic/interfaces';
+import { IGift } from 'src/app/logic/interfaces';
 
 @Component({
   selector: 'app-edit-gifts',
@@ -10,21 +10,21 @@ import { Gift } from 'src/app/logic/interfaces';
   styleUrls: ['./edit-gifts.component.scss']
 })
 export class EditGiftsComponent implements OnInit {
-  @Input() data: Gift[];
+  @Input() data: IGift[];
 
   ngOnInit(): void {
     this.data = this.data || this.app.state.gifts;
     this.reset();
   }
-  newGift: Gift;
+  newGift: Partial<IGift>;
   constructor(private app: AppService, private imageDialog: MatDialog) { }
 
-  add(newGift: Gift) {
+  add(newGift: IGift) {
     this.data.push(newGift);
     this.reset();
     this.app.saveState();
   }
-  editImage(newGift: Gift) {
+  editImage(newGift: IGift) {
     const dialogRef = this.imageDialog.open(DialogComponent, {
       width: '90%',
       data:{
@@ -37,8 +37,8 @@ export class EditGiftsComponent implements OnInit {
   }
 
   get invalidName(): boolean {
-    const display = this.newGift.name;
-    return (!display) || this.data.some(d => d.name === display);
+    const name = this.newGift.name;
+    return (!name) || this.data.some(d => d.name === name);
   }
 
   reset( ){

@@ -13,7 +13,7 @@ import { Gift, KidProfile } from 'src/app/logic/interfaces';
         <button *ngFor="let kid of data.kids" 
           (click)="data.buy(kid)"
           mat-list-item> 
-          {{ kid.display }}
+          {{ kid.name }}
           <mat-icon [style.color]="'gold'">star</mat-icon>
           {{ kid.stars }}
         </button>

@@ -1,21 +1,25 @@
-export interface Profile {
-    display: string;
+interface IStateEntity {
+    id: string;
+}
+
+export interface IProfile extends IStateEntity {
+    name: string;
     image: string;
 }
 
-export interface Gift {
+export interface IGift extends IStateEntity  {
     image: string;
     name: string;
     stars: number;
 }
 
-export interface KidProfile extends Profile {
-    bag: Gift[];
+export interface IKidProfile extends IProfile {
+    bag: IGift[];
     stars: number;
 }
 
-export interface State {
-    profile: Profile;
-    kids: KidProfile[];
-    gifts: Gift[];
+export interface IState {
+    profile: IProfile;
+    kids: IKidProfile[];
+    gifts: IGift[];
 }

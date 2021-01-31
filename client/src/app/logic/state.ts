@@ -4,7 +4,7 @@ export class AppState implements State {
     kids: KidProfile[];
     gifts: Gift[];
     static profile: Profile = {
-        display: '',
+        name: '',
         image: 'https://material.angular.io/assets/img/examples/shiba1.jpg'
     };
     static kids: KidProfile[] = [];

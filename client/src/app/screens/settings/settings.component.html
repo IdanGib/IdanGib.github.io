@@ -5,7 +5,7 @@
         <img *ngIf="profile.image;else emp" 
             mat-card-avatar
             [src]="profile.image">
-        <mat-card-title>{{ profile.display || 'No name' }}</mat-card-title>
+        <mat-card-title>{{ profile.name || 'No name' }}</mat-card-title>
         <mat-card-subtitle>{{ now | date:'short' }}</mat-card-subtitle>
       </mat-card-header>
     <mat-card-actions>

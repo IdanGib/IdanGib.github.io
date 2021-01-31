@@ -1,9 +1,9 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { Gift } from 'src/app/logic/interfaces';
+import { IGift } from 'src/app/logic/interfaces';
 export interface GiftDialogData {
-  actions: { label: string, click: (gift: Gift) => void }[],
-  gift: Gift;
+  actions: { label: string, click: (gift: IGift) => void }[],
+  gift: IGift;
 }
 @Component({
   selector: 'app-gift-dialog',

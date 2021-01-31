@@ -1,10 +1,10 @@
 <mat-nav-list>
     <mat-card class="kid-wrapper" mat-list-item  
     *ngFor="let kid of state.kids" 
-    [routerLink]="[ '/kid/' + kid.display ]">
+    [routerLink]="[ '/kid/' + kid.id ]">
         <div class="kid">
             <img class="avatar" [src]="kid.image">
-            <span class='name'>{{ kid.display }}</span>
+            <span class='name'>{{ kid.name }}</span>
             <span class="spacer"></span>
             <app-bag [kid]="kid"
                 (giftClick)="giftclick($event, kid)"
