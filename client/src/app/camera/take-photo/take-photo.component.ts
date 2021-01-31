@@ -7,13 +7,19 @@ import { MatBottomSheet, MatBottomSheetRef, MAT_BOTTOM_SHEET_DATA} from '@angula
 @Component({
   selector: 'bottom-sheet-chooser',
   template: `
-    <div>
-      <div *ngFor="let device of data.devices">
-        <div><pre>{{ device | json }}</pre><div>
-        <button mat-button (click)="choose(device)">CHOOSE</button>
-      </div>
+    <div class="wrapper">
+      <button *ngFor="let device of data.devices" mat-button (click)="choose(device)">
+        {{ device.label || 'Unknown' }}
+      </button>
     <div>
   `,
+  styles: [`
+    .wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-evenly;
+    }
+  `]
 })
 export class BottomSheetDevicesChooser {
 
