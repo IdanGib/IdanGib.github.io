@@ -4,14 +4,18 @@ import { TakePhotoComponent } from './take-photo/take-photo.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { DialogComponent } from './dialog/dialog.component';
-
+import { BottomSheetDevicesChooser } from './take-photo/take-photo.component';
+import { MatBottomSheetModule } from '@angular/material/bottom-sheet';
 
 
 @NgModule({
-  declarations: [TakePhotoComponent, DialogComponent],
+  declarations: [
+    BottomSheetDevicesChooser,
+    TakePhotoComponent, DialogComponent],
   imports: [
     CommonModule,
     MatIconModule,
+    MatBottomSheetModule,
     MatButtonModule
   ],
   exports: [

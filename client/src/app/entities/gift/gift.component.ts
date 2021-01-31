@@ -9,6 +9,7 @@ import { Gift } from 'src/app/logic/interfaces';
 })
 export class GiftComponent implements OnInit {
   @Input() gift: Gift;
+  @Input() isListItem: boolean = false;
   constructor() { }
 
   ngOnInit(): void {

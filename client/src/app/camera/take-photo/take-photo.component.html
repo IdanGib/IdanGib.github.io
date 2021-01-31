@@ -1,6 +1,7 @@
 
 <div class="wrapper">
 	<div class="screen">
+		<div *ngIf="err">{{ err }}</div>
 		<video #v [class.hide]="!v.srcObject" playsinline muted autoplay></video>
 		<img *ngIf="photo" [src]="photo" class="photo" [class.photo-profile-lg]="profile">
 		<div class="profile-img" >

@@ -9,7 +9,7 @@
     .star {
         color: gold;
         text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
-        $size: 128px;
+        $size: 64px;
         font-size: $size;
         width: $size;
         height: $size;
@@ -17,7 +17,7 @@
     .count {
         margin: auto;
         position: absolute;
-        font-size: 24px;
+        font-size: 16px;
         display: flex;
         justify-items: center;
         align-items: center;

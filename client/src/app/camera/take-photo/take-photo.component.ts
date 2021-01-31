@@ -1,6 +1,29 @@
 import { AfterViewInit, Component, ElementRef, 
+  Inject, 
   Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { Subject } from 'rxjs';
+import { MatBottomSheet, MatBottomSheetRef, MAT_BOTTOM_SHEET_DATA} from '@angular/material/bottom-sheet';
+
+@Component({
+  selector: 'bottom-sheet-chooser',
+  template: `
+    <div>
+      <div *ngFor="let device of data.devices">
+        <div><pre>{{ device | json }}</pre><div>
+        <button mat-button (click)="choose(device)">CHOOSE</button>
+      </div>
+    <div>
+  `,
+})
+export class BottomSheetDevicesChooser {
+
+  constructor(private _bottomSheetRef: MatBottomSheetRef<BottomSheetDevicesChooser>,
+    @Inject(MAT_BOTTOM_SHEET_DATA) public data: { devices: MediaDeviceInfo[] } ) {}
+  choose(device: MediaDeviceInfo): void {
+    this._bottomSheetRef.dismiss(device);
+  }
+}
+
 
 @Component({
   selector: 'app-take-photo',
@@ -19,14 +42,15 @@ export class TakePhotoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
   @ViewChild('v') videoRef: ElementRef;
   @ViewChild('c') canvasRef: ElementRef;
-
+  err: string;
   stream: MediaStream;
   photo: string;
-  constructor() {}
+  constructor(private _bottomSheet: MatBottomSheet) {}
+
 
 
   ngOnInit(): void {
-    
+    this.maxSize = this._size || 300;
   }
   async getMedia(constraints: MediaStreamConstraints): Promise<MediaStream> {
     let stream = null;
@@ -75,15 +99,25 @@ export class TakePhotoComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  async chooseDevice(devices: MediaDeviceInfo[]): Promise<MediaDeviceInfo> {
+    const bref = this._bottomSheet.open(BottomSheetDevicesChooser, {
+      data: { devices }
+    });
+    return bref.afterDismissed().toPromise();
+  }
+
   async open() {
     console.log('open camera');
     const video: HTMLVideoElement = this.videoRef.nativeElement;
     video.srcObject = null;
-    const device = await this.getVideoDevice();
-    const deviceId = device.deviceId;
+    const devices = await this.getDevices('videoinput');
+
+    const device = devices.length > 1 ? await this.chooseDevice(devices) : devices[0];
+
+    const deviceId = device?.deviceId;
+    
     if(deviceId) {
       this.stream = await this.getMedia({ video: { 
-          facingMode: "environment", 
           deviceId: { exact: deviceId } 
         }
       });
@@ -95,6 +129,8 @@ export class TakePhotoComponent implements OnInit, AfterViewInit, OnDestroy {
         };
         video.srcObject = this.stream;
       }
+    } else {
+      this.err = 'device not found';
     }
 
   }
@@ -107,9 +143,10 @@ export class TakePhotoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.open();
   }
 
-  async getVideoDevice(): Promise<MediaDeviceInfo> {
+  async getDevices(kind: MediaDeviceKind): Promise<MediaDeviceInfo[]> {
+    const redult: MediaDeviceInfo[] = [];
     if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
-      return null;
+      return redult;
     }
     
     // List cameras and microphones.
@@ -117,15 +154,15 @@ export class TakePhotoComponent implements OnInit, AfterViewInit, OnDestroy {
     return navigator.mediaDevices.enumerateDevices()
     .then((devices) => {
       for(let device of devices) {
-        if(device.kind === 'videoinput') {
-          return device;
+        if(device.kind === kind) {
+          redult.push(device);
         }
       }
-      return null;
+      return redult;
     })
     .catch((err) => {
       console.log(err.name + ": " + err.message);
-      return null;
+      return redult;
     });
   }
   ngOnDestroy() {

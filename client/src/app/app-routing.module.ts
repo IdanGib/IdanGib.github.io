@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
+import { TakePhotoComponent } from './camera/take-photo/take-photo.component';
 import { EditGiftsComponent } from './edit-dialog/edit-gifts/edit-gifts.component';
 import { EditKidsComponent } from './edit-dialog/edit-kids/edit-kids.component';
 import { EditProfileComponent } from './edit-dialog/edit-profile/edit-profile.component';
@@ -11,6 +12,7 @@ import { SummaryComponent } from './screens/summary/summary.component';
 const routes: Routes = [
   { path: '', component: SummaryComponent },
   { path: 'store', component: StoreComponent },
+  { path: 'camera', component: TakePhotoComponent },
   { path: 'settings/kids', component: EditKidsComponent },
   { path: 'settings/gifts', component: EditGiftsComponent },
   { path: 'settings/profile', component: EditProfileComponent },
