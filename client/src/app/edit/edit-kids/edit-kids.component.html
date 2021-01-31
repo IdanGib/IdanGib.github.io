@@ -1,9 +1,12 @@
 <div>
     <div class="new-kid">
-        <div>
+        <div (click)="editImage(newKid)">
+            <button mat-button>
+                {{newKid.image ?  'New Image' : 'Add Image'}}
+            </button>
             <img
+            *ngIf="newKid.image"
             class="new-kid-avatar"
-            (click)="editImage(newKid)"
             [src]="newKid.image">
         </div>
 
@@ -20,14 +23,14 @@
             </button>
         </div>
     </div>
-    <mat-card *ngFor="let kid of data;let index=index">
+    <mat-card *ngFor="let kid of data">
         <mat-card-header>
             <img mat-card-avatar [src]="kid.image">
             <mat-card-title>{{ kid.name }}</mat-card-title>
         </mat-card-header>
         <mat-card-actions>
             <button mat-icon-button 
-                (click)="delete(index)">
+                (click)="delete(kid)">
                 <mat-icon>delete</mat-icon>
             </button>
         </mat-card-actions>

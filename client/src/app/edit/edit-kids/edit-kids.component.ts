@@ -1,25 +1,25 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { AppService } from 'src/app/app.service';
-import { IKidProfile } from 'src/app/logic/interfaces';
-import { DialogComponent } from 'src/app/camera/dialog/dialog.component';
+import { IKid } from 'src/app/logic/interfaces';
+import { ImageDialogComponent } from 'src/app/dialogs/image-dialog/dialog.component';
+import { Kid } from 'src/app/logic/models/kid';
 @Component({
   selector: 'app-edit-kids',
   templateUrl: './edit-kids.component.html',
   styleUrls: ['./edit-kids.component.scss']
 })
 export class EditKidsComponent implements OnInit {
-  @Input() data: IKidProfile[];
-  newKid: Partial<IKidProfile>;
+  @Input() data: IKid[];
+  newKid: IKid;
   constructor(private app: AppService, private imageDialog: MatDialog) { }
 
-  add(newKid: IKidProfile) {
-    this.data.push(newKid);
+  add(newKid: IKid) {
+    this.app.updateKids(newKid);
     this.reset();
-    this.app.saveState();
   }
-  editImage(newKid: IKidProfile) {
-    const dialogRef = this.imageDialog.open(DialogComponent, {
+  editImage(newKid: IKid) {
+    const dialogRef = this.imageDialog.open(ImageDialogComponent, {
       width: '90%',
       data:{
         image: (img: string) => {
@@ -40,16 +40,11 @@ export class EditKidsComponent implements OnInit {
   }
 
   reset( ){
-    this.newKid = {
-        bag: [],
-        name: '',
-        stars: 0,
-        image: 'https://picsum.photos/200?random=' + Math.floor(Math.random() * 100)
-    };
+    this.newKid = new Kid('', '', 0);
   }
 
-  delete(index: number) {
-    this.data.splice(index, 1);
+  delete(kid: IKid) {
+    this.app.removeKids(kid);
   }
 
 }

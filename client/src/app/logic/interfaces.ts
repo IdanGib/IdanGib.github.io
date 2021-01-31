@@ -11,15 +11,24 @@ export interface IGift extends IStateEntity  {
     image: string;
     name: string;
     stars: number;
+    
 }
 
-export interface IKidProfile extends IProfile {
+export interface IKid extends IProfile {
     bag: IGift[];
     stars: number;
+    updateStars: (n: number) => void;
+    addToBag: (...gifts: IGift[]) => void;
+    removeFromBag: (...gifts: IGift[]) => number ;
 }
 
-export interface IState {
+export interface IStateStore {
     profile: IProfile;
-    kids: IKidProfile[];
+    kids: IKid[];
     gifts: IGift[];
+}
+
+export interface IState extends IStateStore {
+    save: () => void;
+    getState(): IStateStore;
 }

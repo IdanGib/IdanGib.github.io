@@ -1,22 +1,38 @@
 import { Injectable } from '@angular/core';
 
 import { AppState } from 'src/app/logic/state';
-import { State } from './logic/interfaces';
+import { IGift, IKid, IState, IStateStore } from './logic/interfaces';
+import { StateActions } from "./logic/actions/actions.state";
+
 
 @Injectable({ providedIn: 'root' })
 export class AppService {
+    _state: IState;
     constructor() {
-      
+        
     }
+
     init() {
-        AppState.load();
+        this._state = new AppState();
     }
 
-    saveState() {
-        AppState.save();
+    get state(): IStateStore {
+        return this._state.getState();
     }
 
-    get state(): State {
-        return { gifts: AppState.gifts, profile: AppState.profile, kids: AppState.kids };
+    updateKids( ...kids: Partial<IKid>[]) {
+        StateActions.updateKids(this._state, ...kids);
+    }
+
+    updateGifts( ...gifts: Partial<IGift>[]) {
+        StateActions.updateGifts(this._state, ...gifts);
+    }
+    
+    removeKids( ...kids: Partial<IKid>[]) {
+        StateActions.removeKids(this._state, ...kids);
+    }
+
+    removeGifts( ...gifts: Partial<IGift>[]) {
+        StateActions.removeGifts(this._state, ...gifts);
     }
 }

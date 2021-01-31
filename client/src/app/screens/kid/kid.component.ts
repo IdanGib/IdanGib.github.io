@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AppService } from 'src/app/app.service';
-import { IKidProfile } from 'src/app/logic/interfaces';
+import { IKid } from 'src/app/logic/interfaces';
 
 @Component({
   selector: 'app-kid',
@@ -9,15 +9,15 @@ import { IKidProfile } from 'src/app/logic/interfaces';
   styleUrls: ['./kid.component.scss']
 })
 export class KidComponent implements OnInit {
-  kid: IKidProfile;
+  kid: IKid;
   constructor(private route: ActivatedRoute, private app: AppService) { }
   rate(r: number) {
-    this.kid.stars += r;
-    this.app.saveState();
+    this.kid.updateStars(r);
+    this.app.updateKids(this.kid);
   }
   ngOnInit(): void {
     const id = this.route.snapshot.params['id'];
-    this.kid = this.app.state.kids.find((k: IKidProfile) => k.id === id);
+    this.kid = this.app.state.kids.find((k: IKid) => k.id === id);
   }
 
 }

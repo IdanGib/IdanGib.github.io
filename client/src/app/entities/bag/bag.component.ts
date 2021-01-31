@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, Output } from '@angular/core';
 import { Subject } from 'rxjs';
-import { IGift, IKidProfile } from 'src/app/logic/interfaces';
+import { IGift, IKid } from 'src/app/logic/interfaces';
 
 @Component({
   selector: 'app-bag',
@@ -9,7 +9,7 @@ import { IGift, IKidProfile } from 'src/app/logic/interfaces';
 })
 export class BagComponent implements OnInit {
   @Input() toggle: boolean;
-  @Input() kid: IKidProfile;
+  @Input() kid: IKid;
   @Output() giftClick = new Subject<IGift>();
   constructor() { }
   toggleBag(event: any) {

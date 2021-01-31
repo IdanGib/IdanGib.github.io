@@ -1,9 +1,9 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { TakePhotoComponent } from './camera/take-photo/take-photo.component';
-import { EditGiftsComponent } from './edit-dialog/edit-gifts/edit-gifts.component';
-import { EditKidsComponent } from './edit-dialog/edit-kids/edit-kids.component';
-import { EditProfileComponent } from './edit-dialog/edit-profile/edit-profile.component';
+import { EditGiftsComponent } from './edit/edit-gifts/edit-gifts.component';
+import { EditKidsComponent } from './edit/edit-kids/edit-kids.component';
+import { EditProfileComponent } from './edit/edit-profile/edit-profile.component';
 import { KidComponent } from './screens/kid/kid.component';
 import { SettingsComponent } from './screens/settings/settings.component';
 import { StoreComponent } from './screens/store/store.component';

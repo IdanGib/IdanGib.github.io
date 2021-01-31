@@ -2,7 +2,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { AppService } from 'src/app/app.service';
 import { GiftComponent } from 'src/app/entities/gift/gift.component';
-import { Gift, KidProfile } from 'src/app/logic/interfaces';
+import { IGift, IKid } from 'src/app/logic/interfaces';
 
 @Component({
   selector: 'app-gift-dialog',
@@ -24,11 +24,11 @@ import { Gift, KidProfile } from 'src/app/logic/interfaces';
 </div>
 `
 }) export class GiftDialog {
-  kids: KidProfile[];
+  kids: IKid[];
   constructor(@Inject(MAT_DIALOG_DATA) public data: { 
-    kids: KidProfile[],
+    kids: IKid[],
     title: string
-    buy: (kid: KidProfile) => void
+    buy: (kid: IKid) => void
   }) {}
 }
 @Component({
@@ -37,7 +37,7 @@ import { Gift, KidProfile } from 'src/app/logic/interfaces';
   styleUrls: ['./store.component.scss']
 })
 export class StoreComponent implements OnInit {
-  gifts: Gift[];
+  gifts: IGift[];
   title: string;
   constructor(private app: AppService, 
     private dialog: MatDialog) { 
@@ -47,21 +47,21 @@ export class StoreComponent implements OnInit {
   ngOnInit(): void {
     this.gifts = this.app.state.gifts;
   }
-  info(gift: Gift) {
+  info(gift: IGift) {
     this.dialog.open(GiftComponent, {
       width: '90%', 
        data: { gift } })
   }
-  buy(gift: Gift) {
+  buy(gift: IGift) {
     const canBuy =  this.app.state.kids.filter(k => k.stars >= gift.stars);
     const dref = this.dialog.open(GiftDialog, {
       data: {
         title: canBuy.length > 0 ? 'Choose kid:' : 'No kids can buy',
         kids: canBuy,
-        buy: (kid: KidProfile) => {
-          kid.bag.push(gift);
-          kid.stars -= gift.stars;
-          this.app.saveState();
+        buy: (kid: IKid) => {
+          kid.addToBag(gift);
+          kid.updateStars((-1) * gift.stars);
+          this.app.updateKids(kid);
           dref.close();
         }
       }

@@ -6,10 +6,10 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
   templateUrl: './dialog.component.html',
   styleUrls: ['./dialog.component.scss']
 })
-export class DialogComponent implements OnInit {
+export class ImageDialogComponent implements OnInit {
 
   constructor(
-    public dialogRef: MatDialogRef<DialogComponent>,
+    public dialogRef: MatDialogRef<ImageDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { image: (img: string) => void }) {}
     ngOnInit(): void {
     }

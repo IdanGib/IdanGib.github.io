@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { TakePhotoComponent } from './take-photo/take-photo.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { DialogComponent } from './dialog/dialog.component';
 import { BottomSheetDevicesChooser } from './take-photo/take-photo.component';
 import { MatBottomSheetModule } from '@angular/material/bottom-sheet';
 
@@ -11,7 +10,7 @@ import { MatBottomSheetModule } from '@angular/material/bottom-sheet';
 @NgModule({
   declarations: [
     BottomSheetDevicesChooser,
-    TakePhotoComponent, DialogComponent],
+    TakePhotoComponent],
   imports: [
     CommonModule,
     MatIconModule,
@@ -19,8 +18,7 @@ import { MatBottomSheetModule } from '@angular/material/bottom-sheet';
     MatButtonModule
   ],
   exports: [
-    TakePhotoComponent,
-    DialogComponent
+    TakePhotoComponent
   ]
 })
 export class CameraModule { }

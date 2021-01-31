@@ -48,6 +48,7 @@ export class TakePhotoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
   @ViewChild('v') videoRef: ElementRef;
   @ViewChild('c') canvasRef: ElementRef;
+  @ViewChild('image') imgRef: ElementRef;
   err: string;
   stream: MediaStream;
   photo: string;
@@ -84,12 +85,21 @@ export class TakePhotoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   takePhoto(video: HTMLVideoElement) {
     const canvas: HTMLCanvasElement = this.canvasRef.nativeElement;
-    const size = this.getSize(video.videoWidth, video.videoHeight);
-    canvas.width = size.w;
-    canvas.height = size.h;
-    canvas.getContext("2d").drawImage(video, 0, 0, size.w, size.h);
+    
+    const vWidth = video.videoWidth;
+    const vHight = video.videoHeight;
+
+    const size = this.getSize(vWidth, vHight);
+    
+    canvas.width = vWidth;
+    canvas.height = vHight;
+
+    canvas.getContext("2d").drawImage(video, 0, 0, vWidth, vHight);
     var img = canvas.toDataURL("image/png");
     this.photo = img;
+    const image: HTMLImageElement = this.imgRef.nativeElement;
+    image.width = size.w;
+    image.height = size.h;
     this.close();
   }
 

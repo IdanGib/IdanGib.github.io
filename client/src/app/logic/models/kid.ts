@@ -1,7 +1,7 @@
-import { IGift, IKidProfile } from "../interfaces";
+import { IGift, IKid } from "../interfaces";
 import { AppUtils } from "../utils";
 
-export class Kid implements IKidProfile {
+export class Kid implements IKid {
     readonly id: string;
     bag: IGift[];
     constructor(public name: string,

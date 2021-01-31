@@ -3,12 +3,11 @@
 	<div class="screen">
 		<div *ngIf="err">{{ err }}</div>
 		<video #v [class.hide]="!v.srcObject" playsinline muted autoplay></video>
-		<img *ngIf="photo" [src]="photo" class="photo" [class.photo-profile-lg]="profile">
-		<div class="profile-img" >
-			<!--img *ngIf="photo" [src]="photo" class="photo-profile-sm">
-			<img *ngIf="photo" [src]="photo" class="photo-profile-md">
-			<img *ngIf="photo" [src]="photo" class="photo-profile-lg"-->
-		</div>
+		<img #image
+			[src]="photo" 
+			class="photo"
+			[class.photo-profile-lg]="profile"
+			[class.hide]="!photo">
 		<canvas #c hidden="true"></canvas>
 	</div>
 	<div class="actions">

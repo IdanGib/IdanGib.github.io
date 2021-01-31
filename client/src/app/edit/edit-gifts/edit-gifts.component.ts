@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { AppService } from 'src/app/app.service';
-import { DialogComponent } from 'src/app/camera/dialog/dialog.component';
+import { ImageDialogComponent } from 'src/app/dialogs/image-dialog/dialog.component';
 import { IGift } from 'src/app/logic/interfaces';
 
 @Component({
@@ -19,13 +19,12 @@ export class EditGiftsComponent implements OnInit {
   newGift: Partial<IGift>;
   constructor(private app: AppService, private imageDialog: MatDialog) { }
 
-  add(newGift: IGift) {
-    this.data.push(newGift);
+  add(newGift: Partial<IGift>) {
+    this.app.updateGifts(newGift);
     this.reset();
-    this.app.saveState();
   }
-  editImage(newGift: IGift) {
-    const dialogRef = this.imageDialog.open(DialogComponent, {
+  editImage(newGift: Partial<IGift>) {
+    const dialogRef = this.imageDialog.open(ImageDialogComponent, {
       width: '90%',
       data:{
         image: (img: string) => {

@@ -56,6 +56,9 @@
                 bottom: 0;
                 margin: auto;
                 top: 0;
+                &.hide {
+                    opacity: 0;
+                }
                 &.photo-profile-lg {
                     object-fit: cover;
                     border-radius: 50%;
