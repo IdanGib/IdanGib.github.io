@@ -12,7 +12,9 @@ import { Kid } from 'src/app/logic/models/kid';
 export class EditKidsComponent implements OnInit {
   @Input() data: IKid[];
   newKid: IKid;
-  constructor(private app: AppService, private imageDialog: MatDialog) { }
+  constructor(private app: AppService, private imageDialog: MatDialog) { 
+    this.reset();
+  }
 
   add(newKid: IKid) {
     this.app.updateKids(newKid);

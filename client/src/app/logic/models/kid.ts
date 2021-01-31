@@ -11,15 +11,15 @@ export class Kid implements IKid {
                     this.bag = [];
                 }
 
-    updateStars(n: number) {
+    public updateStars(n: number) {
         this.stars += n;
     }
 
-    addToBag(...gifts: IGift[]) {
+    public addToBag(...gifts: IGift[]) {
         this.bag.push(...gifts);
     }
 
-    removeFromBag(...gifts: IGift[]): number {
+    public removeFromBag(...gifts: IGift[]): number {
         let index: number;
         let count = 0;
         for(const g of gifts) {

@@ -123,7 +123,6 @@ export class TakePhotoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async open() {
-    console.log('open camera');
     const video: HTMLVideoElement = this.videoRef.nativeElement;
     video.srcObject = null;
     const devices = await this.getDevices('videoinput');

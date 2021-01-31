@@ -4,6 +4,7 @@ import { TakePhotoComponent } from './camera/take-photo/take-photo.component';
 import { EditGiftsComponent } from './edit/edit-gifts/edit-gifts.component';
 import { EditKidsComponent } from './edit/edit-kids/edit-kids.component';
 import { EditProfileComponent } from './edit/edit-profile/edit-profile.component';
+import { IndexComponent } from './image-to-text/index/index.component';
 import { KidComponent } from './screens/kid/kid.component';
 import { SettingsComponent } from './screens/settings/settings.component';
 import { StoreComponent } from './screens/store/store.component';
@@ -18,6 +19,7 @@ const routes: Routes = [
   { path: 'settings/profile', component: EditProfileComponent },
   { path: 'settings', component: SettingsComponent },
   { path: 'kid/:id', component: KidComponent },
+  { path: 'itt', component: IndexComponent },
   { path: '**', redirectTo: '' }
 ];
 

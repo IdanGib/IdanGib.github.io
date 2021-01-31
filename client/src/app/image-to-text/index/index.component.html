@@ -1,0 +1,8 @@
+<app-take-photo (image)="image($event)"></app-take-photo>
+<div>
+    progress: {{ progress }}
+</div>
+<div *ngIf="text">
+    <h2>Text:</h2>
+    <p>{{ text }}</p>
+</div>
