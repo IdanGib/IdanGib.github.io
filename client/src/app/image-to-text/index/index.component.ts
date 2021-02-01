@@ -7,8 +7,10 @@ declare const Tesseract: any;
 })
 export class IndexComponent implements OnInit {
   text: string;
+  lang = 'eng';
+  langs = [ {val: 'eng', label: 'English'}, { val: 'heb', label: 'Hebrew'} ];
   constructor() { }
-
+  imageUrl = '';
   ngOnInit(): void {
   }
 
@@ -17,14 +19,15 @@ export class IndexComponent implements OnInit {
   image(image: string) {
     Tesseract.recognize(
       image,
-      'eng',
+      this.lang,//'eng+heb',
       { 
         logger: (m: any) => {
           this.progress = m.progress;
         } 
-    }
-    ).then(({ data: { text } }) => {
-      this.text = text;
+      }
+    ).then((res: any) => {
+      console.log(res);
+      this.text = res.data.text;
     })
 
   }
