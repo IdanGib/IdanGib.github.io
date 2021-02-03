@@ -2,12 +2,12 @@ import { IGift, IKid } from "../interfaces";
 import { AppUtils } from "../utils";
 
 export class Kid implements IKid {
-    readonly id: string;
     bag: IGift[];
     constructor(public name: string,
                 public image: string,
-                public stars: number) {
-                    this.id = AppUtils.gId();
+                public stars: number,
+                public id?: string) {
+                    this.id = id || AppUtils.gId();
                     this.bag = [];
                 }
 

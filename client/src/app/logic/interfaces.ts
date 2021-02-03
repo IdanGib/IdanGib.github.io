@@ -1,5 +1,5 @@
 interface IStateEntity {
-    id: string;
+    id?: string;
 }
 
 export interface IProfile extends IStateEntity {
@@ -11,7 +11,6 @@ export interface IGift extends IStateEntity  {
     image: string;
     name: string;
     stars: number;
-    
 }
 
 export interface IKid extends IProfile {

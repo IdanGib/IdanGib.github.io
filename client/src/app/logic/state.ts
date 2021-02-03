@@ -1,5 +1,7 @@
 import { IGift, IKid, IProfile, IState } from "./interfaces";
 import { Profile } from "../logic/models/profile";
+import { Gift } from "./models/gift";
+import { Kid } from "./models/kid";
 
 export class AppState implements IState {
     profile: IProfile;
@@ -15,8 +17,8 @@ export class AppState implements IState {
     private load() {
         try {
             const { gifts, kids, profile } = JSON.parse(localStorage.getItem(this.key)) || {};
-            this.gifts = gifts || [];
-            this.kids = kids || [];
+            this.gifts = (gifts || []).map((g: IGift) => new Gift(g.name, g.image, g.stars, g.id));
+            this.kids = (kids || []).map((k: IKid) => new Kid(k.name, k.image, k.stars, k.id));
             this.profile = profile || new Profile('', '');
         } catch(e) {
             console.error('load:', e);
