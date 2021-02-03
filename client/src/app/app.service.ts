@@ -2,18 +2,20 @@ import { Injectable } from '@angular/core';
 
 import { AppState } from 'src/app/logic/state';
 import { IGift, IKid, IState, IStateStore } from './logic/interfaces';
-import { StateActions } from "./logic/actions/actions.state";
+import { StateActions, UpdateKidStarsAction } from "./logic/actions/actions.state";
 
 
 @Injectable({ providedIn: 'root' })
 export class AppService {
     _state: IState;
+    public UpdateKidStarsAction: UpdateKidStarsAction;
     constructor() {
         
     }
-
+    
     init() {
         this._state = new AppState();
+        this.UpdateKidStarsAction = new UpdateKidStarsAction(this._state);
     }
 
     get state(): IStateStore {

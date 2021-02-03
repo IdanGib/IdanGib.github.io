@@ -11,7 +11,6 @@ import { IGift } from 'src/app/logic/interfaces';
 })
 export class EditGiftsComponent implements OnInit {
   @Input() data: IGift[];
-
   ngOnInit(): void {
     this.data = this.data || this.app.state.gifts;
     this.reset();
