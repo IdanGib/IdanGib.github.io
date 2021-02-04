@@ -11,15 +11,15 @@
     </div>
     <app-star [count]='kid.stars'></app-star>
     <div class="rate">
-        <button mat-icon-button 
-            (click)="updateStars.ui.click({n: -1, kid: kid })"
-            [disabled]="updateStars.ui.process">
-            <mat-icon class="down">thumb_down_alt</mat-icon>
-        </button>
-        <button mat-icon-button 
-            (click)="updateStars.ui.click({n: 1, kid: kid })"
-            [disabled]="updateStars.ui.process">
-            <mat-icon class="up">thumb_up_alt</mat-icon>
-        </button>
+        <app-action 
+            [action]="updateStars"
+            [payload]="{n: -1, kid: kid }"
+            [icon]="'thumb_down_alt'">
+        </app-action>
+        <app-action 
+            [action]="updateStars"
+            [payload]="{n: 1, kid: kid }"
+            [icon]="'thumb_up_alt'">
+        </app-action>
     </div>
 </div>

@@ -11,9 +11,11 @@ import { IKid } from 'src/app/logic/interfaces';
 })
 export class KidComponent implements OnInit {
   kid: IKid;
-  public updateStars = this.app.UpdateKidStarsAction;
+  public updateStars: UpdateKidStarsAction;
   constructor(private route: ActivatedRoute, 
-    public app: AppService) {}
+    public app: AppService) {
+      this.updateStars = this.app.UpdateKidStarsAction;
+    }
   ngOnInit(): void {
     const id = this.route.snapshot.params['id'];
     this.kid = this.app.state.kids.find((k: IKid) => k.id === id);

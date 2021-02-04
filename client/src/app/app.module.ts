@@ -32,6 +32,7 @@ import { GiftDialogComponent } from './dialogs/gift-dialog/gift-dialog.component
 import { MatBadgeModule } from '@angular/material/badge';
 import { ImageDialogComponent } from './dialogs/image-dialog/dialog.component';
 import { ImageToTextModule } from "src/app/image-to-text/image-to-text.module";
+import { ActionComponent } from './entities/action/action.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -48,7 +49,8 @@ import { ImageToTextModule } from "src/app/image-to-text/image-to-text.module";
     GiftDialog,
     KidDialogComponent,
     GiftDialogComponent,
-    ImageDialogComponent
+    ImageDialogComponent,
+    ActionComponent
   ],
   imports: [
     BrowserModule,

@@ -1,0 +1,10 @@
+<button *ngIf="!icon" mat-button 
+    [disabled]="action.ui.process"
+    (click)="action.ui.click(payload)">
+    {{ action.ui.process ? 'Loadgin...' : label }}
+</button>
+<button *ngIf="icon" mat-icon-button 
+    [disabled]="action.ui.process"
+    (click)="action.ui.click(payload)">
+    <mat-icon>{{ icon }}</mat-icon>
+</button>
