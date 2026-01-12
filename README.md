@@ -20,7 +20,7 @@ npm run preview
 
 1. Push to `main` or `master`.
 2. In GitHub repo settings → **Pages**, set **Source** to **GitHub Actions**.
-3. The workflow at `.github/workflows/deploy.yml` builds the site with `VITE_BASE` set to `/${REPO_NAME}/` so assets work under a subpath.
+3. The workflow at `.github/workflows/deploy.yml` builds the site with `VITE_BASE=/` so assets resolve correctly for a user/organization site like `idangib.github.io`.
 
 If your default branch is not `main` or `master`, update the workflow trigger accordingly.
 
