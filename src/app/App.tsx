@@ -1,395 +1,119 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { AppSchema, ParamDef, RangeValue, State } from "../lib/schema";
-import { AppSchemaZ } from "../lib/schemaZod";
-import { buildDefaultState, parseSearch, serializeState } from "../lib/queryRuntime";
-import { generateHookTs, generateSchemaTs } from "../lib/codegen";
+import "./App.css";
 
-const DEFAULT_SCHEMA_TEXT = `{
-  "version": 1,
-  "params": [
-    { "key": "q", "type": "string", "default": "" },
-    { "key": "shape", "type": "enum", "values": ["round", "oval", "emerald"], "default": "round" },
-    { "key": "materials", "type": "string[]", "multi": "repeat", "default": ["gold"] },
-    { "key": "inStock", "type": "boolean", "default": true },
-    { "key": "price", "type": "range", "default": { "min": 100, "max": 500 } }
-  ]
-}`;
-
-const DEFAULT_URL_TEXT = "?q=hello&shape=oval&materials=gold&materials=platinum&inStock=1&priceMin=150&priceMax=750";
-
-const SCHEMA_STORAGE_KEY = "pm_schemaText";
-const URL_STORAGE_KEY = "pm_urlText";
-
-type TabKey = "schema" | "playground" | "code";
-
-type SchemaState = {
-  schema: AppSchema | null;
-  error: string | null;
-};
-
-const parseSchemaText = (text: string): SchemaState => {
-  try {
-    const parsed = JSON.parse(text) as unknown;
-    const result = AppSchemaZ.safeParse(parsed);
-    if (result.success) {
-      return { schema: result.data, error: null };
-    }
-    return {
-      schema: null,
-      error: result.error.issues.map((issue) => issue.message).join("\n"),
-    };
-  } catch (error) {
-    return {
-      schema: null,
-      error: error instanceof Error ? error.message : "Invalid JSON",
-    };
-  }
-};
-
-const safeStringify = (value: unknown) => JSON.stringify(value, null, 2);
-
-const buildMergedState = (schema: AppSchema, urlText: string): State => {
-  const defaults = buildDefaultState(schema);
-  const parsed = parseSearch(schema, urlText);
-  return { ...defaults, ...parsed };
-};
-
-const updateStateValue = (
-  state: State,
-  key: string,
-  value: State[keyof State]
-): State => ({
-  ...state,
-  [key]: value,
-});
-
-const copyToClipboard = async (text: string) => {
-  if (!navigator.clipboard) {
-    return;
-  }
-  await navigator.clipboard.writeText(text);
-};
-
-const renderParamInput = (
-  param: ParamDef,
-  value: State[keyof State],
-  onChange: (next: State[keyof State]) => void
-) => {
-  switch (param.type) {
-    case "string":
-      return (
-        <input
-          value={typeof value === "string" ? value : ""}
-          onChange={(event) => onChange(event.target.value)}
-          placeholder={param.key}
-        />
-      );
-    case "number":
-      return (
-        <input
-          type="number"
-          value={typeof value === "number" ? String(value) : ""}
-          onChange={(event) => {
-            const next = event.target.value;
-            onChange(next === "" ? undefined : Number(next));
-          }}
-          placeholder={param.key}
-        />
-      );
-    case "boolean":
-      return (
-        <label className="checkbox">
-          <input
-            type="checkbox"
-            checked={Boolean(value)}
-            onChange={(event) => onChange(event.target.checked)}
-          />
-          <span>{param.key}</span>
-        </label>
-      );
-    case "enum":
-      return (
-        <select
-          value={typeof value === "string" ? value : ""}
-          onChange={(event) => {
-            const next = event.target.value;
-            onChange(next === "" ? undefined : next);
-          }}
-        >
-          <option value="">(unset)</option>
-          {param.values.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      );
-    case "string[]":
-      return (
-        <input
-          value={Array.isArray(value) ? value.join(", ") : ""}
-          onChange={(event) => {
-            const next = event.target.value
-              .split(",")
-              .map((entry) => entry.trim())
-              .filter(Boolean);
-            onChange(next);
-          }}
-          placeholder="comma,separated"
-        />
-      );
-    case "enum[]":
-      return (
-        <input
-          value={Array.isArray(value) ? value.join(", ") : ""}
-          onChange={(event) => {
-            const next = event.target.value
-              .split(",")
-              .map((entry) => entry.trim())
-              .filter((entry) => entry.length > 0)
-              .filter((entry) => param.values.includes(entry));
-            onChange(next);
-          }}
-          placeholder={param.values.join(", ")}
-        />
-      );
-    case "range": {
-      const range = (value as RangeValue) ?? {};
-      return (
-        <div className="range">
-          <input
-            type="number"
-            value={range.min ?? ""}
-            placeholder="min"
-            onChange={(event) => {
-              const nextMin = event.target.value;
-              onChange({
-                ...range,
-                min: nextMin === "" ? undefined : Number(nextMin),
-              });
-            }}
-          />
-          <span>to</span>
-          <input
-            type="number"
-            value={range.max ?? ""}
-            placeholder="max"
-            onChange={(event) => {
-              const nextMax = event.target.value;
-              onChange({
-                ...range,
-                max: nextMax === "" ? undefined : Number(nextMax),
-              });
-            }}
-          />
+const App = () => (
+  <div className="page">
+    <header className="hero">
+      <nav className="nav">
+        <span className="logo">Idan Gibly</span>
+        <div className="nav-links">
+          <a href="#about">About</a>
+          <a href="#work">Work</a>
+          <a href="#contact">Contact</a>
         </div>
-      );
-    }
-  }
-};
+      </nav>
+      <div className="hero-content">
+        <p className="eyebrow">Product Designer • Creative Technologist</p>
+        <h1>Crafting digital experiences with clarity and heart.</h1>
+        <p className="lead">
+          Idan Gibly is a multidisciplinary designer helping teams transform bold
+          ideas into purposeful products, immersive brands, and elegant user
+          journeys.
+        </p>
+        <div className="cta-row">
+          <a className="primary" href="#contact">
+            Start a project
+          </a>
+          <a className="secondary" href="#work">
+            View selected work
+          </a>
+        </div>
+        <div className="hero-card">
+          <div>
+            <p className="card-title">Currently</p>
+            <p className="card-body">
+              Building customer-first platforms and design systems for global
+              startups.
+            </p>
+          </div>
+          <div>
+            <p className="card-title">Location</p>
+            <p className="card-body">Tel Aviv · Remote worldwide</p>
+          </div>
+        </div>
+      </div>
+    </header>
 
-const App = () => {
-  const [activeTab, setActiveTab] = useState<TabKey>("schema");
-  const [schemaText, setSchemaText] = useState(
-    () => localStorage.getItem(SCHEMA_STORAGE_KEY) ?? DEFAULT_SCHEMA_TEXT
-  );
-  const [urlText, setUrlText] = useState(
-    () => localStorage.getItem(URL_STORAGE_KEY) ?? DEFAULT_URL_TEXT
-  );
-  const [{ schema, error }, setSchemaState] = useState<SchemaState>(() =>
-    parseSchemaText(schemaText)
-  );
-  const [state, setState] = useState<State>({});
-  const [stateText, setStateText] = useState("");
-  const [stateError, setStateError] = useState<string | null>(null);
-  const [schemaCode, setSchemaCode] = useState("");
-  const [hookCode, setHookCode] = useState("");
+    <main>
+      <section id="about" className="section">
+        <h2>About</h2>
+        <p>
+          With a background in product strategy, motion, and UI engineering, Idan
+          bridges the gap between concept and execution. Every project blends
+          research, storytelling, and meticulous craft.
+        </p>
+        <div className="pill-grid">
+          <span>Product Strategy</span>
+          <span>UX & UI Design</span>
+          <span>Design Systems</span>
+          <span>Brand Direction</span>
+          <span>Prototyping</span>
+          <span>Creative Technology</span>
+        </div>
+      </section>
 
-  useEffect(() => {
-    localStorage.setItem(SCHEMA_STORAGE_KEY, schemaText);
-  }, [schemaText]);
+      <section id="work" className="section">
+        <h2>Selected Work</h2>
+        <div className="work-grid">
+          <article>
+            <h3>Northwind Logistics</h3>
+            <p>
+              Reimagined the customer portal with real-time shipment visibility
+              and a new visual language.
+            </p>
+          </article>
+          <article>
+            <h3>Pulse Health</h3>
+            <p>
+              Designed a telehealth onboarding journey that increased retention
+              by 38%.
+            </p>
+          </article>
+          <article>
+            <h3>Studio Atlas</h3>
+            <p>
+              Crafted a brand identity and site experience for a boutique
+              architecture firm.
+            </p>
+          </article>
+        </div>
+      </section>
 
-  useEffect(() => {
-    localStorage.setItem(URL_STORAGE_KEY, urlText);
-  }, [urlText]);
-
-  useEffect(() => {
-    const next = parseSchemaText(schemaText);
-    setSchemaState(next);
-  }, [schemaText]);
-
-  useEffect(() => {
-    if (!schema) {
-      setState({});
-      setStateText("");
-      return;
-    }
-    const mergedState = buildMergedState(schema, urlText);
-    setState(mergedState);
-    setStateText(safeStringify(mergedState));
-  }, [schema, urlText]);
-
-  useEffect(() => {
-    if (!schema) {
-      setSchemaCode("");
-      setHookCode("");
-      return;
-    }
-    setSchemaCode(generateSchemaTs(schema));
-    setHookCode(generateHookTs());
-  }, [schema]);
-
-  const updateStateAndText = useCallback((nextState: State) => {
-    setState(nextState);
-    setStateText(safeStringify(nextState));
-  }, []);
-
-  const handleParse = useCallback(() => {
-    if (!schema) {
-      return;
-    }
-    const nextState = parseSearch(schema, urlText);
-    updateStateAndText(nextState);
-  }, [schema, updateStateAndText, urlText]);
-
-  const handleSerialize = useCallback(() => {
-    if (!schema) {
-      return;
-    }
-    const params = serializeState(schema, state);
-    const query = params.toString();
-    setUrlText(query ? `?${query}` : "");
-  }, [schema, state]);
-
-  const handleApplyJson = useCallback(() => {
-    try {
-      const parsed = JSON.parse(stateText) as State;
-      setStateError(null);
-      updateStateAndText(parsed);
-    } catch (error) {
-      setStateError(error instanceof Error ? error.message : "Invalid JSON");
-    }
-  }, [stateText, updateStateAndText]);
-
-  const playgroundDisabled = !schema;
-
-  return (
-    <div className="app">
-      <header>
+      <section id="contact" className="section contact">
         <div>
-          <h1>ParamMirror</h1>
+          <h2>Let’s build something meaningful</h2>
           <p>
-            Define a query-string schema, parse URLs into typed state, and
-            serialize state back to search params.
+            Tell me about your vision, timeline, and the people you want to
+            impact. I’ll respond within 48 hours.
           </p>
         </div>
-        <div className="tabs">
-          {([
-            ["schema", "Schema"],
-            ["playground", "Playground"],
-            ["code", "Code"],
-          ] as const).map(([key, label]) => (
-            <button
-              key={key}
-              className={activeTab === key ? "active" : ""}
-              onClick={() => setActiveTab(key)}
-              disabled={key !== "schema" && playgroundDisabled}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </header>
+        <a className="primary" href="mailto:hello@idangibly.com">
+          hello@idangibly.com
+        </a>
+      </section>
+    </main>
 
-      {activeTab === "schema" && (
-        <section className="panel">
-          <label className="field">
-            <span>Schema JSON</span>
-            <textarea
-              value={schemaText}
-              onChange={(event) => setSchemaText(event.target.value)}
-            />
-          </label>
-          {error && (
-            <div className="error">
-              <strong>Schema error</strong>
-              <pre>{error}</pre>
-            </div>
-          )}
-          {!error && (
-            <div className="success">Schema is valid and ready.</div>
-          )}
-        </section>
-      )}
-
-      {activeTab === "playground" && schema && (
-        <section className="panel">
-          <div className="field">
-            <span>URL or query string</span>
-            <input
-              value={urlText}
-              onChange={(event) => setUrlText(event.target.value)}
-              placeholder="?q=ring"
-            />
-          </div>
-          <div className="row">
-            <button onClick={handleParse}>Parse → State</button>
-            <button onClick={handleSerialize}>State → Serialize</button>
-          </div>
-
-          <div className="grid">
-            <div className="panel">
-              <h3>State JSON</h3>
-              <textarea
-                value={stateText}
-                onChange={(event) => setStateText(event.target.value)}
-              />
-              <div className="row">
-                <button onClick={handleApplyJson}>Apply JSON</button>
-                {stateError && <span className="error-text">{stateError}</span>}
-              </div>
-            </div>
-            <div className="panel">
-              <h3>Controls</h3>
-              <div className="controls">
-                {schema.params.map((param) => (
-                  <label key={param.key} className="control">
-                    <span>{param.key}</span>
-                    {renderParamInput(param, state[param.key], (next) => {
-                      updateStateAndText(updateStateValue(state, param.key, next));
-                    })}
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {activeTab === "code" && schema && (
-        <section className="panel">
-          <div className="code-block">
-            <div className="row space">
-              <h3>schema.ts</h3>
-              <button onClick={() => void copyToClipboard(schemaCode)}>
-                Copy
-              </button>
-            </div>
-            <pre>{schemaCode}</pre>
-          </div>
-          <div className="code-block">
-            <div className="row space">
-              <h3>useQueryState.ts</h3>
-              <button onClick={() => void copyToClipboard(hookCode)}>
-                Copy
-              </button>
-            </div>
-            <pre>{hookCode}</pre>
-          </div>
-        </section>
-      )}
-    </div>
-  );
-};
+    <footer className="footer">
+      <span>© 2024 Idan Gibly. All rights reserved.</span>
+      <div>
+        <a href="https://www.linkedin.com" target="_blank" rel="noreferrer">
+          LinkedIn
+        </a>
+        <a href="https://www.behance.net" target="_blank" rel="noreferrer">
+          Behance
+        </a>
+      </div>
+    </footer>
+  </div>
+);
 
 export default App;
