@@ -26,6 +26,7 @@ a {
 }
 
 .hero {
+  flex: 1;
   padding: 32px 24px 56px;
   background: linear-gradient(120deg, #eef2ff 0%, #f8fafc 60%, #ecfeff 100%);
 }
@@ -43,12 +44,6 @@ a {
   font-size: 20px;
   font-weight: 700;
   letter-spacing: 0.04em;
-}
-
-.nav-links {
-  display: flex;
-  gap: 20px;
-  font-weight: 500;
 }
 
 .hero-content {
@@ -86,25 +81,15 @@ h1 {
   flex-wrap: wrap;
 }
 
-.primary,
-.secondary {
+.primary {
   padding: 12px 20px;
   border-radius: 999px;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-}
-
-.primary {
   background: #1d4ed8;
   color: #fff;
-}
-
-.secondary {
-  border: 1px solid #cbd5f5;
-  color: #1d4ed8;
-  background: #fff;
 }
 
 .hero-card {
@@ -129,95 +114,4 @@ h1 {
 .card-body {
   margin: 0;
   font-weight: 600;
-}
-
-main {
-  flex: 1;
-}
-
-.section {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 56px 24px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.section h2 {
-  margin: 0;
-  font-size: 28px;
-}
-
-.section p {
-  margin: 0;
-  color: #475569;
-}
-
-.pill-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.pill-grid span {
-  background: #e2e8f0;
-  color: #0f172a;
-  padding: 8px 14px;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.work-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 20px;
-}
-
-.work-grid article {
-  background: #fff;
-  border-radius: 16px;
-  padding: 20px;
-  border: 1px solid #e2e8f0;
-  min-height: 150px;
-}
-
-.work-grid h3 {
-  margin: 0 0 10px;
-}
-
-.contact {
-  margin-bottom: 56px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  align-items: flex-start;
-}
-
-.footer {
-  padding: 32px 24px 40px;
-  border-top: 1px solid #e2e8f0;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 16px;
-  color: #64748b;
-  font-size: 14px;
-}
-
-.footer a {
-  margin-right: 16px;
-  color: inherit;
-}
-
-@media (max-width: 720px) {
-  .nav {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .nav-links {
-    flex-wrap: wrap;
-  }
 }
