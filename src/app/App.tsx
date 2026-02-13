@@ -2,38 +2,26 @@ import "./App.css";
 
 const App = () => (
   <div className="page">
-    <header className="hero">
-      <nav className="nav">
-        <span className="logo">Idan Gibly</span>
-      </nav>
-      <div className="hero-content">
-        <p className="eyebrow">Product Designer • Creative Technologist</p>
-        <h1>Crafting digital experiences with clarity and heart.</h1>
-        <p className="lead">
-          Idan Gibly is a multidisciplinary designer helping teams transform bold
-          ideas into purposeful products, immersive brands, and elegant user
-          journeys.
-        </p>
-        <div className="cta-row">
-          <a className="primary" href="mailto:hello@idangibly.com">
-            Start a project
-          </a>
-        </div>
-        <div className="hero-card">
-          <div>
-            <p className="card-title">Currently</p>
-            <p className="card-body">
-              Building customer-first platforms and design systems for global
-              startups.
-            </p>
-          </div>
-          <div>
-            <p className="card-title">Location</p>
-            <p className="card-body">Tel Aviv · Remote worldwide</p>
-          </div>
-        </div>
-      </div>
-    </header>
+    <div className="grain" />
+    <nav className="nav">
+      <span className="logo">IG</span>
+      <a className="cta" href="mailto:hello@idangibly.com">
+        Let's talk
+      </a>
+    </nav>
+    <main className="hero">
+      <h1>
+        <span className="line">Design</span>
+        <span className="line accent">& craft.</span>
+      </h1>
+      <p className="tagline">
+        Idan Gibly — product designer & creative technologist
+        <br />
+        Tel Aviv · Remote
+      </p>
+    </main>
+    <div className="orb orb-1" />
+    <div className="orb orb-2" />
   </div>
 );
 
