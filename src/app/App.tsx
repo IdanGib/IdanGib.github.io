@@ -5,7 +5,7 @@ const App = () => (
     <div className="grain" />
     <nav className="nav">
       <span className="logo">IG</span>
-      <a className="cta" href="mailto:hello@idangibly.com">
+      <a className="cta" href="mailto:idangibly.dev@gmail.com">
         Let's talk
       </a>
     </nav>
