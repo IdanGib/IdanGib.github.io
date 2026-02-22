@@ -47,9 +47,16 @@ const CollectionPage = () => {
           <span>About</span>
         </div>
         <div className="nav-icons">
-          <span>&#x1F50D;</span>
-          <span>&hearts;</span>
-          <span>&#x2610; 2</span>
+          <button className="nav-icon-btn" aria-label="Search">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          </button>
+          <button className="nav-icon-btn" aria-label="Wishlist">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.3l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+          </button>
+          <button className="nav-icon-btn" aria-label="Cart">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <span className="cart-count">2</span>
+          </button>
         </div>
         <div className="nav-hamburger">
           <span></span>
@@ -113,7 +120,7 @@ const CollectionPage = () => {
                 <div className="swatch-circle rg"></div>
                 <div className="swatch-circle pt"></div>
               </div>
-              <div style={{ fontSize: "10px", color: "#888" }}>
+              <div className="swatch-label">
                 Yellow Gold selected
               </div>
             </div>
@@ -196,6 +203,9 @@ const CollectionPage = () => {
             <div className="product-card">
               <div className="card-img s2">
                 <div className="badge-new">New</div>
+                <button className="card-wishlist" aria-label="Add to wishlist">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.3l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                </button>
               </div>
               <div className="card-body">
                 <div className="card-name">Classic Solitaire Ring</div>
@@ -209,7 +219,11 @@ const CollectionPage = () => {
             </div>
 
             <div className="product-card">
-              <div className="card-img s1"></div>
+              <div className="card-img s1">
+                <button className="card-wishlist" aria-label="Add to wishlist">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.3l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                </button>
+              </div>
               <div className="card-body">
                 <div className="card-name">Halo Engagement Ring</div>
                 <div className="card-price">$3,800</div>
@@ -221,7 +235,11 @@ const CollectionPage = () => {
             </div>
 
             <div className="product-card">
-              <div className="card-img s3"></div>
+              <div className="card-img s3">
+                <button className="card-wishlist" aria-label="Add to wishlist">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.3l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                </button>
+              </div>
               <div className="card-body">
                 <div className="card-name">Pav&eacute; Band Ring</div>
                 <div className="card-price">$1,900</div>
@@ -235,7 +253,11 @@ const CollectionPage = () => {
             </div>
 
             <div className="product-card">
-              <div className="card-img s4"></div>
+              <div className="card-img s4">
+                <button className="card-wishlist" aria-label="Add to wishlist">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.3l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                </button>
+              </div>
               <div className="card-body">
                 <div className="card-name">Three Stone Ring</div>
                 <div className="card-price">$4,200</div>
@@ -247,7 +269,11 @@ const CollectionPage = () => {
             </div>
 
             <div className="product-card">
-              <div className="card-img s2"></div>
+              <div className="card-img s2">
+                <button className="card-wishlist" aria-label="Add to wishlist">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.3l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                </button>
+              </div>
               <div className="card-body">
                 <div className="card-name">Cathedral Setting Ring</div>
                 <div className="card-price">$3,100</div>
@@ -260,7 +286,11 @@ const CollectionPage = () => {
             </div>
 
             <div className="product-card">
-              <div className="card-img s1"></div>
+              <div className="card-img s1">
+                <button className="card-wishlist" aria-label="Add to wishlist">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.3l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                </button>
+              </div>
               <div className="card-body">
                 <div className="card-name">Eternity Band</div>
                 <div className="card-price">$2,750</div>
@@ -273,7 +303,11 @@ const CollectionPage = () => {
             </div>
 
             <div className="product-card">
-              <div className="card-img s3"></div>
+              <div className="card-img s3">
+                <button className="card-wishlist" aria-label="Add to wishlist">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.3l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                </button>
+              </div>
               <div className="card-body">
                 <div className="card-name">Vintage Milgrain Ring</div>
                 <div className="card-price">$3,400</div>
@@ -285,7 +319,11 @@ const CollectionPage = () => {
             </div>
 
             <div className="product-card">
-              <div className="card-img s2"></div>
+              <div className="card-img s2">
+                <button className="card-wishlist" aria-label="Add to wishlist">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.3l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                </button>
+              </div>
               <div className="card-body">
                 <div className="card-name">Split Shank Ring</div>
                 <div className="card-price">$2,900</div>
