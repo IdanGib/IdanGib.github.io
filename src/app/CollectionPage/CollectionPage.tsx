@@ -1,8 +1,17 @@
 import { useCallback, useRef, useState } from "react";
 import "./CollectionPage.css";
 
+type SortOption =
+  | "price-asc"
+  | "price-desc"
+  | "newest"
+  | "best-selling"
+  | "name-asc"
+  | "name-desc";
+
 const CollectionPage = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [sort, setSort] = useState<SortOption>("price-asc");
   const drawerRef = useRef<HTMLElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -189,8 +198,17 @@ const CollectionPage = () => {
               <button className="mobile-filter-btn" onClick={openDrawer}>
                 <span className="filter-icon">&#x2630;</span> Filters
               </button>
-              <select className="sort-select">
-                <option>Sort: Price Low &rarr; High</option>
+              <select
+                className="sort-select"
+                value={sort}
+                onChange={(e) => setSort(e.target.value as SortOption)}
+              >
+                <option value="price-asc">Sort: Price Low → High</option>
+                <option value="price-desc">Sort: Price High → Low</option>
+                <option value="newest">Sort: Newest</option>
+                <option value="best-selling">Sort: Best Selling</option>
+                <option value="name-asc">Sort: Name A → Z</option>
+                <option value="name-desc">Sort: Name Z → A</option>
               </select>
               <div className="view-toggle">
                 <div className="view-btn active">&#x229E;</div>
