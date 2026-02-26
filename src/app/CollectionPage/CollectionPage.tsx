@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "./CollectionPage.css";
 
 type SortOption =
@@ -12,8 +12,19 @@ type SortOption =
 const CollectionPage = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [sort, setSort] = useState<SortOption>("price-asc");
+  const [showBackToTop, setShowBackToTop] = useState(false);
   const drawerRef = useRef<HTMLElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onScroll = () => setShowBackToTop(window.scrollY > 400);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const scrollToTop = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
   const openDrawer = useCallback(() => {
     const overlay = overlayRef.current;
@@ -43,8 +54,45 @@ const CollectionPage = () => {
     }, 350);
   }, []);
 
+  const StarRating = ({ rating, count }: { rating: number; count: number }) => (
+    <div className="card-rating">
+      <div className="stars">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <svg
+            key={star}
+            className={`star ${star <= Math.floor(rating) ? "filled" : star - 0.5 <= rating ? "half" : ""}`}
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+          >
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+          </svg>
+        ))}
+      </div>
+      <span className="review-count">({count})</span>
+    </div>
+  );
+
+  const products = [
+    { name: "Classic Solitaire Ring", price: "$2,400", img: "s2", badge: "New", swatches: ["yg", "wg", "rg"], rating: 4.8, reviews: 124 },
+    { name: "Halo Engagement Ring", price: "$3,800", img: "s1", swatches: ["yg", "pt"], rating: 4.9, reviews: 89 },
+    { name: "Pav\u00e9 Band Ring", price: "$1,900", img: "s3", swatches: ["yg", "wg", "rg", "pt"], rating: 4.6, reviews: 203 },
+    { name: "Three Stone Ring", price: "$4,200", img: "s4", swatches: ["yg", "wg"], rating: 4.7, reviews: 56 },
+    { name: "Cathedral Setting Ring", price: "$3,100", img: "s2", swatches: ["yg", "rg", "pt"], rating: 4.5, reviews: 167 },
+    { name: "Eternity Band", price: "$2,750", img: "s1", swatches: ["yg", "wg", "pt"], rating: 4.9, reviews: 312 },
+    { name: "Vintage Milgrain Ring", price: "$3,400", img: "s3", swatches: ["yg", "rg"], rating: 4.4, reviews: 78 },
+    { name: "Split Shank Ring", price: "$2,900", img: "s2", swatches: ["yg", "wg", "rg"], rating: 4.6, reviews: 145 },
+  ];
+
   return (
     <div className="collection-page">
+      {/* PROMO BANNER */}
+      <div className="promo-banner">
+        <span>Free Shipping on Orders Over $2,000</span>
+        <span className="promo-sep">|</span>
+        <span>Complimentary Engraving on All Rings</span>
+      </div>
+
       {/* NAV */}
       <nav>
         <div className="nav-logo">Keyzar</div>
@@ -76,12 +124,20 @@ const CollectionPage = () => {
 
       {/* BREADCRUMB */}
       <div className="breadcrumb">
-        Home &nbsp;/&nbsp; <span>Engagement Rings</span>
+        <svg className="breadcrumb-home" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Home
+        <svg className="breadcrumb-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        <span>Engagement Rings</span>
       </div>
 
       {/* PAGE HEADER */}
       <div className="page-header">
-        <h1>Engagement Rings</h1>
+        <div className="page-header-content">
+          <h1>Engagement Rings</h1>
+          <p className="collection-description">
+            Discover our curated collection of handcrafted engagement rings, each designed to capture your unique love story. From timeless solitaires to modern halo settings.
+          </p>
+        </div>
         <span className="count">48 results</span>
       </div>
 
@@ -203,12 +259,12 @@ const CollectionPage = () => {
                 value={sort}
                 onChange={(e) => setSort(e.target.value as SortOption)}
               >
-                <option value="price-asc">Sort: Price Low → High</option>
-                <option value="price-desc">Sort: Price High → Low</option>
+                <option value="price-asc">Sort: Price Low &rarr; High</option>
+                <option value="price-desc">Sort: Price High &rarr; Low</option>
                 <option value="newest">Sort: Newest</option>
                 <option value="best-selling">Sort: Best Selling</option>
-                <option value="name-asc">Sort: Name A → Z</option>
-                <option value="name-desc">Sort: Name Z → A</option>
+                <option value="name-asc">Sort: Name A &rarr; Z</option>
+                <option value="name-desc">Sort: Name Z &rarr; A</option>
               </select>
               <div className="view-toggle">
                 <div className="view-btn active">&#x229E;</div>
@@ -218,140 +274,54 @@ const CollectionPage = () => {
           </div>
 
           <div className="product-grid">
-            <div className="product-card">
-              <div className="card-img s2">
-                <div className="badge-new">New</div>
-                <button className="card-wishlist" aria-label="Add to wishlist">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.3l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-                </button>
-              </div>
-              <div className="card-body">
-                <div className="card-name">Classic Solitaire Ring</div>
-                <div className="card-price">$2,400</div>
-                <div className="card-swatches">
-                  <div className="cswatch yg sel"></div>
-                  <div className="cswatch wg"></div>
-                  <div className="cswatch rg"></div>
+            {products.map((product, i) => (
+              <div
+                className="product-card"
+                key={i}
+                style={{ animationDelay: `${i * 0.06}s` }}
+              >
+                <div className={`card-img ${product.img}`}>
+                  <div className="card-img-hover"></div>
+                  {product.badge && (
+                    <div className="badge-new">{product.badge}</div>
+                  )}
+                  <button
+                    className="card-wishlist"
+                    aria-label="Add to wishlist"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.3l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.8z" />
+                    </svg>
+                  </button>
+                  <button className="card-quick-add">Quick Add</button>
+                </div>
+                <div className="card-body">
+                  <div className="card-name">{product.name}</div>
+                  <StarRating
+                    rating={product.rating}
+                    count={product.reviews}
+                  />
+                  <div className="card-price">{product.price}</div>
+                  <div className="card-swatches">
+                    {product.swatches.map((sw, j) => (
+                      <div
+                        key={j}
+                        className={`cswatch ${sw}${j === 0 ? " sel" : ""}`}
+                      ></div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-
-            <div className="product-card">
-              <div className="card-img s1">
-                <button className="card-wishlist" aria-label="Add to wishlist">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.3l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-                </button>
-              </div>
-              <div className="card-body">
-                <div className="card-name">Halo Engagement Ring</div>
-                <div className="card-price">$3,800</div>
-                <div className="card-swatches">
-                  <div className="cswatch yg sel"></div>
-                  <div className="cswatch pt"></div>
-                </div>
-              </div>
-            </div>
-
-            <div className="product-card">
-              <div className="card-img s3">
-                <button className="card-wishlist" aria-label="Add to wishlist">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.3l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-                </button>
-              </div>
-              <div className="card-body">
-                <div className="card-name">Pav&eacute; Band Ring</div>
-                <div className="card-price">$1,900</div>
-                <div className="card-swatches">
-                  <div className="cswatch yg sel"></div>
-                  <div className="cswatch wg"></div>
-                  <div className="cswatch rg"></div>
-                  <div className="cswatch pt"></div>
-                </div>
-              </div>
-            </div>
-
-            <div className="product-card">
-              <div className="card-img s4">
-                <button className="card-wishlist" aria-label="Add to wishlist">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.3l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-                </button>
-              </div>
-              <div className="card-body">
-                <div className="card-name">Three Stone Ring</div>
-                <div className="card-price">$4,200</div>
-                <div className="card-swatches">
-                  <div className="cswatch yg sel"></div>
-                  <div className="cswatch wg"></div>
-                </div>
-              </div>
-            </div>
-
-            <div className="product-card">
-              <div className="card-img s2">
-                <button className="card-wishlist" aria-label="Add to wishlist">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.3l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-                </button>
-              </div>
-              <div className="card-body">
-                <div className="card-name">Cathedral Setting Ring</div>
-                <div className="card-price">$3,100</div>
-                <div className="card-swatches">
-                  <div className="cswatch yg sel"></div>
-                  <div className="cswatch rg"></div>
-                  <div className="cswatch pt"></div>
-                </div>
-              </div>
-            </div>
-
-            <div className="product-card">
-              <div className="card-img s1">
-                <button className="card-wishlist" aria-label="Add to wishlist">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.3l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-                </button>
-              </div>
-              <div className="card-body">
-                <div className="card-name">Eternity Band</div>
-                <div className="card-price">$2,750</div>
-                <div className="card-swatches">
-                  <div className="cswatch yg sel"></div>
-                  <div className="cswatch wg"></div>
-                  <div className="cswatch pt"></div>
-                </div>
-              </div>
-            </div>
-
-            <div className="product-card">
-              <div className="card-img s3">
-                <button className="card-wishlist" aria-label="Add to wishlist">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.3l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-                </button>
-              </div>
-              <div className="card-body">
-                <div className="card-name">Vintage Milgrain Ring</div>
-                <div className="card-price">$3,400</div>
-                <div className="card-swatches">
-                  <div className="cswatch yg sel"></div>
-                  <div className="cswatch rg"></div>
-                </div>
-              </div>
-            </div>
-
-            <div className="product-card">
-              <div className="card-img s2">
-                <button className="card-wishlist" aria-label="Add to wishlist">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.3l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-                </button>
-              </div>
-              <div className="card-body">
-                <div className="card-name">Split Shank Ring</div>
-                <div className="card-price">$2,900</div>
-                <div className="card-swatches">
-                  <div className="cswatch yg sel"></div>
-                  <div className="cswatch wg"></div>
-                  <div className="cswatch rg"></div>
-                </div>
-              </div>
-            </div>
+            ))}
 
             <div className="product-card card-loading">
               <div className="card-img"></div>
@@ -372,8 +342,20 @@ const CollectionPage = () => {
             <div className="pg">12</div>
             <div className="pg arrow">&#x203A;</div>
           </div>
+          <div className="pagination-info">
+            Showing 1–9 of 48 products
+          </div>
         </main>
       </div>
+
+      {/* BACK TO TOP */}
+      <button
+        className={`back-to-top${showBackToTop ? " visible" : ""}`}
+        onClick={scrollToTop}
+        aria-label="Back to top"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+      </button>
     </div>
   );
 };
