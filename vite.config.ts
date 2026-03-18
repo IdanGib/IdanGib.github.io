@@ -23,6 +23,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, "index.html"),
         collection: resolve(__dirname, "collection/index.html"),
+        "gaya-homework-math-e1": resolve(__dirname, "gaya/homework/math/e1.html"),
       },
     },
   },
