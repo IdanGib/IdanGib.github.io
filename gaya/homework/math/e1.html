@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>שיעורי בית - אומדן כפל</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, sans-serif;
+    background: linear-gradient(165deg, #e8f4f8 0%, #f0e6ff 50%, #fff5e6 100%);
+    min-height: 100vh;
+    padding: 14px;
+    direction: rtl;
+  }
+  .header { text-align: center; margin-bottom: 10px; }
+  .header .rhino { font-size: 32px; }
+  .header .subtitle { font-size: 13px; color: #6b7280; font-weight: 600; letter-spacing: 0.5px; }
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 14px 18px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .title-card { text-align: center; }
+  .title-card h1 { font-size: 20px; font-weight: 800; color: #1e3a5f; margin-bottom: 4px; line-height: 1.3; }
+  .title-card p { font-size: 14px; color: #6b7280; }
+  .name-row { display: flex; align-items: center; gap: 10px; padding: 10px 16px; }
+  .name-row label { font-size: 14px; font-weight: 600; color: #4b5563; white-space: nowrap; }
+  .name-row input {
+    flex: 1; border: 2px solid #e5e7eb; border-radius: 8px; padding: 7px 10px;
+    font-size: 14px; font-weight: 600; color: #1e3a5f; outline: none; direction: rtl;
+    transition: border-color 0.2s;
+  }
+  .name-row input:focus { border-color: #60a5fa; }
+  .progress-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .progress-bar .label { font-size: 12px; font-weight: 600; color: #6b7280; }
+  .progress-bar .count { font-size: 12px; font-weight: 700; color: #3b82f6; }
+  .bar-bg { height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; }
+  .bar-fill {
+    height: 100%; border-radius: 4px; transition: width 0.4s ease;
+    background: linear-gradient(90deg, #60a5fa, #3b82f6);
+  }
+  .bar-fill.done { background: linear-gradient(90deg, #34d399, #10b981); }
+  .exercises-card { border: 2px solid #bfdbfe; padding: 10px; }
+  .exercise-row {
+    display: flex; align-items: center; gap: 5px; padding: 7px 6px;
+    border-radius: 10px; margin-bottom: 5px; transition: background 0.3s;
+    direction: ltr; flex-wrap: nowrap;
+  }
+  .exercise-row:last-child { margin-bottom: 0; }
+  .exercise-row.correct-bg { background: #f0fdf4; }
+  .exercise-row.wrong-bg { background: #fef2f2; }
+  .exercise-row.example-bg { background: #f0fdf4; }
+  .row-num { font-size: 11px; color: #9ca3af; font-weight: 700; min-width: 16px; text-align: center; }
+  .expr { font-weight: 700; font-size: 14px; color: #1e3a5f; min-width: 50px; font-family: monospace; }
+  .arrow { color: #9ca3af; font-size: 13px; font-weight: 700; }
+  .op { font-weight: 700; color: #6b7280; font-size: 13px; }
+  .cell-input {
+    width: 40px; height: 32px; border: 2px solid #d1e8f5; border-radius: 8px;
+    text-align: center; font-size: 14px; font-weight: 700; color: #1e3a5f;
+    background: #eef6fb; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    direction: ltr; -moz-appearance: textfield;
+  }
+  .cell-input::-webkit-inner-spin-button, .cell-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .cell-input:focus { box-shadow: 0 0 0 3px rgba(59,130,246,0.15); border-color: #60a5fa; }
+  .cell-input.wide { width: 54px; }
+  .cell-input.example { background: #d1fae5; }
+  .cell-input.correct { border-color: #86efac; }
+  .cell-input.wrong { border-color: #fca5a5; }
+  .status { font-size: 16px; min-width: 20px; text-align: center; }
+  .score-card {
+    border-radius: 14px; padding: 14px; margin-bottom: 14px;
+    text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .score-card.perfect { background: linear-gradient(135deg, #d1fae5, #a7f3d0); }
+  .score-card.partial { background: linear-gradient(135deg, #fef3c7, #fde68a); }
+  .score-card .emoji { font-size: 28px; margin-bottom: 4px; }
+  .score-card .text { font-size: 18px; font-weight: 800; color: #1e3a5f; }
+  .score-card .hint { font-size: 13px; color: #6b7280; margin-top: 4px; }
+  .buttons { display: flex; gap: 10px; margin-bottom: 14px; }
+  .btn {
+    flex: 1; padding: 13px; border-radius: 12px; border: none;
+    color: white; font-size: 15px; font-weight: 700; cursor: pointer;
+    transition: transform 0.15s, opacity 0.2s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-check { background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+  .btn-pdf { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+  .btn-share { background: linear-gradient(135deg, #25D366, #128C7E); box-shadow: 0 4px 12px rgba(37,211,102,0.3); }
+  .tip { text-align: center; font-size: 12px; color: #9ca3af; line-height: 1.7; padding: 0 10px; margin-top: 6px; }
+  .loading-overlay {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4); z-index: 999;
+    justify-content: center; align-items: center;
+  }
+  .loading-overlay.show { display: flex; }
+  .loading-box {
+    background: white; border-radius: 16px; padding: 24px 32px;
+    text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  }
+  .loading-box .spinner { font-size: 32px; animation: spin 1s linear infinite; display: inline-block; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .loading-box p { margin-top: 10px; font-size: 14px; color: #4b5563; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="rhino">🦏</div>
+  <div class="subtitle">קרנפים - לומדים פה חשבון</div>
+</div>
+
+<div class="card title-card">
+  <h1>אומדן כפל דו ספרתי בדו ספרתי</h1>
+  <p>פתרו את התרגילים הבאים ✏️</p>
+</div>
+
+<div class="card name-row">
+  <label>שם התלמיד/ה:</label>
+  <input type="text" id="studentName" placeholder="...הכניסו שם">
+</div>
+
+<div class="card" style="padding: 10px 16px;">
+  <div class="progress-bar">
+    <span class="label">התקדמות</span>
+    <span class="count" id="progressCount">0/11</span>
+  </div>
+  <div class="bar-bg">
+    <div class="bar-fill" id="progressFill" style="width:0%"></div>
+  </div>
+</div>
+
+<div class="card exercises-card" id="exercisesContainer"></div>
+
+<div id="scoreArea"></div>
+
+<div class="buttons">
+  <button class="btn btn-check" id="btnCheck" disabled onclick="checkAnswers()">✓ בדוק תשובות</button>
+  <button class="btn btn-pdf" id="btnPdf" disabled onclick="exportPDF()">📄 הורד PDF</button>
+</div>
+
+<div class="buttons">
+  <button class="btn btn-share" id="btnShare" disabled onclick="shareToWhatsApp()">📱 שלח ב-WhatsApp</button>
+</div>
+
+<div class="tip">
+  💡 טיפ: עגלו כל מספר לעשרת הקרובה ואז כפלו
+</div>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-box">
+    <div class="spinner">⏳</div>
+    <p>...יוצר PDF</p>
+  </div>
+</div>
+
+<script>
+(function() {
+  var exercises = [
+    { expr: "72\u00D769", a: "70", b: "70", result: "4900", example: true },
+    { expr: "93\u00D799", example: false },
+    { expr: "82\u00D779", example: false },
+    { expr: "63\u00D769", example: false },
+    { expr: "71\u00D758", example: false },
+    { expr: "32\u00D768", example: false },
+    { expr: "82\u00D779", example: false },
+    { expr: "51\u00D769", example: false },
+    { expr: "42\u00D749", example: false },
+    { expr: "41\u00D788", example: false },
+    { expr: "31\u00D759", example: false },
+    { expr: "62\u00D778", example: false }
+  ];
+
+  var total = 11;
+  var checked = false;
+  var results = [];
+  var jsPDFReady = false;
+
+  // ========== BUILD EXERCISE ROWS ==========
+  var container = document.getElementById("exercisesContainer");
+  var html = "";
+  for (var i = 0; i < exercises.length; i++) {
+    var ex = exercises[i];
+    var isEx = ex.example;
+    var rowCls = isEx ? "exercise-row example-bg" : "exercise-row";
+    var inCls = isEx ? "cell-input example" : "cell-input";
+    var dis = isEx ? "disabled" : "";
+    html += '<div class="' + rowCls + '" id="row-' + i + '">' +
+      '<span class="row-num">' + (i + 1) + '</span>' +
+      '<span class="expr">' + ex.expr + '</span>' +
+      '<span class="arrow">\u21D2</span>' +
+      '<input class="' + inCls + '" id="a-' + i + '" value="' + (isEx ? ex.a : "") + '" ' + dis + ' inputmode="numeric" oninput="window._onInput(' + i + ')">' +
+      '<span class="op">\u00D7</span>' +
+      '<input class="' + inCls + '" id="b-' + i + '" value="' + (isEx ? ex.b : "") + '" ' + dis + ' inputmode="numeric" oninput="window._onInput(' + i + ')">' +
+      '<span class="op">=</span>' +
+      '<input class="' + inCls + ' wide" id="r-' + i + '" value="' + (isEx ? ex.result : "") + '" ' + dis + ' inputmode="numeric" oninput="window._onInput(' + i + ')">' +
+      '<span class="status" id="s-' + i + '">' + (isEx ? "\u2705" : "") + '</span>' +
+      '</div>';
+  }
+  container.innerHTML = html;
+
+  // ========== HELPERS ==========
+  function getVal(id) { var el = document.getElementById(id); return el ? el.value.trim() : ""; }
+
+  function filledCount() {
+    var c = 0;
+    for (var i = 1; i < exercises.length; i++) {
+      if (getVal("a-"+i) && getVal("b-"+i) && getVal("r-"+i)) c++;
+    }
+    return c;
+  }
+
+  function updateProgress() {
+    var f = filledCount();
+    var ce = document.getElementById("progressCount");
+    if (ce) ce.textContent = f + "/" + total;
+    var bar = document.getElementById("progressFill");
+    if (bar) bar.style.width = ((f / total) * 100) + "%";
+    var bc = document.getElementById("btnCheck"); if (bc) bc.disabled = f === 0;
+    var bp = document.getElementById("btnPdf"); if (bp) bp.disabled = f === 0;
+    var bs = document.getElementById("btnShare"); if (bs) bs.disabled = f === 0;
+  }
+
+  function clearStyles() {
+    for (var i = 1; i < exercises.length; i++) {
+      var row = document.getElementById("row-" + i);
+      if (row) row.className = "exercise-row";
+      var ids = ["a-"+i, "b-"+i, "r-"+i];
+      for (var j = 0; j < ids.length; j++) {
+        var el = document.getElementById(ids[j]);
+        if (el) { el.classList.remove("correct","wrong"); }
+      }
+      var s = document.getElementById("s-"+i);
+      if (s) s.textContent = "";
+    }
+    document.getElementById("scoreArea").innerHTML = "";
+  }
+
+  function roundTo10(n) { return Math.round(n / 10) * 10; }
+
+  function expected(expr) {
+    var p = expr.replace(/\u00D7/g,"x").split("x");
+    var a = parseInt(p[0]), b = parseInt(p[1]);
+    return { a: roundTo10(a), b: roundTo10(b), result: roundTo10(a) * roundTo10(b) };
+  }
+
+  // ========== GLOBAL HANDLERS ==========
+  window._onInput = function(i) {
+    ["a-","b-","r-"].forEach(function(pf) {
+      var el = document.getElementById(pf + i);
+      if (el) el.value = el.value.replace(/[^0-9]/g,"");
+    });
+    checked = false; results = [];
+    clearStyles();
+    updateProgress();
+  };
+
+  window.checkAnswers = function() {
+    results = [];
+    var cc = 0;
+    for (var i = 0; i < exercises.length; i++) {
+      if (exercises[i].example) { results.push({a:true,b:true,result:true}); continue; }
+      var exp = expected(exercises[i].expr);
+      var ua = parseInt(getVal("a-"+i)) || 0;
+      var ub = parseInt(getVal("b-"+i)) || 0;
+      var ur = parseInt(getVal("r-"+i)) || 0;
+      var r = { a: ua===exp.a, b: ub===exp.b, result: ur===exp.result };
+      results.push(r);
+      var ok = r.a && r.b && r.result;
+      if (ok) cc++;
+      var row = document.getElementById("row-"+i);
+      if (row) row.className = "exercise-row " + (ok ? "correct-bg" : "wrong-bg");
+      var ae = document.getElementById("a-"+i); if(ae){ae.classList.toggle("correct",r.a);ae.classList.toggle("wrong",!r.a);}
+      var be = document.getElementById("b-"+i); if(be){be.classList.toggle("correct",r.b);be.classList.toggle("wrong",!r.b);}
+      var re = document.getElementById("r-"+i); if(re){re.classList.toggle("correct",r.result);re.classList.toggle("wrong",!r.result);}
+      var se = document.getElementById("s-"+i); if(se) se.textContent = ok ? "\u2705" : "\u274C";
+    }
+    checked = true;
+    var perfect = cc === total;
+    document.getElementById("scoreArea").innerHTML =
+      '<div class="score-card '+(perfect?"perfect":"partial")+'">'+
+      '<div class="emoji">'+(perfect?"\uD83C\uDF89":"\uD83D\uDCAA")+'</div>'+
+      '<div class="text">'+(perfect?"!מעולה! כל התשובות נכונות":cc+"/"+total+" תשובות נכונות")+'</div>'+
+      (perfect?'':'<div class="hint">נסו לתקן את התשובות המסומנות באדום</div>')+
+      '</div>';
+    updateProgress();
+  };
+
+  // ========== PDF ==========
+  function loadLib(cb) {
+    if (jsPDFReady && window.jspdf) { cb(); return; }
+    var s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js";
+    s.onload = function() { jsPDFReady = true; cb(); };
+    s.onerror = function() {
+      document.getElementById("loadingOverlay").classList.remove("show");
+      alert("נדרש חיבור אינטרנט ליצירת PDF. ודאו שיש חיבור ונסו שוב.");
+    };
+    document.head.appendChild(s);
+  }
+
+  function makePDF() {
+    var jsPDF = window.jspdf.jsPDF;
+    var doc = new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+    var pw = 210;
+    var name = getVal("studentName");
+
+    doc.setFont("helvetica","bold"); doc.setFontSize(11);
+    doc.text("Karnafim - Math Practice", pw/2, 18, {align:"center"});
+    if (name) { doc.setFontSize(10); doc.setFont("helvetica","normal"); doc.text("Student: "+name, pw/2, 26, {align:"center"}); }
+    doc.setLineWidth(0.3); doc.setDrawColor(180); doc.line(30,30,pw-30,30);
+    doc.setFont("helvetica","bold"); doc.setFontSize(15);
+    doc.text("Estimation: Two-Digit x Two-Digit Multiplication", pw/2, 40, {align:"center"});
+
+    var startY=60, rowH=14, boxW=18, boxH=9;
+    doc.setDrawColor(50,100,170); doc.setLineWidth(0.6);
+    doc.roundedRect(22,startY-6,pw-44,exercises.length*rowH+10,3,3);
+
+    for (var i=0; i<exercises.length; i++) {
+      var ex = exercises[i];
+      var y = startY + i*rowH + 4;
+      var a = getVal("a-"+i), b = getVal("b-"+i), res = getVal("r-"+i);
+      doc.setFont("helvetica",ex.example?"bold":"normal"); doc.setFontSize(11);
+      var x = 30;
+      doc.text(ex.expr.replace(/\u00D7/g,"x"), x, y); x+=28;
+      doc.text("=>", x, y); x+=12;
+      doc.setFillColor(184,230,240);
+      doc.roundedRect(x,y-6.5,boxW,boxH,2,2,"F");
+      if(a){doc.setFont("helvetica","bold");doc.setFontSize(10);doc.text(a,x+boxW/2,y-0.5,{align:"center"});}
+      x+=boxW+3;
+      doc.setFont("helvetica","normal");doc.setFontSize(11);doc.text("x",x+2,y);x+=9;
+      doc.setFillColor(184,230,240);doc.roundedRect(x,y-6.5,boxW,boxH,2,2,"F");
+      if(b){doc.setFont("helvetica","bold");doc.setFontSize(10);doc.text(b,x+boxW/2,y-0.5,{align:"center"});}
+      x+=boxW+3;
+      doc.setFont("helvetica","normal");doc.setFontSize(11);doc.text("=",x+2,y);x+=9;
+      var rw=24;doc.setFillColor(184,230,240);doc.roundedRect(x,y-6.5,rw,boxH,2,2,"F");
+      if(res){doc.setFont("helvetica","bold");doc.setFontSize(10);doc.text(res,x+rw/2,y-0.5,{align:"center"});}
+    }
+
+    if (checked && results.length) {
+      var cc=0;
+      for(var i=1;i<results.length;i++){if(results[i].a&&results[i].b&&results[i].result)cc++;}
+      doc.setFont("helvetica","bold");doc.setFontSize(12);
+      doc.text("Score: "+cc+"/"+total, pw/2, startY+exercises.length*rowH+18, {align:"center"});
+    }
+    doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(140);
+    doc.text("karnafim.co.il",pw/2,285,{align:"center"});
+    return doc;
+  }
+
+  window.exportPDF = function() {
+    document.getElementById("loadingOverlay").classList.add("show");
+    loadLib(function(){
+      try {
+        var doc = makePDF();
+        var name = getVal("studentName") || "student";
+        doc.save("homework_"+name+".pdf");
+      } catch(e) { alert("שגיאה ביצירת PDF"); }
+      document.getElementById("loadingOverlay").classList.remove("show");
+    });
+  };
+
+  window.shareToWhatsApp = function() {
+    document.getElementById("loadingOverlay").classList.add("show");
+    loadLib(function(){
+      try {
+        var doc = makePDF();
+        var name = getVal("studentName") || "student";
+        var blob = doc.output("blob");
+        var file = new File([blob], "homework_"+name+".pdf", {type:"application/pdf"});
+        if (navigator.canShare && navigator.canShare({files:[file]})) {
+          navigator.share({title:"homework",files:[file]}).catch(function(){});
+        } else {
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement("a"); a.href=url; a.download="homework_"+name+".pdf"; a.click();
+          URL.revokeObjectURL(url);
+          alert("ה-PDF הורד! פתחו את WhatsApp ושלחו למורה 📎");
+        }
+      } catch(e) { alert("שגיאה. נסו שוב."); }
+      document.getElementById("loadingOverlay").classList.remove("show");
+    });
+  };
+
+  updateProgress();
+})();
+</script>
+</body>
+</html>
