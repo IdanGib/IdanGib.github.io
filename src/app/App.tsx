@@ -27,9 +27,14 @@ const App = () => {
       <div className="grain" />
       <nav className="nav fade-in">
         <span className="logo">IG</span>
-        <a className="cta" href="mailto:idangibly.dev@gmail.com">
-          Let's talk
-        </a>
+        <div className="nav-links">
+          <a className="nav-link" href="/cv/">
+            CV
+          </a>
+          <a className="cta" href="mailto:idangibly.dev@gmail.com">
+            Let's talk
+          </a>
+        </div>
       </nav>
       <main className="hero">
         <h1 className="fade-in" style={{ animationDelay: "0.15s" }}>
