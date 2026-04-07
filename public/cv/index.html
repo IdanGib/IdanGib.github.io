@@ -1,10 +1,330 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta http-equiv="refresh" content="0; url=idan-gibly-cv.pdf" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CV — Idan Gibly</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0a0a0f;
+        --fg: #f0ece2;
+        --accent: #c084fc;
+        --muted: #6b7280;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      body {
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: "Space Grotesk", system-ui, sans-serif;
+        display: flex;
+        flex-direction: column;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      /* ---------- film-grain overlay ---------- */
+
+      .grain {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 10;
+        opacity: 0.04;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        background-repeat: repeat;
+        background-size: 180px;
+      }
+
+      /* ---------- nav ---------- */
+
+      .nav {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 32px 40px;
+      }
+
+      .logo {
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        opacity: 0.6;
+        transition: opacity 0.3s;
+      }
+
+      .logo:hover {
+        opacity: 1;
+      }
+
+      .nav-link {
+        font-size: 14px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        opacity: 0.6;
+        transition: opacity 0.3s;
+      }
+
+      .nav-link:hover {
+        opacity: 1;
+      }
+
+      /* ---------- hero ---------- */
+
+      .hero {
+        position: relative;
+        z-index: 2;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 0 24px 80px;
+        gap: 36px;
+      }
+
+      h1 {
+        font-size: clamp(3rem, 10vw, 7rem);
+        font-weight: 700;
+        line-height: 0.95;
+        letter-spacing: -0.03em;
+        background: linear-gradient(135deg, var(--accent), #f472b6, #fb923c);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .tagline {
+        color: var(--muted);
+        font-size: clamp(0.9rem, 1.4vw, 1.1rem);
+        letter-spacing: 0.06em;
+        line-height: 1.7;
+      }
+
+      /* ---------- download button ---------- */
+
+      .download-btn {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        font-family: "Space Grotesk", system-ui, sans-serif;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 18px 52px;
+        border: none;
+        border-radius: 999px;
+        cursor: pointer;
+        color: var(--fg);
+        background: transparent;
+        transition: transform 0.3s, box-shadow 0.3s;
+        z-index: 1;
+      }
+
+      /* gradient border via pseudo-element */
+      .download-btn::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 999px;
+        padding: 2px;
+        background: linear-gradient(135deg, var(--accent), #f472b6, #fb923c);
+        -webkit-mask: linear-gradient(#fff 0 0) content-box,
+          linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask: linear-gradient(#fff 0 0) content-box,
+          linear-gradient(#fff 0 0);
+        mask-composite: exclude;
+        z-index: -1;
+        transition: opacity 0.3s;
+      }
+
+      /* gradient fill on hover */
+      .download-btn::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 999px;
+        background: linear-gradient(135deg, var(--accent), #f472b6, #fb923c);
+        opacity: 0;
+        z-index: -1;
+        transition: opacity 0.3s;
+      }
+
+      .download-btn:hover::after {
+        opacity: 1;
+      }
+
+      .download-btn:hover::before {
+        opacity: 0;
+      }
+
+      .download-btn:hover {
+        color: var(--bg);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(192, 132, 252, 0.3);
+      }
+
+      .download-icon {
+        width: 22px;
+        height: 22px;
+        transition: transform 0.3s;
+      }
+
+      .download-btn:hover .download-icon {
+        transform: translateY(2px);
+      }
+
+      /* ---------- floating orbs ---------- */
+
+      .orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(100px);
+        z-index: 1;
+        pointer-events: none;
+        animation: drift 14s ease-in-out infinite alternate;
+      }
+
+      .orb-1 {
+        width: 480px;
+        height: 480px;
+        background: radial-gradient(
+          circle,
+          rgba(192, 132, 252, 0.25),
+          transparent 70%
+        );
+        top: -10%;
+        right: -8%;
+      }
+
+      .orb-2 {
+        width: 360px;
+        height: 360px;
+        background: radial-gradient(
+          circle,
+          rgba(251, 146, 60, 0.18),
+          transparent 70%
+        );
+        bottom: -5%;
+        left: -6%;
+        animation-delay: -7s;
+      }
+
+      @keyframes drift {
+        0% {
+          transform: translate(0, 0) scale(1);
+        }
+        100% {
+          transform: translate(30px, -20px) scale(1.08);
+        }
+      }
+
+      /* ---------- fade-in animation ---------- */
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(28px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .fade-in {
+        opacity: 0;
+        animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+
+      .fade-in-delay-1 {
+        animation-delay: 0.15s;
+      }
+
+      .fade-in-delay-2 {
+        animation-delay: 0.3s;
+      }
+
+      /* ---------- responsive ---------- */
+
+      @media (max-width: 600px) {
+        .nav {
+          padding: 24px 20px;
+        }
+
+        .hero {
+          padding-bottom: 48px;
+        }
+
+        .download-btn {
+          font-size: 15px;
+          padding: 16px 36px;
+        }
+
+        .orb-1 {
+          width: 280px;
+          height: 280px;
+        }
+
+        .orb-2 {
+          width: 200px;
+          height: 200px;
+        }
+      }
+    </style>
   </head>
   <body>
-    <p><a href="idan-gibly-cv.pdf">Download CV</a></p>
+    <div class="grain"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <nav class="nav fade-in">
+      <a href="/" class="logo">IG</a>
+      <a href="/" class="nav-link">← Back</a>
+    </nav>
+
+    <main class="hero">
+      <h1 class="fade-in">Curriculum Vitae</h1>
+      <p class="tagline fade-in fade-in-delay-1">
+        Download my CV to learn more about my experience and skills.
+      </p>
+      <a href="idan-gibly-cv.pdf" class="download-btn fade-in fade-in-delay-2" download>
+        <svg
+          class="download-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        Download CV
+      </a>
+    </main>
   </body>
 </html>
