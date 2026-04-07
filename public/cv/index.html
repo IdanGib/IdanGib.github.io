@@ -30,7 +30,6 @@
         font-family: "Space Grotesk", system-ui, sans-serif;
         display: flex;
         flex-direction: column;
-        overflow: hidden;
       }
 
       a {
@@ -100,17 +99,6 @@
         text-align: center;
         padding: 0 24px 80px;
         gap: 36px;
-      }
-
-      h1 {
-        font-size: clamp(3rem, 10vw, 7rem);
-        font-weight: 700;
-        line-height: 0.95;
-        letter-spacing: -0.03em;
-        background: linear-gradient(135deg, var(--accent), #f472b6, #fb923c);
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
       }
 
       .tagline {
@@ -208,27 +196,27 @@
       }
 
       .orb-1 {
-        width: 480px;
-        height: 480px;
+        width: min(480px, 50vw);
+        height: min(480px, 50vh);
         background: radial-gradient(
           circle,
           rgba(192, 132, 252, 0.25),
           transparent 70%
         );
-        top: -10%;
-        right: -8%;
+        top: 0;
+        right: 0;
       }
 
       .orb-2 {
-        width: 360px;
-        height: 360px;
+        width: min(360px, 40vw);
+        height: min(360px, 40vh);
         background: radial-gradient(
           circle,
           rgba(251, 146, 60, 0.18),
           transparent 70%
         );
-        bottom: -5%;
-        left: -6%;
+        bottom: 0;
+        left: 0;
         animation-delay: -7s;
       }
 
@@ -283,15 +271,6 @@
           padding: 16px 36px;
         }
 
-        .orb-1 {
-          width: 280px;
-          height: 280px;
-        }
-
-        .orb-2 {
-          width: 200px;
-          height: 200px;
-        }
       }
     </style>
   </head>
@@ -306,11 +285,10 @@
     </nav>
 
     <main class="hero">
-      <h1 class="fade-in">Curriculum Vitae</h1>
-      <p class="tagline fade-in fade-in-delay-1">
+      <p class="tagline fade-in">
         Download my CV to learn more about my experience and skills.
       </p>
-      <a href="idan-gibly-cv.pdf" class="download-btn fade-in fade-in-delay-2" download>
+      <a href="idan-gibly-cv.pdf" class="download-btn fade-in fade-in-delay-1" download>
         <svg
           class="download-icon"
           viewBox="0 0 24 24"
