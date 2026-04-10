@@ -7,7 +7,7 @@ const App = () => (
     <nav className="nav">
       <span className="logo">IG</span>
       <div className="nav-links">
-        <a className="nav-link" href="/cv/idan-gibly-cv.pdf" target="_blank" rel="noopener noreferrer">
+        <a className="cv-btn" href="/cv/idan-gibly-cv.pdf" target="_blank" rel="noopener noreferrer">
           CV
         </a>
         <a className="cta" href="mailto:idangibly.dev@gmail.com">
