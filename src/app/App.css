@@ -85,6 +85,31 @@ a {
   opacity: 1;
 }
 
+.cv-btn {
+  position: relative;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 10px 24px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent), #f472b6, #fb923c) border-box;
+  border: 1px solid transparent;
+  mask:
+    linear-gradient(#fff 0 0) padding-box,
+    linear-gradient(#fff 0 0) border-box;
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  transition: all 0.3s;
+}
+
+.cv-btn:hover {
+  mask: none;
+  -webkit-mask: none;
+  background: linear-gradient(135deg, var(--accent), #f472b6, #fb923c);
+  color: var(--bg);
+}
+
 .cta {
   font-size: 14px;
   letter-spacing: 0.08em;
