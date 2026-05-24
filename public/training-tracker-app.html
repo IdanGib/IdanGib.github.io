@@ -1,0 +1,363 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e0f0d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Training">
+<title>Training Cycle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#0e0f0d;
+    --panel:#161814;
+    --panel-2:#1d201a;
+    --line:#2a2e25;
+    --ink:#f2f0e6;
+    --muted:#8a8d80;
+    --faint:#5a5d52;
+    --lime:#c6f73f;
+    --lime-dim:#7e9a2a;
+    --rust:#e0703a;
+    --blue:#4a90d9;
+    --shadow:0 18px 40px -20px rgba(0,0,0,.8);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);font-family:"DM Sans",sans-serif}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(900px 500px at 85% -10%, rgba(198,247,63,.07), transparent 60%),
+      radial-gradient(700px 500px at -10% 110%, rgba(74,144,217,.06), transparent 55%),
+      var(--bg);
+    padding:clamp(16px,4vw,40px);
+  }
+  .wrap{max-width:960px;margin:0 auto}
+
+  /* ---------- header ---------- */
+  header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:26px}
+  .title{line-height:.84}
+  .title small{display:block;font:700 12px/1 "JetBrains Mono",monospace;letter-spacing:.32em;color:var(--lime);text-transform:uppercase;margin-bottom:10px}
+  .title h1{font-family:"Anton",sans-serif;font-size:clamp(40px,9vw,76px);letter-spacing:.01em;text-transform:uppercase}
+  .title h1 span{color:var(--faint)}
+  .rule{font:500 13px/1.5 "DM Sans";color:var(--muted);max-width:240px;text-align:right;border-left:2px solid var(--line);padding-left:14px}
+  .rule b{color:var(--ink);font-weight:700}
+
+  /* ---------- status strip ---------- */
+  .status{
+    display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:1px;
+    background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+    box-shadow:var(--shadow);margin-bottom:26px;
+  }
+  .cell{background:var(--panel);padding:18px 18px 16px}
+  .cell .k{font:700 10px/1 "JetBrains Mono",monospace;letter-spacing:.22em;text-transform:uppercase;color:var(--faint);margin-bottom:11px}
+  .cell .v{font-family:"Anton",sans-serif;font-size:30px;line-height:.9;letter-spacing:.01em}
+  .cell .v small{font-family:"DM Sans";font-size:13px;font-weight:500;color:var(--muted);letter-spacing:0}
+  .cell.lead{background:var(--panel-2)}
+  .phasepill{display:inline-flex;align-items:center;gap:8px;font-family:"DM Sans";font-size:19px;font-weight:700;line-height:1.1}
+  .dot{width:10px;height:10px;border-radius:50%;flex:none}
+  .dot.train{background:var(--lime)}
+  .dot.rest{background:var(--blue)}
+  .dot.deload{background:var(--rust)}
+  .today-pres{font:500 12px/1.4 "DM Sans";color:var(--muted);margin-top:6px}
+
+  .bar{height:7px;background:var(--panel-2);border-radius:99px;overflow:hidden;margin-top:12px;border:1px solid var(--line)}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--lime-dim),var(--lime));border-radius:99px;transition:width .4s ease}
+
+  /* ---------- cycle nav ---------- */
+  .navrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .cyclelabel{font-family:"Anton",sans-serif;font-size:22px;letter-spacing:.02em;text-transform:uppercase}
+  .cyclelabel em{color:var(--lime);font-style:normal}
+  .navbtns{display:flex;gap:8px}
+  button.nav{
+    font:700 12px/1 "JetBrains Mono",monospace;letter-spacing:.08em;text-transform:uppercase;
+    background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:9px;
+    padding:10px 13px;cursor:pointer;transition:.15s;
+  }
+  button.nav:hover{border-color:var(--lime);color:var(--lime)}
+  button.nav.solid{background:var(--lime);color:#13160d;border-color:var(--lime)}
+  button.nav.solid:hover{filter:brightness(1.08)}
+
+  /* ---------- week grid ---------- */
+  .weeks{display:flex;flex-direction:column;gap:10px}
+  .week{
+    display:grid;grid-template-columns:64px repeat(7,1fr);gap:8px;align-items:stretch;
+  }
+  .wlabel{
+    display:flex;flex-direction:column;justify-content:center;gap:3px;
+    padding-right:4px;border-right:1px solid var(--line);
+  }
+  .wlabel .n{font-family:"Anton",sans-serif;font-size:26px;line-height:.8;color:var(--faint)}
+  .wlabel .t{font:700 9px/1.1 "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--lime-dim)}
+  .week.deload .wlabel .t{color:var(--rust)}
+
+  .day{
+    position:relative;background:var(--panel);border:1px solid var(--line);border-radius:11px;
+    padding:9px 8px 10px;min-height:74px;display:flex;flex-direction:column;justify-content:space-between;
+    transition:.15s;overflow:hidden;
+  }
+  .day .dow{font:700 9px/1 "JetBrains Mono",monospace;letter-spacing:.1em;color:var(--faint);text-transform:uppercase}
+  .day .date{font-family:"JetBrains Mono",monospace;font-size:15px;font-weight:700;color:var(--muted)}
+  .day .mark{align-self:flex-end;font-family:"JetBrains Mono",monospace;font-size:10px;font-weight:800;letter-spacing:.05em}
+
+  /* training day states */
+  .day.train{cursor:pointer}
+  .day.train:hover{border-color:var(--lime);transform:translateY(-2px)}
+  .day.train .date{color:var(--ink)}
+  .day.train .check{
+    position:absolute;right:8px;bottom:7px;width:22px;height:22px;border-radius:6px;
+    border:1.5px solid var(--lime-dim);display:flex;align-items:center;justify-content:center;
+    color:transparent;font-size:13px;transition:.15s;
+  }
+  .day.train.done{background:linear-gradient(160deg,rgba(198,247,63,.16),rgba(198,247,63,.04));border-color:var(--lime)}
+  .day.train.done .date{color:var(--lime)}
+  .day.train.done .check{background:var(--lime);border-color:var(--lime);color:#13160d}
+
+  .day.rest{background:repeating-linear-gradient(135deg,var(--panel) 0 7px,transparent 7px 14px),var(--panel-2);opacity:.72}
+  .day.rest .dow,.day.rest .date{color:var(--faint)}
+  .day.rest .tag{font:700 8px/1 "JetBrains Mono",monospace;letter-spacing:.1em;color:var(--blue);text-transform:uppercase}
+  .day.deloadcell{background:repeating-linear-gradient(135deg,rgba(224,112,58,.07) 0 8px,transparent 8px 16px),var(--panel-2);opacity:.78}
+  .day.deloadcell .tag{color:var(--rust);font:700 8px/1 "JetBrains Mono",monospace;letter-spacing:.1em;text-transform:uppercase}
+
+  .day.today{outline:2px solid var(--ink);outline-offset:1px}
+  .day.today::before{content:"TODAY";position:absolute;top:-1px;left:-1px;background:var(--ink);color:var(--bg);font:800 8px/1 "JetBrains Mono",monospace;letter-spacing:.1em;padding:3px 5px;border-radius:0 0 7px 0}
+  .day.today .dow{color:var(--ink)}
+
+  /* ---------- settings ---------- */
+  .settings{margin-top:24px;display:flex;flex-wrap:wrap;align-items:center;gap:12px;font:500 13px/1 "DM Sans";color:var(--muted)}
+  .settings label{font:700 10px/1 "JetBrains Mono",monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  .settings input[type=date]{
+    background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--ink);
+    font-family:"JetBrains Mono",monospace;font-size:13px;padding:8px 10px;
+  }
+  .settings input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.7)}
+  .reset{margin-left:auto;color:var(--faint);background:none;border:none;font:700 10px/1 "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+  .reset:hover{color:var(--rust)}
+
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:18px;font:500 11px/1 "JetBrains Mono",monospace;color:var(--faint);letter-spacing:.04em}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+
+  @media(max-width:640px){
+    .status{grid-template-columns:1fr 1fr}
+    .rule{text-align:left;max-width:none}
+    .week{grid-template-columns:46px repeat(7,1fr);gap:5px}
+    .day{min-height:60px;padding:6px 5px 7px}
+    .day .check{display:none}
+    .day.train.done::after{content:"✓";position:absolute;right:6px;bottom:5px;color:var(--lime);font-weight:800;font-family:"JetBrains Mono"}
+    .wlabel{padding-right:2px}
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="title">
+      <small>Macrocycle Tracker</small>
+      <h1>Training<br><span>Cycle</span></h1>
+    </div>
+    <div class="rule">
+      <b>5 train · 2 rest</b> each week.<br>After <b>5 weeks</b>, a full <b>deload week</b>.
+    </div>
+  </header>
+
+  <div class="status" id="status"></div>
+
+  <div class="navrow">
+    <div class="cyclelabel" id="cycleLabel"></div>
+    <div class="navbtns">
+      <button class="nav" id="prev">‹ Prev</button>
+      <button class="nav solid" id="now">Today</button>
+      <button class="nav" id="next">Next ›</button>
+    </div>
+  </div>
+
+  <div class="weeks" id="weeks"></div>
+
+  <div class="legend">
+    <span><i class="dot train" style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--lime)"></i> Training (tap to log)</span>
+    <span><i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--blue)"></i> Weekly rest</span>
+    <span><i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--rust)"></i> Deload week</span>
+  </div>
+
+  <div class="settings">
+    <label for="start">Cycle start</label>
+    <input type="date" id="start">
+    <button class="reset" id="reset">Reset all logs</button>
+  </div>
+</div>
+
+<script>
+/* ===== cycle constants ===== */
+const TRAIN_DAYS = 5;      // training days per normal week
+const WEEK_LEN   = 7;      // days per week
+const TRAIN_WEEKS= 5;      // training weeks before deload
+const CYCLE_WEEKS= TRAIN_WEEKS + 1;   // 6
+const CYCLE_LEN  = CYCLE_WEEKS * WEEK_LEN; // 42 days
+const SESSIONS_PER_CYCLE = TRAIN_WEEKS * TRAIN_DAYS; // 25
+
+/* ===== date helpers (local, no TZ drift) ===== */
+const fmt = d => {const z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;};
+const parse = s => {const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);};
+const addDays = (d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
+const dayDiff = (a,b)=>Math.round((parse(b)-parse(a))/86400000);
+const nextMonday = ()=>{const t=new Date();t.setHours(0,0,0,0);const off=(8-t.getDay())%7;return fmt(addDays(t, off===0?0:off));};
+
+/* classify a date given the cycle start */
+function classify(dateStr, startStr){
+  const diff = dayDiff(startStr, dateStr);
+  if(diff < 0) return {phase:'pre'};
+  const cycleNum   = Math.floor(diff/CYCLE_LEN)+1;
+  const inCycle    = diff % CYCLE_LEN;
+  const weekInCycle= Math.floor(inCycle/WEEK_LEN);  // 0..5
+  const dayInWeek  = inCycle % WEEK_LEN;            // 0..6
+  if(weekInCycle === TRAIN_WEEKS) return {phase:'deload', cycleNum, weekInCycle, dayInWeek};
+  if(dayInWeek < TRAIN_DAYS)      return {phase:'train',  cycleNum, weekInCycle, dayInWeek};
+  return {phase:'rest', cycleNum, weekInCycle, dayInWeek};
+}
+
+/* ===== persistent storage — browser localStorage (graceful fallback) ===== */
+const mem = {};
+async function sget(k){ try{ const v=localStorage.getItem(k); if(v!=null) return JSON.parse(v); }catch(e){} return (k in mem)?mem[k]:null; }
+async function sset(k,v){ mem[k]=v; try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+
+const K_START='tracker:start', K_DONE='tracker:completions';
+
+let START = nextMonday();
+let DONE = {};            // { 'YYYY-MM-DD': true }
+let viewCycle = 1;        // which macrocycle is shown
+
+/* ===== render ===== */
+const TODAY = fmt(new Date());
+const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']; // indexed by Date.getDay()
+
+function currentCycleNum(){
+  const d = dayDiff(START, TODAY);
+  return d < 0 ? 1 : Math.floor(d/CYCLE_LEN)+1;
+}
+
+function cycleStats(cycleNum){
+  const startOfCycle = addDays(parse(START), (cycleNum-1)*CYCLE_LEN);
+  let done=0;
+  for(let i=0;i<CYCLE_LEN;i++){
+    const ds=fmt(addDays(startOfCycle,i));
+    if(classify(ds,START).phase==='train' && DONE[ds]) done++;
+  }
+  return {done, total:SESSIONS_PER_CYCLE};
+}
+
+function streak(){
+  // walk back from today over training days; rest/deload don't break it
+  let s=0, cur=parse(TODAY);
+  for(let i=0;i<400;i++){
+    const ds=fmt(cur);
+    if(dayDiff(START,ds)<0) break;
+    const c=classify(ds,START);
+    if(c.phase==='train'){
+      if(DONE[ds]) s++; else break;
+    }
+    cur=addDays(cur,-1);
+  }
+  return s;
+}
+
+function renderStatus(){
+  const c = classify(TODAY, START);
+  let phaseHtml, pres;
+  if(c.phase==='pre'){phaseHtml=`<span class="phasepill"><span class="dot rest"></span>Not started</span>`;pres='Cycle begins '+START;}
+  else if(c.phase==='train'){phaseHtml=`<span class="phasepill"><span class="dot train"></span>Training day</span>`;pres=`Week ${c.weekInCycle+1} · session ${c.dayInWeek+1} of 5`;}
+  else if(c.phase==='rest'){phaseHtml=`<span class="phasepill"><span class="dot rest"></span>Rest day</span>`;pres=`Week ${c.weekInCycle+1} · recovery`;}
+  else {phaseHtml=`<span class="phasepill"><span class="dot deload"></span>Deload week</span>`;pres='Full week off — let it adapt';}
+
+  const cur = currentCycleNum();
+  const st = cycleStats(cur);
+  const pct = Math.round(st.done/st.total*100);
+
+  document.getElementById('status').innerHTML = `
+    <div class="cell lead">
+      <div class="k">Today — ${TODAY}</div>
+      ${phaseHtml}
+      <div class="today-pres">${pres}</div>
+    </div>
+    <div class="cell">
+      <div class="k">Cycle</div>
+      <div class="v">${cur}<small> /∞</small></div>
+    </div>
+    <div class="cell">
+      <div class="k">Sessions · cyc ${cur}</div>
+      <div class="v">${st.done}<small> /${st.total}</small></div>
+      <div class="bar"><i style="width:${pct}%"></i></div>
+    </div>
+    <div class="cell">
+      <div class="k">Current streak</div>
+      <div class="v">${streak()}<small> days</small></div>
+    </div>`;
+}
+
+function renderWeeks(){
+  document.getElementById('cycleLabel').innerHTML =
+    `Macrocycle <em>#${viewCycle}</em>`;
+  const startOfCycle = addDays(parse(START), (viewCycle-1)*CYCLE_LEN);
+  let html='';
+  for(let w=0; w<CYCLE_WEEKS; w++){
+    const isDeload = (w===TRAIN_WEEKS);
+    html += `<div class="week ${isDeload?'deload':''}">
+      <div class="wlabel"><div class="n">${w+1}</div><div class="t">${isDeload?'Deload':'Train'}</div></div>`;
+    for(let d=0; d<WEEK_LEN; d++){
+      const date = addDays(startOfCycle, w*WEEK_LEN+d);
+      const ds = fmt(date);
+      const c = classify(ds, START);
+      const isToday = ds===TODAY;
+      const dnum = date.getDate();
+      if(c.phase==='train'){
+        const done = !!DONE[ds];
+        html += `<div class="day train ${done?'done':''} ${isToday?'today':''}" data-d="${ds}">
+          <div class="dow">${DOW[date.getDay()]}</div>
+          <div class="date">${dnum}</div>
+          <div class="check">✓</div>
+        </div>`;
+      } else if(c.phase==='deload'){
+        html += `<div class="day deloadcell ${isToday?'today':''}">
+          <div class="dow">${DOW[date.getDay()]}</div>
+          <div class="date">${dnum}</div>
+          <div class="tag">Off</div>
+        </div>`;
+      } else {
+        html += `<div class="day rest ${isToday?'today':''}">
+          <div class="dow">${DOW[date.getDay()]}</div>
+          <div class="date">${dnum}</div>
+          <div class="tag">Rest</div>
+        </div>`;
+      }
+    }
+    html+=`</div>`;
+  }
+  const el=document.getElementById('weeks');
+  el.innerHTML=html;
+  el.querySelectorAll('.day.train').forEach(c=>c.addEventListener('click',()=>toggle(c.dataset.d)));
+}
+
+function renderAll(){ renderStatus(); renderWeeks(); document.getElementById('start').value=START; }
+
+async function toggle(ds){
+  if(DONE[ds]) delete DONE[ds]; else DONE[ds]=true;
+  await sset(K_DONE, DONE);
+  renderAll();
+}
+
+/* ===== events ===== */
+document.getElementById('prev').onclick=()=>{if(viewCycle>1){viewCycle--;renderWeeks();renderStatus();document.getElementById('cycleLabel').classList.toggle('x');}};
+document.getElementById('next').onclick=()=>{viewCycle++;renderWeeks();};
+document.getElementById('now').onclick=()=>{viewCycle=currentCycleNum();renderWeeks();};
+document.getElementById('start').onchange=async e=>{ START=e.target.value||nextMonday(); await sset(K_START,START); viewCycle=currentCycleNum(); renderAll(); };
+document.getElementById('reset').onclick=async()=>{ if(confirm('Clear all logged sessions?')){ DONE={}; await sset(K_DONE,DONE); renderAll(); } };
+
+/* ===== boot ===== */
+(async function(){
+  const s=await sget(K_START); if(s) START=s; else await sset(K_START,START);
+  const d=await sget(K_DONE); if(d && typeof d==='object') DONE=d;
+  viewCycle=currentCycleNum();
+  renderAll();
+})();
+</script>
