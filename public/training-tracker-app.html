@@ -140,14 +140,87 @@
   .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:18px;font:500 11px/1 "JetBrains Mono",monospace;color:var(--faint);letter-spacing:.04em}
   .legend span{display:inline-flex;align-items:center;gap:6px}
 
+  /* ── 640 px and below ─────────────────────────────────── */
   @media(max-width:640px){
-    .status{grid-template-columns:1fr 1fr}
-    .rule{text-align:left;max-width:none}
-    .week{grid-template-columns:46px repeat(7,1fr);gap:5px}
-    .day{min-height:60px;padding:6px 5px 7px}
-    .day .check{display:none}
-    .day.train.done::after{content:"✓";position:absolute;right:6px;bottom:5px;color:var(--lime);font-weight:800;font-family:"JetBrains Mono"}
+    body{padding:14px 12px}
+    header{margin-bottom:16px;gap:10px}
+    .rule{display:none}
+
+    /* status: lead spans full width, 3 stats in one row */
+    .status{grid-template-columns:repeat(3,1fr);margin-bottom:16px}
+    .cell.lead{grid-column:1/-1}
+    .cell{padding:14px 14px 12px}
+    .cell .v{font-size:26px}
+    .cell .k{font-size:9px;letter-spacing:.16em;margin-bottom:8px}
+    .phasepill{font-size:16px}
+    .today-pres{font-size:11px}
+
+    /* nav row: compact buttons so label stays on one line */
+    .navrow{margin-bottom:10px;gap:8px}
+    .cyclelabel{font-size:18px}
+    /* segmented-control feel for the 3 nav buttons */
+    .navbtns{
+      background:var(--panel);border:1px solid var(--line);
+      border-radius:10px;padding:3px;gap:2px
+    }
+    button.nav{
+      border-radius:7px;border-color:transparent;background:transparent;
+      padding:9px 11px;font-size:11px;letter-spacing:.05em
+    }
+    button.nav:hover{border-color:transparent;color:var(--lime);background:var(--panel-2)}
+    button.nav.solid{background:var(--lime);border-color:var(--lime)}
+    button.nav.solid:hover{filter:brightness(1.08);background:var(--lime)}
+
+    /* week grid */
+    .week{grid-template-columns:38px repeat(7,1fr);gap:4px}
     .wlabel{padding-right:2px}
+    .wlabel .n{font-size:20px}
+    .wlabel .t{font-size:7.5px;letter-spacing:.08em}
+
+    .day{min-height:58px;padding:6px 5px 7px;border-radius:9px}
+    .day .dow{font-size:7.5px;letter-spacing:.05em}
+    .day .date{font-size:14px}
+    .day.today::before{font-size:5.5px;padding:2px 4px;letter-spacing:.05em;border-radius:0 0 5px 0}
+    .day .check{display:none}
+    .day.train.done::after{
+      content:"✓";position:absolute;right:5px;bottom:5px;
+      color:var(--lime);font-weight:800;font-family:"JetBrains Mono",monospace;font-size:12px
+    }
+
+    /* settings & legend */
+    .settings{flex-direction:column;align-items:flex-start;gap:8px;margin-top:16px}
+    .settings input[type=date]{font-size:14px;padding:9px 10px}
+    .reset{margin-left:0}
+    .legend{gap:10px;margin-top:12px;font-size:10px}
+  }
+
+  /* ── very small phones: 400 px and below ───────────────── */
+  @media(max-width:400px){
+    body{padding:8px 7px}
+    .title h1{font-size:36px}
+    .title small{font-size:10px;letter-spacing:.22em;margin-bottom:7px}
+
+    /* tighter 3-col status */
+    .cell{padding:11px 10px 10px}
+    .cell .v{font-size:22px}
+    .cell .k{font-size:8px;letter-spacing:.12em;margin-bottom:6px}
+    .phasepill{font-size:14px}
+
+    /* even tighter week grid */
+    .week{grid-template-columns:26px repeat(7,1fr);gap:3px}
+    .wlabel{border-right:none;padding-right:0;align-items:center;justify-content:center}
+    .wlabel .n{font-size:15px}
+    .wlabel .t{display:none}
+
+    .day{min-height:52px;padding:5px 3px 6px;border-radius:7px}
+    .day .dow{font-size:6.5px;letter-spacing:.02em}
+    .day .date{font-size:12px}
+    .day.today::before{font-size:4.5px;padding:2px 3px;letter-spacing:.03em}
+    .day.train.done::after{font-size:11px;right:3px;bottom:3px}
+
+    .cyclelabel{font-size:15px}
+    button.nav{padding:8px 9px;font-size:10px;border-radius:6px}
+    .navbtns{border-radius:9px;padding:2px}
   }
 </style>
 
