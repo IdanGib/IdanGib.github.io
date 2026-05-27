@@ -472,7 +472,9 @@ document.getElementById('reset').onclick=async()=>{if(confirm('Clear all logged 
 document.getElementById('lockToggle').onclick=async()=>{LOCKED=!LOCKED;await sset(K_LOCKED,LOCKED);updateLockUI();renderWeeks(getToday());};
 
 (async function(){
-  const s=await sget(K_START);if(s)START=s;else await sset(K_START,START);
+  const s=await sget(K_START);
+  if(s){START=s;if(dayDiff(START,getToday())<0){START=lastMonday();await sset(K_START,START);}}
+  else await sset(K_START,START);
   const d=await sget(K_DONE);
   if(d&&typeof d==='object'&&!Array.isArray(d))DONE=d;
   else if(!d){autoMarkRecent(3);await sset(K_DONE,DONE);}
