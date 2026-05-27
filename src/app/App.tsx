@@ -1,33 +1,45 @@
-import { useEffect, useRef } from "react";
 import "./App.css";
+
+const apps = [
+  {
+    name: "Training",
+    href: "/training-tracker-app.html",
+    gradient: "linear-gradient(145deg, #c6f73f, #7e9a2a)",
+    icon: (
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="18" width="6" height="4" rx="2" fill="#0e0f0d" />
+        <rect x="30" y="18" width="6" height="4" rx="2" fill="#0e0f0d" />
+        <rect x="9" y="14" width="22" height="12" rx="6" fill="#0e0f0d" />
+        <rect x="12" y="17" width="4" height="6" rx="1" fill="#c6f73f" />
+        <rect x="18" y="17" width="4" height="6" rx="1" fill="#c6f73f" />
+        <rect x="24" y="17" width="4" height="6" rx="1" fill="#c6f73f" />
+      </svg>
+    ),
+  },
+];
 
 const App = () => (
   <div className="page">
     <div className="grain" />
-    <nav className="nav">
-      <span className="logo">IG</span>
-      <div className="nav-links">
-        <a className="cv-btn" href="/cv/idan-gibly-cv.pdf" target="_blank" rel="noopener noreferrer">
-          CV
-        </a>
-        <a className="cta" href="mailto:idangibly.dev@gmail.com">
-          Let's talk
-        </a>
-      </div>
-    </nav>
-    <main className="hero">
-      <h1>
-        <span className="line">Design</span>
-        <span className="line accent">& craft.</span>
-      </h1>
-      <p className="tagline">
-        Idan Gibly — product designer & creative technologist
-        <br />
-        Tel Aviv · Remote
-      </p>
-    </main>
     <div className="orb orb-1" />
     <div className="orb orb-2" />
+
+    <header className="status-bar">
+      <span className="status-name">IG Apps</span>
+    </header>
+
+    <main className="home-screen">
+      <div className="app-grid">
+        {apps.map((app) => (
+          <a key={app.href} href={app.href} className="app-icon-wrap">
+            <div className="app-icon" style={{ background: app.gradient }}>
+              {app.icon}
+            </div>
+            <span className="app-label">{app.name}</span>
+          </a>
+        ))}
+      </div>
+    </main>
   </div>
 );
 
