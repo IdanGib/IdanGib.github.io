@@ -188,8 +188,8 @@ button.nav-btn.solid:active{filter:brightness(1.06)}
 .lock-toggle.off .lock-state{color:var(--faint)}
 
 /* ── Past / future training cells ── */
-.day-cell.train.missed{opacity:.28;border-color:var(--faint);color:var(--faint);cursor:default}
-.day-cell.train.future{opacity:.18;border-style:dashed;border-color:var(--faint);color:var(--faint);cursor:default}
+.day-cell.train.missed{opacity:.55;border-color:var(--faint);color:var(--faint);cursor:default}
+.day-cell.train.future{opacity:.45;border-style:dashed;border-color:var(--faint);color:var(--faint);cursor:default}
 
 /* ── Celebration: cell pop ── */
 @keyframes cell-pop{
@@ -305,7 +305,7 @@ async function sget(k){try{const v=localStorage.getItem(k);if(v!=null)return JSO
 async function sset(k,v){mem[k]=v;try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 const K_START='tracker:start',K_DONE='tracker:completions',K_LOCKED='tracker:locked';
 
-let START=lastMonday(),DONE={},viewCycle=1,LOCKED=true;
+let START=lastMonday(),DONE={},viewCycle=1,LOCKED=false;
 const getToday=()=>fmt(new Date());
 
 function currentCycleNum(){const d=dayDiff(START,getToday());return d<0?1:Math.floor(d/CYCLE_LEN)+1;}
@@ -472,7 +472,9 @@ document.getElementById('reset').onclick=async()=>{if(confirm('Clear all logged 
 document.getElementById('lockToggle').onclick=async()=>{LOCKED=!LOCKED;await sset(K_LOCKED,LOCKED);updateLockUI();renderWeeks(getToday());};
 
 (async function(){
-  const s=await sget(K_START);if(s)START=s;else await sset(K_START,START);
+  const s=await sget(K_START);
+  if(s){START=s;if(dayDiff(START,getToday())<0){START=lastMonday();await sset(K_START,START);}}
+  else await sset(K_START,START);
   const d=await sget(K_DONE);
   if(d&&typeof d==='object'&&!Array.isArray(d))DONE=d;
   else if(!d){autoMarkRecent(3);await sset(K_DONE,DONE);}
