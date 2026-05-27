@@ -248,7 +248,7 @@ const fmt=d=>{const z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${
 const parse=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);};
 const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
 const dayDiff=(a,b)=>Math.round((parse(b)-parse(a))/86400000);
-const nextMonday=()=>{const t=new Date();t.setHours(0,0,0,0);const off=(8-t.getDay())%7;return fmt(addDays(t,off));};
+const lastMonday=()=>{const t=new Date();t.setHours(0,0,0,0);const off=(t.getDay()+6)%7;return fmt(addDays(t,-off));};
 
 const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const DAYS_FULL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -272,7 +272,7 @@ async function sget(k){try{const v=localStorage.getItem(k);if(v!=null)return JSO
 async function sset(k,v){mem[k]=v;try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 const K_START='tracker:start',K_DONE='tracker:completions';
 
-let START=nextMonday(),DONE={},viewCycle=1;
+let START=lastMonday(),DONE={},viewCycle=1;
 const getToday=()=>fmt(new Date());
 
 function currentCycleNum(){const d=dayDiff(START,getToday());return d<0?1:Math.floor(d/CYCLE_LEN)+1;}
@@ -412,7 +412,7 @@ async function toggle(ds){
 document.getElementById('prev').onclick=()=>{if(viewCycle>1){viewCycle--;renderWeeks(getToday());}};
 document.getElementById('next').onclick=()=>{viewCycle++;renderWeeks(getToday());};
 document.getElementById('now').onclick=()=>{const t=getToday();viewCycle=currentCycleNum();renderWeeks(t);};
-document.getElementById('start').onchange=async e=>{START=e.target.value||nextMonday();await sset(K_START,START);viewCycle=currentCycleNum();renderAll();};
+document.getElementById('start').onchange=async e=>{START=e.target.value||lastMonday();await sset(K_START,START);viewCycle=currentCycleNum();renderAll();};
 document.getElementById('reset').onclick=async()=>{if(confirm('Clear all logged sessions?')){DONE={};await sset(K_DONE,DONE);renderAll();}};
 
 (async function(){
