@@ -101,7 +101,7 @@ button.nav-btn.solid:active{filter:brightness(1.06)}
   background:var(--panel);border:1px solid var(--line);border-radius:20px;
   padding:14px 10px 16px;box-shadow:var(--shadow);
 }
-#weeks{display:flex;flex-direction:column;gap:5px}
+#weeks{display:flex;flex-direction:column;gap:6px}
 .cal-head,.week-row{
   display:grid;
   grid-template-columns:22px repeat(7,1fr);
@@ -126,9 +126,9 @@ button.nav-btn.solid:active{filter:brightness(1.06)}
 }
 .day-cell.train:active{transform:scale(.88);background:var(--lime-bg)}
 .day-cell.train.done{background:var(--lime);border-color:var(--lime);color:#13160d;font-weight:800}
-.day-cell.tod{outline:2px solid var(--ink);outline-offset:2px}
-.day-cell.train.done.tod{outline-color:var(--lime)}
-.day-cell.rest.tod,.day-cell.deload-d.tod{outline-color:rgba(242,240,230,.35)}
+.day-cell.tod{box-shadow:inset 0 0 0 2px var(--ink)}
+.day-cell.train.done.tod{box-shadow:inset 0 0 0 2px rgba(19,22,13,.55)}
+.day-cell.rest.tod,.day-cell.deload-d.tod{box-shadow:inset 0 0 0 2px rgba(242,240,230,.35)}
 .day-cell.rest{color:var(--faint);font-size:11px;font-weight:400}
 .day-cell.deload-d{color:var(--rust);opacity:.6;font-size:11px}
 .day-cell.deload-d.tod{opacity:1}
