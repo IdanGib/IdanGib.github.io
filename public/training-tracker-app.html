@@ -101,11 +101,11 @@ button.nav-btn.solid:active{filter:brightness(1.06)}
   background:var(--panel);border:1px solid var(--line);border-radius:20px;
   padding:14px 10px 16px;box-shadow:var(--shadow);
 }
-#weeks{display:flex;flex-direction:column;gap:3px}
+#weeks{display:flex;flex-direction:column;gap:5px}
 .cal-head,.week-row{
   display:grid;
   grid-template-columns:22px repeat(7,1fr);
-  gap:3px;align-items:center;
+  gap:5px;align-items:center;
 }
 .cal-head{margin-bottom:6px}
 .cal-dow{text-align:center;font:700 10px/1 "JetBrains Mono",monospace;letter-spacing:.04em;color:var(--faint);text-transform:uppercase}
@@ -188,8 +188,8 @@ button.nav-btn.solid:active{filter:brightness(1.06)}
 .lock-toggle.off .lock-state{color:var(--faint)}
 
 /* ── Past / future training cells ── */
-.day-cell.train.missed{opacity:.55;border-color:var(--faint);color:var(--faint);cursor:default}
-.day-cell.train.future{opacity:.45;border-style:dashed;border-color:var(--faint);color:var(--faint);cursor:default}
+.day-cell.train.missed{opacity:.75;border-color:var(--faint);color:var(--faint);cursor:default}
+.day-cell.train.future{opacity:.75;border-style:dashed;border-color:var(--faint);color:var(--faint);cursor:default}
 
 /* ── Celebration: cell pop ── */
 @keyframes cell-pop{
@@ -305,7 +305,7 @@ async function sget(k){try{const v=localStorage.getItem(k);if(v!=null)return JSO
 async function sset(k,v){mem[k]=v;try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 const K_START='tracker:start',K_DONE='tracker:completions',K_LOCKED='tracker:locked';
 
-let START=lastMonday(),DONE={},viewCycle=1,LOCKED=false;
+let START=lastMonday(),DONE={},viewCycle=1,LOCKED=true;
 const getToday=()=>fmt(new Date());
 
 function currentCycleNum(){const d=dayDiff(START,getToday());return d<0?1:Math.floor(d/CYCLE_LEN)+1;}
