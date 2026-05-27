@@ -178,6 +178,55 @@ a {
   }
 }
 
+/* ---------- services (planned section) ---------- */
+
+.services {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  padding: 0 40px 80px;
+  max-width: 820px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.service-card {
+  flex: 1;
+  padding: 28px;
+  border: 1px solid rgba(240, 236, 226, 0.1);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.service-card:nth-child(2) {
+  transition-delay: 0.15s;
+}
+
+.services.visible .service-card {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.service-card h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.service-card p {
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
 /* ---------- scroll animations (reserved) ---------- */
 
 @keyframes fadeInUp {
