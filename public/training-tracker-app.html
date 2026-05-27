@@ -161,6 +161,32 @@ button.nav-btn.solid:active{filter:brightness(1.06)}
 }
 .reset-btn:active{background:var(--rust-bg)}
 
+/* ── Lock toggle ── */
+.lock-toggle{
+  display:flex;align-items:center;gap:9px;
+  background:none;border:none;cursor:pointer;padding:0;
+}
+.lock-pill{
+  width:44px;height:26px;border-radius:13px;
+  background:var(--lime);position:relative;flex:none;
+  transition:background .2s;
+}
+.lock-pill::after{
+  content:'';position:absolute;
+  width:20px;height:20px;border-radius:50%;
+  background:#13160d;top:3px;left:3px;
+  transition:transform .2s cubic-bezier(.16,1,.3,1);
+  transform:translateX(18px);
+}
+.lock-toggle.off .lock-pill{background:var(--faint)}
+.lock-toggle.off .lock-pill::after{transform:translateX(0)}
+.lock-state{
+  font:700 11px/1 "JetBrains Mono",monospace;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:var(--lime);min-width:26px;text-align:right;
+}
+.lock-toggle.off .lock-state{color:var(--faint)}
+
 /* ── Past / future training cells ── */
 .day-cell.train.missed{opacity:.28;border-color:var(--faint);color:var(--faint);cursor:default}
 .day-cell.train.future{opacity:.18;border-style:dashed;border-color:var(--faint);color:var(--faint);cursor:default}
@@ -234,6 +260,13 @@ button.nav-btn.solid:active{filter:brightness(1.06)}
         <span class="settings-label">Cycle start</span>
         <input type="date" id="start">
       </div>
+      <div class="settings-row">
+        <span class="settings-label">Lock past days</span>
+        <button class="lock-toggle" id="lockToggle">
+          <span class="lock-state" id="lockLabel">ON</span>
+          <span class="lock-pill"></span>
+        </button>
+      </div>
       <button class="reset-btn" id="reset">Reset all logs</button>
     </div>
   </div>
@@ -248,7 +281,7 @@ const fmt=d=>{const z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${
 const parse=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);};
 const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
 const dayDiff=(a,b)=>Math.round((parse(b)-parse(a))/86400000);
-const nextMonday=()=>{const t=new Date();t.setHours(0,0,0,0);const off=(8-t.getDay())%7;return fmt(addDays(t,off));};
+const lastMonday=()=>{const t=new Date();t.setHours(0,0,0,0);const off=(t.getDay()+6)%7;return fmt(addDays(t,-off));};
 
 const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const DAYS_FULL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -270,9 +303,9 @@ function classify(dateStr,startStr){
 const mem={};
 async function sget(k){try{const v=localStorage.getItem(k);if(v!=null)return JSON.parse(v);}catch(e){}return(k in mem)?mem[k]:null;}
 async function sset(k,v){mem[k]=v;try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
-const K_START='tracker:start',K_DONE='tracker:completions';
+const K_START='tracker:start',K_DONE='tracker:completions',K_LOCKED='tracker:locked';
 
-let START=nextMonday(),DONE={},viewCycle=1;
+let START=lastMonday(),DONE={},viewCycle=1,LOCKED=true;
 const getToday=()=>fmt(new Date());
 
 function currentCycleNum(){const d=dayDiff(START,getToday());return d<0?1:Math.floor(d/CYCLE_LEN)+1;}
@@ -296,6 +329,24 @@ function streak(){
     cur=addDays(cur,-1);
   }
   return s;
+}
+
+function autoMarkRecent(n){
+  let cur=addDays(parse(getToday()),-1),count=0;
+  while(count<n){
+    const ds=fmt(cur);
+    if(dayDiff(START,ds)<0)break;
+    if(classify(ds,START).phase==='train'){DONE[ds]=true;count++;}
+    cur=addDays(cur,-1);
+  }
+}
+
+function updateLockUI(){
+  const btn=document.getElementById('lockToggle');
+  const lbl=document.getElementById('lockLabel');
+  if(!btn)return;
+  if(LOCKED){btn.classList.remove('off');lbl.textContent='ON';}
+  else{btn.classList.add('off');lbl.textContent='OFF';}
 }
 
 function renderStatus(today){
@@ -340,7 +391,11 @@ function renderWeeks(today){
         if(diff===0){
           html+=`<button class="day-cell train${done?' done':''}${tod}" data-d="${ds}">${n}</button>`;
         }else if(diff>0){
-          html+=`<div class="day-cell train${done?' done':' missed'}${tod}">${n}</div>`;
+          if(LOCKED){
+            html+=`<div class="day-cell train${done?' done':' missed'}${tod}">${n}</div>`;
+          }else{
+            html+=`<button class="day-cell train${done?' done':''}${tod}" data-d="${ds}">${n}</button>`;
+          }
         }else{
           html+=`<div class="day-cell train future">${n}</div>`;
         }
@@ -412,12 +467,18 @@ async function toggle(ds){
 document.getElementById('prev').onclick=()=>{if(viewCycle>1){viewCycle--;renderWeeks(getToday());}};
 document.getElementById('next').onclick=()=>{viewCycle++;renderWeeks(getToday());};
 document.getElementById('now').onclick=()=>{const t=getToday();viewCycle=currentCycleNum();renderWeeks(t);};
-document.getElementById('start').onchange=async e=>{START=e.target.value||nextMonday();await sset(K_START,START);viewCycle=currentCycleNum();renderAll();};
+document.getElementById('start').onchange=async e=>{START=e.target.value||lastMonday();await sset(K_START,START);viewCycle=currentCycleNum();renderAll();};
 document.getElementById('reset').onclick=async()=>{if(confirm('Clear all logged sessions?')){DONE={};await sset(K_DONE,DONE);renderAll();}};
+document.getElementById('lockToggle').onclick=async()=>{LOCKED=!LOCKED;await sset(K_LOCKED,LOCKED);updateLockUI();renderWeeks(getToday());};
 
 (async function(){
   const s=await sget(K_START);if(s)START=s;else await sset(K_START,START);
-  const d=await sget(K_DONE);if(d&&typeof d==='object'&&!Array.isArray(d))DONE=d;
-  viewCycle=currentCycleNum();renderAll();
+  const d=await sget(K_DONE);
+  if(d&&typeof d==='object'&&!Array.isArray(d))DONE=d;
+  else if(!d){autoMarkRecent(3);await sset(K_DONE,DONE);}
+  const l=await sget(K_LOCKED);if(l!==null)LOCKED=l;
+  viewCycle=currentCycleNum();
+  updateLockUI();
+  renderAll();
 })();
 </script>
