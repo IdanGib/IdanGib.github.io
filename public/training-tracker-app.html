@@ -160,6 +160,50 @@ button.nav-btn.solid:active{filter:brightness(1.06)}
   border-radius:10px;padding:12px 14px;cursor:pointer;transition:.12s;text-align:left;
 }
 .reset-btn:active{background:var(--rust-bg)}
+
+/* ── Past / future training cells ── */
+.day-cell.train.missed{opacity:.28;border-color:var(--faint);color:var(--faint);cursor:default}
+.day-cell.train.future{opacity:.18;border-style:dashed;border-color:var(--faint);color:var(--faint);cursor:default}
+
+/* ── Celebration: cell pop ── */
+@keyframes cell-pop{
+  0%{transform:scale(1)}
+  35%{transform:scale(1.25)}
+  100%{transform:scale(1)}
+}
+.day-cell.celebrate{animation:cell-pop .38s cubic-bezier(.16,1,.3,1) both}
+
+/* expanding burst rings via pseudo-elements */
+@keyframes burst-ring{
+  0%{transform:scale(1);opacity:.85}
+  100%{transform:scale(2.7);opacity:0}
+}
+.day-cell.celebrate::before{
+  content:'';position:absolute;inset:0;border-radius:50%;
+  border:2px solid var(--lime);pointer-events:none;
+  animation:burst-ring .52s ease-out forwards;
+}
+.day-cell.celebrate::after{
+  content:'';position:absolute;inset:0;border-radius:50%;
+  border:2px solid rgba(198,247,63,.45);pointer-events:none;
+  animation:burst-ring .52s .13s ease-out forwards;
+}
+
+/* ── Toast ── */
+.celebrate-toast{
+  position:fixed;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 88px);
+  left:50%;
+  transform:translateX(-50%) translateY(10px);
+  background:var(--lime);color:#13160d;
+  font:800 11px/1 "JetBrains Mono",monospace;
+  letter-spacing:.12em;text-transform:uppercase;
+  padding:11px 22px;border-radius:99px;
+  opacity:0;transition:opacity .2s ease,transform .28s cubic-bezier(.16,1,.3,1);
+  pointer-events:none;z-index:100;white-space:nowrap;
+  box-shadow:0 4px 24px rgba(198,247,63,.35);
+}
+.celebrate-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 
 <div class="app">
@@ -254,8 +298,7 @@ function streak(){
   return s;
 }
 
-function renderStatus(){
-  const today=getToday();
+function renderStatus(today){
   const c=classify(today,START);
   let cls,name,pres;
   if(c.phase==='pre'){cls='pre';name='Not started';pres='Starts '+prettyDate(START);}
@@ -277,10 +320,9 @@ function renderStatus(){
     </div>`;
 }
 
-function renderWeeks(){
+function renderWeeks(today){
   document.getElementById('cycleLabel').innerHTML=`Macrocycle <em>#${viewCycle}</em>`;
   const s0=addDays(parse(START),(viewCycle-1)*CYCLE_LEN);
-  const today=getToday();
   let html='<div class="cal-head"><div></div>';
   for(let d=0;d<7;d++){const date=addDays(s0,d);html+=`<div class="cal-dow">${DOW_SHORT[date.getDay()]}</div>`;}
   html+='</div>';
@@ -289,10 +331,19 @@ function renderWeeks(){
     html+=`<div class="week-row${isDeload?' deload':''}"><div class="wn">${isDeload?'D':w+1}</div>`;
     for(let d=0;d<WEEK_LEN;d++){
       const date=addDays(s0,w*WEEK_LEN+d);
-      const ds=fmt(date),c=classify(ds,START),tod=ds===today?' tod':'',n=date.getDate();
+      const ds=fmt(date),c=classify(ds,START),n=date.getDate();
+      // positive = past, 0 = today, negative = future
+      const diff=dayDiff(ds,today);
+      const tod=diff===0?' tod':'';
       if(c.phase==='train'){
         const done=!!DONE[ds];
-        html+=`<button class="day-cell train${done?' done':''}${tod}" data-d="${ds}">${n}</button>`;
+        if(diff===0){
+          html+=`<button class="day-cell train${done?' done':''}${tod}" data-d="${ds}">${n}</button>`;
+        }else if(diff>0){
+          html+=`<div class="day-cell train${done?' done':' missed'}${tod}">${n}</div>`;
+        }else{
+          html+=`<div class="day-cell train future">${n}</div>`;
+        }
       }else if(c.phase==='deload'){
         html+=`<div class="day-cell deload-d${tod}">${n}</div>`;
       }else{
@@ -303,19 +354,64 @@ function renderWeeks(){
   }
   const el=document.getElementById('weeks');
   el.innerHTML=html;
-  el.querySelectorAll('.day-cell.train').forEach(c=>c.addEventListener('click',()=>toggle(c.dataset.d)));
+  el.querySelectorAll('button.day-cell.train').forEach(b=>b.addEventListener('click',()=>toggle(b.dataset.d)));
 }
 
-function renderAll(){renderStatus();renderWeeks();document.getElementById('start').value=START;}
+function renderAll(){
+  const today=getToday();
+  renderStatus(today);
+  renderWeeks(today);
+  document.getElementById('start').value=START;
+}
+
+let _toastTimer=null;
+function showToast(msg){
+  let el=document.getElementById('celebrate-toast');
+  if(!el){el=document.createElement('div');el.id='celebrate-toast';el.className='celebrate-toast';document.body.appendChild(el);}
+  el.textContent=msg;
+  clearTimeout(_toastTimer);
+  el.classList.remove('show');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    el.classList.add('show');
+    _toastTimer=setTimeout(()=>el.classList.remove('show'),2000);
+  }));
+}
+
+function spawnConfetti(btn){
+  const colors=['#c6f73f','rgba(198,247,63,.55)','#f2f0e6'];
+  for(let i=0;i<8;i++){
+    const angle=(i/8)*2*Math.PI;
+    const dist=26+Math.random()*8;
+    const p=document.createElement('span');
+    p.style.cssText=`position:absolute;width:4px;height:4px;border-radius:50%;background:${colors[i%3]};pointer-events:none;left:calc(50% - 2px);top:calc(50% - 2px);transition:transform .55s cubic-bezier(.16,1,.3,1),opacity .55s ease-out;`;
+    btn.appendChild(p);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      p.style.transform=`translate(${Math.cos(angle)*dist}px,${Math.sin(angle)*dist}px) scale(0)`;
+      p.style.opacity='0';
+    }));
+    setTimeout(()=>p.remove(),680);
+  }
+}
 
 async function toggle(ds){
+  const wasEmpty=!DONE[ds];
   if(DONE[ds])delete DONE[ds];else DONE[ds]=true;
-  await sset(K_DONE,DONE);renderAll();
+  await sset(K_DONE,DONE);
+  renderAll();
+  if(wasEmpty){
+    const btn=document.querySelector(`button.day-cell[data-d="${ds}"]`);
+    if(btn){
+      btn.classList.add('celebrate');
+      spawnConfetti(btn);
+      setTimeout(()=>btn.classList.remove('celebrate'),450);
+    }
+    showToast('Session logged!');
+  }
 }
 
-document.getElementById('prev').onclick=()=>{if(viewCycle>1){viewCycle--;renderWeeks();}};
-document.getElementById('next').onclick=()=>{viewCycle++;renderWeeks();};
-document.getElementById('now').onclick=()=>{viewCycle=currentCycleNum();renderWeeks();};
+document.getElementById('prev').onclick=()=>{if(viewCycle>1){viewCycle--;renderWeeks(getToday());}};
+document.getElementById('next').onclick=()=>{viewCycle++;renderWeeks(getToday());};
+document.getElementById('now').onclick=()=>{const t=getToday();viewCycle=currentCycleNum();renderWeeks(t);};
 document.getElementById('start').onchange=async e=>{START=e.target.value||nextMonday();await sset(K_START,START);viewCycle=currentCycleNum();renderAll();};
 document.getElementById('reset').onclick=async()=>{if(confirm('Clear all logged sessions?')){DONE={};await sset(K_DONE,DONE);renderAll();}};
 
