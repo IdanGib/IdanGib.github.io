@@ -305,7 +305,7 @@ async function sget(k){try{const v=localStorage.getItem(k);if(v!=null)return JSO
 async function sset(k,v){mem[k]=v;try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 const K_START='tracker:start',K_DONE='tracker:completions',K_LOCKED='tracker:locked';
 
-let START=lastMonday(),DONE={},viewCycle=1,LOCKED=false;
+let START=lastMonday(),DONE={},viewCycle=1,LOCKED=true;
 const getToday=()=>fmt(new Date());
 
 function currentCycleNum(){const d=dayDiff(START,getToday());return d<0?1:Math.floor(d/CYCLE_LEN)+1;}
