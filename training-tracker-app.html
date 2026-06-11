@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en" data-theme="igtracker">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0e0f0d">
+<meta name="description" content="A 6-week macrocycle training tracker — log sessions, follow rest and deload weeks, keep your streak.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Training">
+<title>Training Tracker</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23c6f73f'/%3E%3Cg transform='translate(12 12)'%3E%3Crect x='4' y='18' width='6' height='4' rx='2' fill='%230e0f0d'/%3E%3Crect x='30' y='18' width='6' height='4' rx='2' fill='%230e0f0d'/%3E%3Crect x='9' y='14' width='22' height='12' rx='6' fill='%230e0f0d'/%3E%3Crect x='12' y='17' width='4' height='6' rx='1' fill='%23c6f73f'/%3E%3Crect x='18' y='17' width='4' height='6' rx='1' fill='%23c6f73f'/%3E%3Crect x='24' y='17' width='4' height='6' rx='1' fill='%23c6f73f'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+<script type="module" src="/src/tracker/main.ts"></script>
+</head>
+<body class="min-h-svh touch-manipulation bg-base-100 font-dm text-base-content">
+<div class="mx-auto flex min-h-svh max-w-[430px] flex-col">
+  <header class="sticky top-0 z-20 flex items-center justify-center border-b border-base-content/10 bg-base-100/85 px-5 pt-[calc(env(safe-area-inset-top,0px)+14px)] pb-3.5 backdrop-blur-xl">
+    <h1 class="font-jet text-[11px] font-extrabold tracking-[0.24em] uppercase text-base-content/60">Training Tracker</h1>
+  </header>
+  <main class="flex flex-1 flex-col gap-2 p-3.5 pb-[calc(env(safe-area-inset-bottom,0px)+28px)]">
+    <noscript><p class="py-6 text-center text-base-content/60">Training Tracker needs JavaScript to run.</p></noscript>
+    <section id="status" aria-label="Today" class="flex flex-col gap-2"></section>
+    <div class="flex items-center justify-between px-0.5 py-1">
+      <h2 class="font-anton text-xl tracking-[0.02em] uppercase" id="cycleLabel"></h2>
+      <div class="join rounded-field border border-base-content/10 bg-base-200 p-[3px]" role="group" aria-label="Cycle navigation">
+        <button type="button" class="btn btn-ghost join-item btn-xs h-8 font-jet tracking-[0.06em] uppercase" id="prev">‹ Prev</button>
+        <button type="button" class="btn btn-primary join-item btn-xs h-8 font-jet tracking-[0.06em] uppercase" id="now">Today</button>
+        <button type="button" class="btn btn-ghost join-item btn-xs h-8 font-jet tracking-[0.06em] uppercase" id="next">Next ›</button>
+      </div>
+    </div>
+    <section class="card border border-base-content/10 bg-base-200 shadow-md" aria-label="Calendar">
+      <div class="card-body px-2.5 pt-3.5 pb-4">
+        <div id="weeks" class="flex flex-col gap-1.5"></div>
+      </div>
+    </section>
+    <p class="flex flex-wrap gap-3.5 px-0.5 text-[11px] text-base-content/60">
+      <span class="inline-flex items-center gap-1.5"><span aria-hidden="true" class="h-[11px] w-[11px] flex-none rounded-full border-[1.5px] border-primary/60"></span>Train (tap to log)</span>
+      <span class="inline-flex items-center gap-1.5"><span aria-hidden="true" class="h-2 w-2 flex-none rounded-full bg-primary"></span>Done</span>
+      <span class="inline-flex items-center gap-1.5"><span aria-hidden="true" class="h-2 w-2 flex-none rounded-full bg-secondary"></span>Rest</span>
+      <span class="inline-flex items-center gap-1.5"><span aria-hidden="true" class="h-2 w-2 flex-none rounded-full bg-accent"></span>Deload</span>
+    </p>
+    <section class="card border border-base-content/10 bg-base-200 shadow-md" aria-label="Settings">
+      <div class="card-body gap-3 p-4">
+        <div class="flex items-center justify-between gap-3">
+          <label class="font-jet text-[10px] font-bold tracking-[0.16em] uppercase whitespace-nowrap text-base-content/40" for="start">Cycle start</label>
+          <input type="date" id="start" class="input input-sm flex-1 border-base-content/10 bg-base-300 font-dm font-medium">
+        </div>
+        <div class="flex items-center justify-between gap-3">
+          <label class="font-jet text-[10px] font-bold tracking-[0.16em] uppercase whitespace-nowrap text-base-content/40" for="lockToggle">Lock past days</label>
+          <input type="checkbox" id="lockToggle" class="toggle toggle-primary" checked>
+        </div>
+        <button type="button" class="btn btn-outline btn-error btn-sm justify-start font-jet tracking-[0.1em] uppercase" id="reset">Reset all logs</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<dialog id="resetModal" class="modal">
+  <div class="modal-box border border-base-content/10 bg-base-200">
+    <h2 class="text-lg font-bold">Reset all logs?</h2>
+    <p class="py-3 text-base-content/60">This clears every logged session and can't be undone.</p>
+    <form method="dialog" class="modal-action">
+      <button class="btn btn-ghost">Cancel</button>
+      <button value="confirm" class="btn btn-error">Reset</button>
+    </form>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+<div id="toast" class="toast toast-center toast-bottom pointer-events-none z-50 mb-16 opacity-0 transition-opacity duration-200" role="status">
+  <div class="alert alert-success border-none font-jet text-[11px] font-extrabold tracking-[0.12em] uppercase shadow-lg shadow-primary/35" id="toastMsg"></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en" data-theme="igapps">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <meta name="theme-color" content="#0a0a0f" />
+    <title>Page not found — IG Apps</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a0a0f'/%3E%3Ctext x='32' y='42' font-family='sans-serif' font-size='26' font-weight='700' fill='%23c084fc' text-anchor='middle'%3EIG%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body class="bg-base-100 font-space text-base-content antialiased">
+    <div class="hero relative min-h-screen overflow-hidden">
+      <div
+        aria-hidden="true"
+        class="pointer-events-none fixed inset-0 z-10 bg-[url(/grain.svg)] bg-repeat opacity-[0.04]"
+      ></div>
+      <div
+        aria-hidden="true"
+        class="pointer-events-none absolute top-0 right-0 h-[min(480px,50vh)] w-[min(480px,50vw)] rounded-full bg-primary/25 blur-[100px] motion-safe:animate-pulse"
+      ></div>
+      <div
+        aria-hidden="true"
+        class="pointer-events-none absolute bottom-0 left-0 h-[min(360px,40vh)] w-[min(360px,40vw)] rounded-full bg-accent/20 blur-[100px] [animation-delay:-2s] motion-safe:animate-pulse"
+      ></div>
+
+      <div class="hero-content relative z-[2] text-center">
+        <div class="flex flex-col items-center gap-7">
+          <h1 class="bg-linear-135 from-primary via-secondary to-accent bg-clip-text text-8xl leading-none font-bold text-transparent sm:text-9xl">
+            404
+          </h1>
+          <p class="tracking-[0.06em] text-base-content/60">This screen doesn't exist.</p>
+          <a
+            href="/"
+            class="btn btn-outline btn-primary rounded-full px-9 tracking-[0.08em] uppercase"
+            >← Back home</a
+          >
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
