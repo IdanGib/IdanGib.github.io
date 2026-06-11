@@ -1,4 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap");
+/* Space Grotesk is loaded from index.html (<link rel="preconnect"> + stylesheet)
+   so the font request starts in parallel with CSS instead of after it. */
 
 :root {
   --bg: #0a0a0f;
@@ -127,6 +128,15 @@ a {
   transition-duration: 0.12s;
 }
 
+.app-icon-wrap:focus-visible {
+  outline: none;
+}
+
+.app-icon-wrap:focus-visible .app-icon {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
 .app-label {
   font-size: 12px;
   font-weight: 400;
@@ -243,6 +253,24 @@ a {
 .fade-in {
   opacity: 0;
   animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ---------- reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .orb {
+    animation: none;
+  }
+
+  .fade-in {
+    animation: none;
+    opacity: 1;
+  }
+
+  .app-icon,
+  .service-card {
+    transition: none;
+  }
 }
 
 /* ---------- responsive ---------- */
