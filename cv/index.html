@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en" data-theme="igapps">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Download the CV of Idan Gibly — product designer & creative technologist."
+    />
+    <meta name="theme-color" content="#0a0a0f" />
+    <title>CV — Idan Gibly</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a0a0f'/%3E%3Ctext x='32' y='42' font-family='sans-serif' font-size='26' font-weight='700' fill='%23c084fc' text-anchor='middle'%3EIG%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body class="relative flex min-h-screen flex-col overflow-hidden bg-base-100 font-space text-base-content antialiased">
+    <div
+      aria-hidden="true"
+      class="pointer-events-none fixed inset-0 z-10 bg-[url(/grain.svg)] bg-repeat opacity-[0.04]"
+    ></div>
+    <div
+      aria-hidden="true"
+      class="pointer-events-none absolute top-0 right-0 h-[min(480px,50vh)] w-[min(480px,50vw)] rounded-full bg-primary/25 blur-[100px] motion-safe:animate-pulse"
+    ></div>
+    <div
+      aria-hidden="true"
+      class="pointer-events-none absolute bottom-0 left-0 h-[min(360px,40vh)] w-[min(360px,40vw)] rounded-full bg-accent/20 blur-[100px] [animation-delay:-2s] motion-safe:animate-pulse"
+    ></div>
+
+    <nav class="relative z-[2] flex items-center justify-between px-5 py-6 sm:px-10 sm:py-8">
+      <a
+        href="/"
+        class="link link-hover rounded-full text-lg font-bold tracking-[0.12em] uppercase no-underline opacity-60 transition-opacity duration-300 hover:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+        >IG</a
+      >
+      <a
+        href="/"
+        class="link link-hover rounded-full text-sm tracking-[0.08em] uppercase no-underline opacity-60 transition-opacity duration-300 hover:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+        >← Back</a
+      >
+    </nav>
+
+    <main class="hero relative z-[2] flex-1">
+      <div class="hero-content pb-12 text-center sm:pb-20">
+        <div class="flex flex-col items-center gap-9">
+          <p class="leading-relaxed tracking-[0.06em] text-base-content/60">
+            Download my CV to learn more about my experience and skills.
+          </p>
+          <a
+            href="idan-gibly-cv.pdf"
+            download
+            class="btn btn-primary btn-lg rounded-full px-10 tracking-[0.08em] uppercase shadow-lg shadow-primary/30 transition-transform duration-300 ease-fluid hover:-translate-y-0.5 motion-reduce:transition-none"
+          >
+            <svg
+              class="h-5 w-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Download CV
+          </a>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

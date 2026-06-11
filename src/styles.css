@@ -1,0 +1,88 @@
+/*
+ * Single styling entry for every page (home, tracker, CV, 404).
+ * All styling lives in Tailwind utilities + daisyUI components;
+ * this file only configures the libraries — no bespoke rules.
+ */
+
+@import "tailwindcss";
+
+@plugin "daisyui" {
+  themes: false;
+}
+
+/* Home screen, CV and 404 pages — near-black with purple accent */
+@plugin "daisyui/theme" {
+  name: "igapps";
+  default: true;
+  color-scheme: dark;
+  --color-base-100: #0a0a0f;
+  --color-base-200: #131318;
+  --color-base-300: #1c1c24;
+  --color-base-content: #f0ece2;
+  --color-primary: #c084fc;
+  --color-primary-content: #1d1230;
+  --color-secondary: #f472b6;
+  --color-secondary-content: #2b0f1e;
+  --color-accent: #fb923c;
+  --color-accent-content: #2a1505;
+  --color-neutral: #6b7280;
+  --color-neutral-content: #f0ece2;
+  --color-info: #60a5fa;
+  --color-info-content: #0b1c33;
+  --color-success: #34d399;
+  --color-success-content: #062119;
+  --color-warning: #fbbf24;
+  --color-warning-content: #2a1f04;
+  --color-error: #fb7185;
+  --color-error-content: #300a12;
+  --radius-selector: 1rem;
+  --radius-field: 999px;
+  --radius-box: 1rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+/* Training Tracker — lime/rust/blue on near-black */
+@plugin "daisyui/theme" {
+  name: "igtracker";
+  color-scheme: dark;
+  --color-base-100: #0e0f0d;
+  --color-base-200: #161814;
+  --color-base-300: #1c1f18;
+  --color-base-content: #f2f0e6;
+  --color-primary: #c6f73f;
+  --color-primary-content: #13160d;
+  --color-secondary: #4a90d9;
+  --color-secondary-content: #0b1c2e;
+  --color-accent: #e0703a;
+  --color-accent-content: #2a1207;
+  --color-neutral: #454840;
+  --color-neutral-content: #f2f0e6;
+  --color-info: #4a90d9;
+  --color-info-content: #0b1c2e;
+  --color-success: #c6f73f;
+  --color-success-content: #13160d;
+  --color-warning: #e0703a;
+  --color-warning-content: #2a1207;
+  --color-error: #e0703a;
+  --color-error-content: #f9e8df;
+  --radius-selector: 2rem;
+  --radius-field: 0.625rem;
+  --radius-box: 1.25rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+@theme {
+  --font-space: "Space Grotesk", system-ui, sans-serif;
+  --font-dm: "DM Sans", sans-serif;
+  --font-anton: "Anton", sans-serif;
+  --font-jet: "JetBrains Mono", monospace;
+  --ease-fluid: cubic-bezier(0.16, 1, 0.3, 1);
+}
