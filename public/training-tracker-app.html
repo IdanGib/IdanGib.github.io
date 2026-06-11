@@ -1,11 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0e0f0d">
+<meta name="description" content="A 6-week macrocycle training tracker — log sessions, follow rest and deload weeks, keep your streak.">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Training">
 <title>Training Tracker</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23c6f73f'/%3E%3Cg transform='translate(12 12)'%3E%3Crect x='4' y='18' width='6' height='4' rx='2' fill='%230e0f0d'/%3E%3Crect x='30' y='18' width='6' height='4' rx='2' fill='%230e0f0d'/%3E%3Crect x='9' y='14' width='22' height='12' rx='6' fill='%230e0f0d'/%3E%3Crect x='12' y='17' width='4' height='6' rx='1' fill='%23c6f73f'/%3E%3Crect x='18' y='17' width='4' height='6' rx='1' fill='%23c6f73f'/%3E%3Crect x='24' y='17' width='4' height='6' rx='1' fill='%23c6f73f'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
@@ -95,6 +100,8 @@ button.nav-btn{
 button.nav-btn:active{color:var(--lime);background:var(--panel2)}
 button.nav-btn.solid{background:var(--lime);color:#13160d}
 button.nav-btn.solid:active{filter:brightness(1.06)}
+button.nav-btn:disabled{opacity:.35;cursor:default}
+button.nav-btn:disabled:active{color:var(--muted);background:transparent}
 
 /* ── Calendar ── */
 .cal-wrap{
@@ -124,7 +131,7 @@ button.nav-btn.solid:active{filter:brightness(1.06)}
   border:1.5px solid var(--lime-dim);color:var(--ink);
   cursor:pointer;background:transparent;transition:.1s;
 }
-.day-cell.train:active{transform:scale(.88);background:var(--lime-bg)}
+button.day-cell.train:active{transform:scale(.88);background:var(--lime-bg)}
 .day-cell.train.done{background:var(--lime);border-color:var(--lime);color:#13160d;font-weight:800}
 .day-cell.tod{box-shadow:inset 0 0 0 2px var(--ink)}
 .day-cell.train.done.tod{box-shadow:inset 0 0 0 2px rgba(19,22,13,.55)}
@@ -132,6 +139,15 @@ button.nav-btn.solid:active{filter:brightness(1.06)}
 .day-cell.rest{color:var(--faint);font-size:11px;font-weight:400}
 .day-cell.deload-d{color:var(--rust);opacity:.6;font-size:11px}
 .day-cell.deload-d.tod{opacity:1}
+/* logged-but-locked cells render as divs — don't let them look clickable */
+div.day-cell.train{cursor:default}
+
+/* ── Desktop hover & keyboard focus ── */
+@media(hover:hover){
+  button.nav-btn:not(:disabled):not(.solid):hover{color:var(--ink)}
+  button.day-cell.train:not(.done):hover{border-color:var(--lime);background:var(--lime-bg)}
+}
+:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
 
 /* ── Legend ── */
 .legend{
@@ -229,21 +245,33 @@ button.nav-btn.solid:active{filter:brightness(1.06)}
   pointer-events:none;z-index:100;white-space:nowrap;
   box-shadow:0 4px 24px rgba(198,247,63,.35);
 }
+.celebrate-toast:empty{visibility:hidden}
 .celebrate-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-</style>
 
+/* ── Reduced motion ── */
+@media(prefers-reduced-motion:reduce){
+  .day-cell.celebrate{animation:none}
+  .day-cell.celebrate::before,.day-cell.celebrate::after{animation:none;opacity:0}
+  .celebrate-toast{transition:opacity .2s ease}
+  .cyc-bar-fill{transition:none}
+  .lock-pill,.lock-pill::after{transition:none}
+}
+</style>
+</head>
+<body>
 <div class="app">
-  <div class="topbar">
-    <span class="topbar-title">Training Tracker</span>
-  </div>
-  <div class="scroll-body">
+  <header class="topbar">
+    <h1 class="topbar-title">Training Tracker</h1>
+  </header>
+  <main class="scroll-body">
+    <noscript><p style="color:#8a8d80;text-align:center;padding:24px 0">Training Tracker needs JavaScript to run.</p></noscript>
     <div id="status"></div>
     <div class="cycle-nav">
       <div class="cycle-label" id="cycleLabel"></div>
       <div class="nav-seg">
-        <button class="nav-btn" id="prev">‹ Prev</button>
-        <button class="nav-btn solid" id="now">Today</button>
-        <button class="nav-btn" id="next">Next ›</button>
+        <button type="button" class="nav-btn" id="prev">‹ Prev</button>
+        <button type="button" class="nav-btn solid" id="now">Today</button>
+        <button type="button" class="nav-btn" id="next">Next ›</button>
       </div>
     </div>
     <div class="cal-wrap">
@@ -257,20 +285,21 @@ button.nav-btn.solid:active{filter:brightness(1.06)}
     </div>
     <div class="settings">
       <div class="settings-row">
-        <span class="settings-label">Cycle start</span>
+        <label class="settings-label" for="start">Cycle start</label>
         <input type="date" id="start">
       </div>
       <div class="settings-row">
-        <span class="settings-label">Lock past days</span>
-        <button class="lock-toggle" id="lockToggle">
+        <span class="settings-label" id="lockSettingLabel">Lock past days</span>
+        <button type="button" class="lock-toggle" id="lockToggle" aria-labelledby="lockSettingLabel" aria-pressed="true">
           <span class="lock-state" id="lockLabel">ON</span>
           <span class="lock-pill"></span>
         </button>
       </div>
-      <button class="reset-btn" id="reset">Reset all logs</button>
+      <button type="button" class="reset-btn" id="reset">Reset all logs</button>
     </div>
-  </div>
+  </main>
 </div>
+<div class="celebrate-toast" id="celebrate-toast" role="status"></div>
 
 <script>
 const TRAIN_DAYS=5,WEEK_LEN=7,TRAIN_WEEKS=5;
@@ -307,6 +336,7 @@ const K_START='tracker:start',K_DONE='tracker:completions',K_LOCKED='tracker:loc
 
 let START=lastMonday(),DONE={},viewCycle=1,LOCKED=true;
 const getToday=()=>fmt(new Date());
+const REDUCED_MOTION=matchMedia('(prefers-reduced-motion: reduce)');
 
 function currentCycleNum(){const d=dayDiff(START,getToday());return d<0?1:Math.floor(d/CYCLE_LEN)+1;}
 
@@ -325,7 +355,8 @@ function streak(){
     const ds=fmt(cur);
     if(dayDiff(START,ds)<0)break;
     const c=classify(ds,START);
-    if(c.phase==='train'){if(DONE[ds])s++;else break;}
+    // today doesn't break the streak while it's still unlogged — logging it extends the run
+    if(c.phase==='train'){if(DONE[ds])s++;else if(ds!==today)break;}
     cur=addDays(cur,-1);
   }
   return s;
@@ -345,6 +376,7 @@ function updateLockUI(){
   const btn=document.getElementById('lockToggle');
   const lbl=document.getElementById('lockLabel');
   if(!btn)return;
+  btn.setAttribute('aria-pressed',String(LOCKED));
   if(LOCKED){btn.classList.remove('off');lbl.textContent='ON';}
   else{btn.classList.add('off');lbl.textContent='OFF';}
 }
@@ -371,8 +403,14 @@ function renderStatus(today){
     </div>`;
 }
 
+function trainCellButton(ds,n,done,tod){
+  const label=`${prettyDate(ds)} — training day${done?', logged':''}`;
+  return `<button type="button" class="day-cell train${done?' done':''}${tod}" data-d="${ds}" aria-pressed="${done}" aria-label="${label}">${n}</button>`;
+}
+
 function renderWeeks(today){
   document.getElementById('cycleLabel').innerHTML=`Macrocycle <em>#${viewCycle}</em>`;
+  document.getElementById('prev').disabled=viewCycle<=1;
   const s0=addDays(parse(START),(viewCycle-1)*CYCLE_LEN);
   let html='<div class="cal-head"><div></div>';
   for(let d=0;d<7;d++){const date=addDays(s0,d);html+=`<div class="cal-dow">${DOW_SHORT[date.getDay()]}</div>`;}
@@ -389,12 +427,12 @@ function renderWeeks(today){
       if(c.phase==='train'){
         const done=!!DONE[ds];
         if(diff===0){
-          html+=`<button class="day-cell train${done?' done':''}${tod}" data-d="${ds}">${n}</button>`;
+          html+=trainCellButton(ds,n,done,tod);
         }else if(diff>0){
           if(LOCKED){
             html+=`<div class="day-cell train${done?' done':' missed'}${tod}">${n}</div>`;
           }else{
-            html+=`<button class="day-cell train${done?' done':''}${tod}" data-d="${ds}">${n}</button>`;
+            html+=trainCellButton(ds,n,done,tod);
           }
         }else{
           html+=`<div class="day-cell train future">${n}</div>`;
@@ -421,8 +459,7 @@ function renderAll(){
 
 let _toastTimer=null;
 function showToast(msg){
-  let el=document.getElementById('celebrate-toast');
-  if(!el){el=document.createElement('div');el.id='celebrate-toast';el.className='celebrate-toast';document.body.appendChild(el);}
+  const el=document.getElementById('celebrate-toast');
   el.textContent=msg;
   clearTimeout(_toastTimer);
   el.classList.remove('show');
@@ -433,6 +470,7 @@ function showToast(msg){
 }
 
 function spawnConfetti(btn){
+  if(REDUCED_MOTION.matches)return;
   const colors=['#c6f73f','rgba(198,247,63,.55)','#f2f0e6'];
   for(let i=0;i<8;i++){
     const angle=(i/8)*2*Math.PI;
@@ -484,3 +522,5 @@ document.getElementById('lockToggle').onclick=async()=>{LOCKED=!LOCKED;await sse
   renderAll();
 })();
 </script>
+</body>
+</html>

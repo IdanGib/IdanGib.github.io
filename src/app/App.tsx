@@ -1,44 +1,31 @@
 import "./App.css";
-
-const apps = [
-  {
-    name: "Training",
-    href: "/training-tracker-app.html",
-    gradient: "linear-gradient(145deg, #c6f73f, #7e9a2a)",
-    icon: (
-      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="4" y="18" width="6" height="4" rx="2" fill="#0e0f0d" />
-        <rect x="30" y="18" width="6" height="4" rx="2" fill="#0e0f0d" />
-        <rect x="9" y="14" width="22" height="12" rx="6" fill="#0e0f0d" />
-        <rect x="12" y="17" width="4" height="6" rx="1" fill="#c6f73f" />
-        <rect x="18" y="17" width="4" height="6" rx="1" fill="#c6f73f" />
-        <rect x="24" y="17" width="4" height="6" rx="1" fill="#c6f73f" />
-      </svg>
-    ),
-  },
-];
+import { apps } from "./apps";
 
 const App = () => (
   <div className="page">
-    <div className="grain" />
-    <div className="orb orb-1" />
-    <div className="orb orb-2" />
+    <div className="grain" aria-hidden="true" />
+    <div className="orb orb-1" aria-hidden="true" />
+    <div className="orb orb-2" aria-hidden="true" />
 
     <header className="status-bar">
-      <span className="status-name">IG Apps</span>
+      <h1 className="status-name">IG Apps</h1>
     </header>
 
     <main className="home-screen">
-      <div className="app-grid">
+      <nav className="app-grid" aria-label="Apps">
         {apps.map((app) => (
           <a key={app.href} href={app.href} className="app-icon-wrap">
-            <div className="app-icon" style={{ background: app.gradient }}>
+            <span
+              className="app-icon"
+              style={{ background: app.gradient }}
+              aria-hidden="true"
+            >
               {app.icon}
-            </div>
+            </span>
             <span className="app-label">{app.name}</span>
           </a>
         ))}
-      </div>
+      </nav>
     </main>
   </div>
 );
