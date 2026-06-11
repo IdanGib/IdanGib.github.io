@@ -4,21 +4,21 @@ This file describes the codebase structure, conventions, and development workflo
 
 ## Project Overview
 
-**idangib.github.io** is a personal portfolio site for Idan Gibly (product designer & creative technologist), deployed to GitHub Pages at `idangib.github.io`.
+**idangib.github.io** is the personal site of Idan Gibly (product designer & creative technologist), deployed to GitHub Pages at `idangib.github.io`.
 
-Built with React 18, TypeScript, and Vite. Intentionally minimal in dependencies and complexity — the emphasis is on visual polish, not framework complexity.
+The root page is **IG Apps** — an iOS-style home screen built with React 18, TypeScript, and Vite — that launches small self-contained web apps. The apps themselves are standalone HTML files under `public/` (currently the **Training Tracker**). Intentionally minimal in dependencies and complexity — the emphasis is on visual polish, not framework complexity.
 
 ## Tech Stack
 
 | Tool | Version | Purpose |
 |------|---------|---------|
-| React | 18.3.1 | UI rendering |
+| React | 18.3.1 | Home screen UI |
 | TypeScript | 5.5.4 | Type checking (strict mode) |
 | Vite | 5.4.2 | Bundler + dev server |
 | `@vitejs/plugin-react` | 4.3.1 | Fast refresh for JSX |
 | `cross-env` | 7.0.3 | Cross-platform env vars |
 
-No router, no state management library, no UI component library.
+No router, no state management library, no UI component library. Standalone apps in `public/` use vanilla HTML/CSS/JS only.
 
 ## Directory Structure
 
@@ -26,23 +26,41 @@ No router, no state management library, no UI component library.
 .
 ├── .github/
 │   └── workflows/
-│       ├── deploy.yml          # Active: Vite build + GitHub Pages deploy
-│       └── jekyll-docker.yml   # Legacy/unused (pre-migration artifact)
+│       └── deploy.yml          # Vite build + GitHub Pages deploy
 ├── public/
+│   ├── 404.html                # Styled GitHub Pages 404 (standalone HTML)
+│   ├── training-tracker-app.html  # Training Tracker app (standalone HTML/CSS/JS)
 │   └── cv/
 │       ├── index.html          # Standalone CV download page (plain HTML, not React)
 │       └── idan-gibly-cv.pdf   # PDF resume asset
 ├── src/
 │   ├── main.tsx                # React entry point (createRoot)
 │   └── app/
-│       ├── App.tsx             # Main (and currently only) component
-│       └── App.css             # All site styles
-├── index.html                  # Root HTML shell (mounts #root)
+│       ├── App.tsx             # Home screen component (renders the app grid)
+│       ├── apps.tsx            # Typed registry of launchable apps (add new apps here)
+│       └── App.css             # All home screen styles
+├── index.html                  # Root HTML shell (mounts #root; meta/SEO/fonts live here)
 ├── vite.config.ts              # Vite config with smart base path resolution
 ├── tsconfig.json               # TypeScript config for src/
 ├── tsconfig.node.json          # TypeScript config for vite.config.ts
 └── package.json
 ```
+
+## Architecture: Home Screen + Standalone Apps
+
+- The React app (`src/`) is only the launcher. Each app on the grid is an entry in `src/app/apps.tsx` (`AppDefinition`: name, href, gradient, 40×40 SVG icon).
+- Apps live as **single self-contained HTML files in `public/`** (inline CSS + JS, no build step). They are deliberately framework-free so they stay portable, load instantly, and can be saved to a phone home screen.
+- **Do not migrate standalone apps into React** without explicit direction — and never change their URLs or localStorage keys (see below); they are bookmarked on devices and hold user data.
+
+### Training Tracker (`public/training-tracker-app.html`)
+
+A 6-week macrocycle training log: 5 training weeks (5 train days + 2 rest days each) + 1 deload week. Key invariants:
+
+- **URL must stay `/training-tracker-app.html`** — it is saved to home screens.
+- **localStorage keys must not change:** `tracker:start`, `tracker:completions`, `tracker:locked`. Breaking these silently wipes the user's training history.
+- Mobile-first (430px max width, safe-area insets, Apple web-app metas). Palette is lime/rust/blue on near-black (`--lime: #c6f73f` is the brand color of this app).
+- Day cells re-render via `innerHTML` in `renderWeeks()`; interactive train days are `<button>`s with `aria-pressed`, locked/future days are `<div>`s.
+- Celebration effects (cell pop, confetti, toast) are gated behind `prefers-reduced-motion`.
 
 ## Development Workflow
 
@@ -53,6 +71,8 @@ npm run build     # Production build → dist/
 npm run preview   # Preview the production build locally
 npm run lint      # TypeScript type check (tsc --noEmit)
 ```
+
+Standalone pages in `public/` are served as-is in dev (e.g. `http://localhost:5173/training-tracker-app.html`) and copied verbatim into `dist/`.
 
 The `build:pages` script (`cross-env VITE_BASE=/$npm_package_name/ vite build`) exists for project-site deployments but is not used in CI — the deploy workflow sets `VITE_BASE=/` directly.
 
@@ -65,9 +85,9 @@ The `build:pages` script (`cross-env VITE_BASE=/$npm_package_name/ vite build`) 
 
 **Do not push to `main` directly for feature work** — use the `claude/feature-name-{id}` branch convention.
 
-## CSS Design System
+## CSS Design System (home screen, CV page, 404 page)
 
-All styles live in `src/app/App.css`. There is no CSS module system or utility framework.
+Home screen styles live in `src/app/App.css`. There is no CSS module system or utility framework. The Training Tracker has its own inline design system (see above) — keep the two visually distinct.
 
 ### CSS Custom Properties
 
@@ -80,7 +100,7 @@ All styles live in `src/app/App.css`. There is no CSS module system or utility f
 
 ### Typography
 
-- **Font:** Space Grotesk (Google Fonts, weights 400 & 700)
+- **Font:** Space Grotesk (Google Fonts, weights 400 & 700), loaded via `<link>` in `index.html` (preconnect + stylesheet — not CSS `@import`, which serializes requests)
 - **Scale:** Use `clamp()` for fluid heading sizes (e.g. `clamp(4rem, 12vw, 10rem)`)
 - **Gradient text:** Applied via `-webkit-background-clip: text` + `-webkit-text-fill-color: transparent` with `linear-gradient(135deg, var(--accent), #f472b6, #fb923c)`
 
@@ -90,16 +110,18 @@ All styles live in `src/app/App.css`. There is no CSS module system or utility f
 - **Gradient border:** `background: linear-gradient(var(--bg), var(--bg)) padding-box, linear-gradient(...) border-box; border: 1px solid transparent`
 - **Hover transitions:** `0.3s cubic-bezier(0.16, 1, 0.3, 1)` — use this easing for all transitions
 - **Opacity-based dim:** `opacity: 0.6` at rest → `1.0` on hover (used for nav items)
+- **Focus:** interactive elements get a visible `:focus-visible` outline (`2px solid var(--accent)` on dark pages, `var(--lime)` in the tracker)
 
 ### Visual Effects
 
 - **Film grain overlay:** `.grain` — SVG `fractalNoise` filter via `background-image` data URI; `z-index: 10`, `pointer-events: none`, `opacity: 0.04`
 - **Floating orbs:** `.orb` divs — `position: absolute`, `border-radius: 50%`, `filter: blur(100px)`, animated by `@keyframes drift` (14s, `ease-in-out`, `alternate`)
 - **Entrance animation:** `@keyframes fadeInUp` (translateY 28px → 0, opacity 0 → 1) — currently defined but not applied (reserved for future scroll animations)
+- **Reduced motion:** every page has a `@media (prefers-reduced-motion: reduce)` block that disables decorative animation. Keep new animations behind it.
 
 ### Responsive Breakpoint
 
-Single breakpoint at `@media (max-width: 600px)`. On mobile: reduce nav padding to `24px 20px`, orb sizes scale down.
+Single breakpoint at `@media (max-width: 600px)`. On mobile the app grid switches to four `1fr` columns (max 360px wide).
 
 ### Unused CSS Classes
 
@@ -132,35 +154,43 @@ export default MyComponent;
 - Target: ES2020
 - No `tsc` emit — Vite handles compilation
 
-**Current known issue:** `useEffect` and `useRef` are imported in `App.tsx` but unused. Remove these imports or implement the intended scroll animation logic.
-
 ### File Organization
 
 - One CSS file per component (co-located: `App.tsx` / `App.css`)
+- Shared data/types in plain modules (e.g. `src/app/apps.tsx`)
 - Static assets served from `public/` (accessible at root path)
-- The `public/cv/` directory contains a standalone HTML page — it is **not** part of the React app
+- Standalone HTML pages (`public/cv/`, `public/404.html`, `public/training-tracker-app.html`) are **not** part of the React app
+
+## Adding a New App to the Home Screen
+
+1. Build the app as a single self-contained HTML file in `public/` (own inline styles, own palette, proper `<!doctype html>`, `lang`, meta description, favicon, reduced-motion support).
+2. Add an entry to `src/app/apps.tsx` with a name, href, icon gradient, and a 40×40 SVG icon.
+3. Run `npm run lint` and `npm run build`; verify both pages with `npm run preview`.
 
 ## Key Conventions to Follow
 
 1. **Keep dependencies minimal.** Do not add npm packages unless truly necessary.
-2. **Preserve the dark theme.** All new UI must use the CSS custom properties (`--bg`, `--fg`, `--accent`, `--muted`).
-3. **Match the animation style.** Use `cubic-bezier(0.16, 1, 0.3, 1)` for easing; keep durations 0.3–0.7s.
+2. **Preserve the dark theme.** All new launcher UI must use the CSS custom properties (`--bg`, `--fg`, `--accent`, `--muted`).
+3. **Match the animation style.** Use `cubic-bezier(0.16, 1, 0.3, 1)` for easing; keep durations 0.3–0.7s; respect `prefers-reduced-motion`.
 4. **No component libraries.** Write raw HTML + CSS — this site's polish comes from hand-crafted styles.
-5. **`public/cv/index.html` is standalone HTML.** Changes there do not go through React; match styles manually to maintain visual consistency.
+5. **Standalone pages in `public/` don't go through React.** Match styles manually to maintain visual consistency.
 6. **Run `npm run lint` before committing.** TypeScript errors must be resolved.
 7. **Branch naming:** `claude/feature-description-{randomId}` (matches existing convention in the repo's commit history).
 
 ## Accessibility Notes
 
-- Use semantic HTML (`<nav>`, `<main>`, heading hierarchy)
+- Use semantic HTML (`<header>`, `<nav>`, `<main>`, one `<h1>` per page, heading hierarchy)
+- Decorative elements (`.grain`, `.orb`, icon artwork) carry `aria-hidden="true"`
+- Toggle buttons expose state via `aria-pressed`; live feedback (toasts) uses `role="status"`
 - External links must include `rel="noopener noreferrer"`
 - Maintain sufficient contrast (light text on dark background)
-- Buttons and links should have clear focus states
+- Buttons and links must have visible `:focus-visible` states
 
 ## Files to Be Careful With
 
 | File | Caution |
 |------|---------|
 | `public/cv/idan-gibly-cv.pdf` | Binary asset — do not overwrite without a new PDF |
+| `public/training-tracker-app.html` | Holds live user data via localStorage — never rename the file or its storage keys |
 | `.github/workflows/deploy.yml` | Changes here affect live deployment pipeline |
 | `vite.config.ts` | Base path logic is environment-sensitive; test changes carefully |
