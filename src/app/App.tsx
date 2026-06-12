@@ -6,15 +6,6 @@ const App = () => (
       aria-hidden="true"
       className="pointer-events-none fixed inset-0 z-10 bg-[url(/grain.svg)] bg-repeat opacity-[0.04]"
     />
-    <div
-      aria-hidden="true"
-      className="pointer-events-none absolute -top-[10%] -right-[8%] h-[480px] w-[480px] rounded-full bg-primary/25 blur-[100px] motion-safe:animate-pulse"
-    />
-    <div
-      aria-hidden="true"
-      className="pointer-events-none absolute -bottom-[5%] -left-[6%] h-[360px] w-[360px] rounded-full bg-accent/20 blur-[100px] [animation-delay:-2s] motion-safe:animate-pulse"
-    />
-
     <header className="relative z-[2] flex items-center justify-center px-5 pt-5 pb-2 sm:px-10 sm:pt-7 sm:pb-3">
       <h1 className="text-[13px] font-bold tracking-[0.16em] uppercase opacity-40">
         IG Apps
