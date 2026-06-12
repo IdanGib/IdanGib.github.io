@@ -6,7 +6,7 @@ This file describes the codebase structure, conventions, and development workflo
 
 **idangib.github.io** is the personal site of Idan Gibly (product designer & creative technologist), deployed to GitHub Pages at `idangib.github.io`.
 
-The root page is **IG Apps** — an iOS-style home screen built with React 18, TypeScript, and Vite — that launches small self-contained web apps (currently the **Training Tracker**). Every page is styled exclusively with **Tailwind CSS 4 + daisyUI 5**: there are no hand-written stylesheets and no inline styles anywhere in the project.
+The root page is **IG Apps** — an iOS-style home screen built with React 18, TypeScript, and Vite — that launches small self-contained web apps (the **Training Tracker** and the **Malawah** recipe calculator). Every page is styled exclusively with **Tailwind CSS 4 + daisyUI 5**: there are no hand-written stylesheets and no inline styles anywhere in the project.
 
 ## Tech Stack
 
@@ -36,9 +36,11 @@ No router, no state management library. Standalone app pages use vanilla TypeScr
 │   ├── app/
 │   │   ├── App.tsx                # Home screen component (renders the app grid)
 │   │   └── apps.tsx               # Typed registry of launchable apps (add new apps here)
-│   └── tracker/main.ts            # Training Tracker logic (vanilla TS, typed)
+│   ├── tracker/main.ts            # Training Tracker logic (vanilla TS, typed)
+│   └── malawah/main.ts            # Malawah recipe calculator logic (vanilla TS, typed)
 ├── index.html                     # Home entry (theme igapps)
 ├── training-tracker-app.html      # Tracker entry (theme igtracker)
+├── malawah-app.html               # Malawah entry (theme igmalawah)
 ├── 404.html                       # GitHub Pages 404 entry (theme igapps)
 ├── cv/index.html                  # CV download entry (theme igapps)
 ├── vite.config.ts                 # Base path logic + MPA rollup inputs + tailwindcss()
@@ -50,7 +52,7 @@ No router, no state management library. Standalone app pages use vanilla TypeScr
 
 - The React app is only the launcher. Each app on the grid is an entry in `src/app/apps.tsx` (`AppDefinition`: name, href, icon tile classes, 40×40 SVG icon).
 - Apps are **separate Vite page entries** (registered in `vite.config.ts` → `build.rollupOptions.input`). Build output paths mirror source paths, so public URLs never change. App logic is vanilla TypeScript under `src/<app>/main.ts` — do not introduce React into app pages.
-- Pages select their daisyUI theme with `data-theme` on `<html>` (`igapps` or `igtracker`).
+- Pages select their daisyUI theme with `data-theme` on `<html>` (`igapps`, `igtracker` or `igmalawah`).
 
 ### Training Tracker (`training-tracker-app.html` + `src/tracker/main.ts`)
 
@@ -62,9 +64,18 @@ A 6-week macrocycle training log: 5 training weeks (5 train days + 2 rest days e
 - Day cells re-render via `innerHTML` in `renderWeeks()`; interactive train days are `<button>`s with `aria-pressed` + date `aria-label`s, locked/future days are `<div>`s.
 - Celebration (ping ring) and all decorative animation use `motion-safe:` so reduced-motion users are respected.
 
+### Malawah (`malawah-app.html` + `src/malawah/main.ts`)
+
+A recipe calculator: enter the flour weight (`Fw`, grams) and get the mix-in amounts — honey (g), salt (g), water (ml) — computed as `Fw ×` a ratio vector `(honey, salt, water)`, default `(0.16, 0.032, 0.72)`. A second form lets the user tune the vector to improve the recipe. Key invariants:
+
+- **URL must stay `/malawah-app.html`** — it is saved to phone home screens.
+- **localStorage keys must not change:** `malawah:ratios` (tuned ratio vector), `malawah:flour` (last flour weight). Breaking these silently discards the user's tuned recipe.
+- Mobile-first like the tracker (430px max width, safe-area insets, Apple web-app metas). Theme `igmalawah`: honey gold primary, water blue secondary, salt pink accent, on warm near-black.
+- Static markup; results live in `<output>` elements updated via `textContent`. Restoring the default ratios confirms via the daisyUI modal.
+
 ## Styling Policy (Tailwind + daisyUI only)
 
-1. **`src/styles.css` is the only CSS file.** It contains nothing but library configuration: `@import "tailwindcss"`, the daisyUI plugin, the two custom themes, and `@theme` tokens. Never add bespoke selectors/rules to it, and never create other CSS files.
+1. **`src/styles.css` is the only CSS file.** It contains nothing but library configuration: `@import "tailwindcss"`, the daisyUI plugin, the three custom themes, and `@theme` tokens. Never add bespoke selectors/rules to it, and never create other CSS files.
 2. **No `<style>` blocks and no `style=` attributes** — in HTML, JSX, or JS-generated markup. Dynamic values must be expressed as classes (e.g. native `<progress value>` instead of a styled width).
 3. **daisyUI components first** (`btn`, `card`, `toggle`, `input`, `modal`, `toast`, `alert`, `progress`, `join`, `hero`, `link`), Tailwind utilities for layout and fine detail, arbitrary values (`w-[88px]`, `grid-cols-[22px_repeat(7,1fr)]`) where the design needs them.
 4. **Theme colors via daisyUI tokens** (`bg-base-100`, `text-base-content/60`, `bg-primary`, `border-primary/60`, …) — never hard-code page palette hexes in markup. Exception: icon artwork gradients in `apps.tsx` carry their own brand colors.
@@ -72,7 +83,8 @@ A 6-week macrocycle training log: 5 training weeks (5 train days + 2 rest days e
 6. **Custom themes** live in `src/styles.css`:
    - `igapps` (default): near-black `#0a0a0f`, foreground `#f0ece2`, primary purple `#c084fc`, secondary pink `#f472b6`, accent orange `#fb923c`. Pill fields (`--radius-field: 999px`).
    - `igtracker`: near-black `#0e0f0d`, foreground `#f2f0e6`, primary lime `#c6f73f`, secondary blue `#4a90d9`, accent/error rust `#e0703a`.
-7. **Fonts** are `@theme` tokens → utilities: `font-space` (Space Grotesk — igapps pages), `font-dm`, `font-anton`, `font-jet` (tracker). Loaded via `<link>` preconnect + stylesheet in each entry's `<head>`.
+   - `igmalawah`: warm near-black `#0d0c08`, foreground `#f2eee1`, primary honey gold `#f0b429`, secondary water blue `#56b8dc`, accent salt pink `#f2a48f`.
+7. **Fonts** are `@theme` tokens → utilities: `font-space` (Space Grotesk — igapps pages), `font-dm`, `font-anton`, `font-jet` (tracker, malawah). Loaded via `<link>` preconnect + stylesheet in each entry's `<head>`.
 8. **Motion:** use `ease-fluid` (cubic-bezier 0.16,1,0.3,1 — `@theme` token), durations 0.1–0.7s, and gate decorative animation behind `motion-safe:` (or disable with `motion-reduce:`).
 9. **Signature effects:** film grain = fixed div with `bg-[url(/grain.svg)] bg-repeat opacity-[0.04]`; floating orbs = blurred rounded divs with `motion-safe:animate-pulse`. Both `aria-hidden="true"`.
 
@@ -81,7 +93,7 @@ A 6-week macrocycle training log: 5 training weeks (5 train days + 2 rest days e
 ```bash
 npm install       # Install dependencies
 npm run dev       # Start Vite dev server at http://localhost:5173
-npm run build     # Production build → dist/ (all four page entries)
+npm run build     # Production build → dist/ (all five page entries)
 npm run preview   # Preview the production build locally
 npm run lint      # TypeScript type check (tsc --noEmit, covers src/)
 ```

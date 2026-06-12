@@ -1,5 +1,5 @@
 /*
- * Single styling entry for every page (home, tracker, CV, 404).
+ * Single styling entry for every page (home, tracker, malawah, CV, 404).
  * All styling lives in Tailwind utilities + daisyUI components;
  * this file only configures the libraries — no bespoke rules.
  */
@@ -71,6 +71,40 @@
   --color-error-content: #f9e8df;
   --radius-selector: 2rem;
   --radius-field: 0.625rem;
+  --radius-box: 1.25rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+/* Malawah recipe calculator — honey gold/water blue/salt pink on warm near-black */
+@plugin "daisyui/theme" {
+  name: "igmalawah";
+  color-scheme: dark;
+  --color-base-100: #0d0c08;
+  --color-base-200: #16140d;
+  --color-base-300: #1f1c12;
+  --color-base-content: #f2eee1;
+  --color-primary: #f0b429;
+  --color-primary-content: #251a04;
+  --color-secondary: #56b8dc;
+  --color-secondary-content: #06222e;
+  --color-accent: #f2a48f;
+  --color-accent-content: #33130a;
+  --color-neutral: #4a463a;
+  --color-neutral-content: #f2eee1;
+  --color-info: #56b8dc;
+  --color-info-content: #06222e;
+  --color-success: #f0b429;
+  --color-success-content: #251a04;
+  --color-warning: #e08c3a;
+  --color-warning-content: #2a1605;
+  --color-error: #e0654a;
+  --color-error-content: #fae3dd;
+  --radius-selector: 1rem;
+  --radius-field: 0.75rem;
   --radius-box: 1.25rem;
   --size-selector: 0.25rem;
   --size-field: 0.25rem;
