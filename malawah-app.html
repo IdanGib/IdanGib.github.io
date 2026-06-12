@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en" data-theme="igmalawah">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d0c08">
+<meta name="description" content="Malawah recipe calculator — enter your flour weight and get the honey, salt and water amounts. Tune the ratio vector to perfect the recipe.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Malawah">
+<title>Malawah</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23f0b429'/%3E%3Cg transform='translate(12 12)'%3E%3Ccircle cx='20' cy='20' r='15' fill='%230d0c08'/%3E%3Cpath d='M20 20a2 2 0 0 1 0 4a4 4 0 0 1 0-8a6 6 0 0 1 0 12a8 8 0 0 1 0-16' fill='none' stroke='%23f0b429' stroke-width='2.5' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+<script type="module" src="/src/malawah/main.ts"></script>
+</head>
+<body class="min-h-svh touch-manipulation bg-base-100 font-dm text-base-content">
+<div class="mx-auto flex min-h-svh max-w-[430px] flex-col">
+  <header class="sticky top-0 z-20 flex items-center justify-center border-b border-base-content/10 bg-base-100/85 px-5 pt-[calc(env(safe-area-inset-top,0px)+14px)] pb-3.5 backdrop-blur-xl">
+    <h1 class="font-jet text-[11px] font-extrabold tracking-[0.24em] uppercase text-base-content/60">Malawah</h1>
+  </header>
+  <main class="flex flex-1 flex-col gap-2 p-3.5 pb-[calc(env(safe-area-inset-bottom,0px)+28px)]">
+    <noscript><p class="py-6 text-center text-base-content/60">Malawah needs JavaScript to run.</p></noscript>
+
+    <section class="card border border-base-content/10 bg-base-200 shadow-md" aria-label="Flour weight">
+      <div class="card-body gap-2.5 px-[18px] pt-[18px] pb-4">
+        <label class="font-jet text-[10px] font-bold tracking-[0.16em] uppercase text-base-content/40" for="flour">Flour weight · Fw</label>
+        <div class="input input-lg flex w-full items-center gap-2 border-base-content/10 bg-base-300">
+          <input id="flour" type="number" inputmode="decimal" min="0" step="any" placeholder="500" class="min-w-0 grow font-anton text-2xl tracking-[0.01em]">
+          <span class="font-dm text-sm font-medium text-base-content/60">g</span>
+        </div>
+        <div class="join w-full rounded-field border border-base-content/10 bg-base-300/50 p-[3px]" role="group" aria-label="Quick flour amounts">
+          <button type="button" class="btn btn-ghost join-item btn-xs h-8 flex-1 font-jet tracking-[0.06em]" data-fw="250">250g</button>
+          <button type="button" class="btn btn-ghost join-item btn-xs h-8 flex-1 font-jet tracking-[0.06em]" data-fw="500">500g</button>
+          <button type="button" class="btn btn-ghost join-item btn-xs h-8 flex-1 font-jet tracking-[0.06em]" data-fw="750">750g</button>
+          <button type="button" class="btn btn-ghost join-item btn-xs h-8 flex-1 font-jet tracking-[0.06em]" data-fw="1000">1kg</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="flex flex-col gap-2" aria-labelledby="mixHeading">
+      <h2 id="mixHeading" class="px-0.5 pt-1 font-anton text-xl tracking-[0.02em] uppercase">Mix in</h2>
+      <div class="grid grid-cols-3 gap-2">
+        <div class="card border border-base-content/10 bg-base-200 shadow-md">
+          <div class="card-body gap-0 px-3 pt-3.5 pb-3">
+            <p class="mb-1.5 flex items-center gap-1.5 font-jet text-[9px] font-bold tracking-[0.14em] uppercase text-base-content/40"><span aria-hidden="true" class="h-2 w-2 flex-none rounded-full bg-primary"></span>Honey</p>
+            <p class="font-anton text-[26px] leading-[0.9] tracking-[0.01em]"><output id="honeyOut" for="flour honeyRatio">0</output><span class="font-dm text-xs font-medium tracking-normal text-base-content/60"> g</span></p>
+          </div>
+        </div>
+        <div class="card border border-base-content/10 bg-base-200 shadow-md">
+          <div class="card-body gap-0 px-3 pt-3.5 pb-3">
+            <p class="mb-1.5 flex items-center gap-1.5 font-jet text-[9px] font-bold tracking-[0.14em] uppercase text-base-content/40"><span aria-hidden="true" class="h-2 w-2 flex-none rounded-full bg-accent"></span>Salt</p>
+            <p class="font-anton text-[26px] leading-[0.9] tracking-[0.01em]"><output id="saltOut" for="flour saltRatio">0</output><span class="font-dm text-xs font-medium tracking-normal text-base-content/60"> g</span></p>
+          </div>
+        </div>
+        <div class="card border border-base-content/10 bg-base-200 shadow-md">
+          <div class="card-body gap-0 px-3 pt-3.5 pb-3">
+            <p class="mb-1.5 flex items-center gap-1.5 font-jet text-[9px] font-bold tracking-[0.14em] uppercase text-base-content/40"><span aria-hidden="true" class="h-2 w-2 flex-none rounded-full bg-secondary"></span>Water</p>
+            <p class="font-anton text-[26px] leading-[0.9] tracking-[0.01em]"><output id="waterOut" for="flour waterRatio">0</output><span class="font-dm text-xs font-medium tracking-normal text-base-content/60"> ml</span></p>
+          </div>
+        </div>
+      </div>
+      <p class="px-0.5 text-[11px] leading-snug text-base-content/60">Mix these into your flour — honey and salt in grams, water in millilitres.</p>
+    </section>
+
+    <section class="card border border-base-content/10 bg-base-200 shadow-md" aria-labelledby="ratiosHeading">
+      <div class="card-body gap-3 p-4">
+        <h2 id="ratiosHeading" class="font-anton text-xl tracking-[0.02em] uppercase">Tune the recipe</h2>
+        <p class="font-jet text-[11px] font-bold text-base-content/60">(honey, salt, water) = <span id="vector" class="text-primary"></span></p>
+        <p class="text-[11px] leading-snug text-base-content/60">Amount of each ingredient per 1&nbsp;g of flour. Changes apply instantly and are saved on this device.</p>
+        <div class="flex items-center justify-between gap-3">
+          <label class="flex items-center gap-2 font-jet text-[10px] font-bold tracking-[0.16em] uppercase whitespace-nowrap text-base-content/40" for="honeyRatio"><span aria-hidden="true" class="h-2 w-2 flex-none rounded-full bg-primary"></span>Honey</label>
+          <input type="number" id="honeyRatio" inputmode="decimal" min="0" step="any" class="input input-sm w-28 border-base-content/10 bg-base-300 text-right font-jet font-medium">
+        </div>
+        <div class="flex items-center justify-between gap-3">
+          <label class="flex items-center gap-2 font-jet text-[10px] font-bold tracking-[0.16em] uppercase whitespace-nowrap text-base-content/40" for="saltRatio"><span aria-hidden="true" class="h-2 w-2 flex-none rounded-full bg-accent"></span>Salt</label>
+          <input type="number" id="saltRatio" inputmode="decimal" min="0" step="any" class="input input-sm w-28 border-base-content/10 bg-base-300 text-right font-jet font-medium">
+        </div>
+        <div class="flex items-center justify-between gap-3">
+          <label class="flex items-center gap-2 font-jet text-[10px] font-bold tracking-[0.16em] uppercase whitespace-nowrap text-base-content/40" for="waterRatio"><span aria-hidden="true" class="h-2 w-2 flex-none rounded-full bg-secondary"></span>Water</label>
+          <input type="number" id="waterRatio" inputmode="decimal" min="0" step="any" class="input input-sm w-28 border-base-content/10 bg-base-300 text-right font-jet font-medium">
+        </div>
+        <button type="button" class="btn btn-outline btn-error btn-sm justify-start font-jet tracking-[0.1em] uppercase" id="reset">Restore default ratios</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<dialog id="resetModal" class="modal">
+  <div class="modal-box border border-base-content/10 bg-base-200">
+    <h2 class="text-lg font-bold">Restore default ratios?</h2>
+    <p class="py-3 text-base-content/60">Honey, salt and water go back to (0.16, 0.032, 0.72). Your current tuning is lost.</p>
+    <form method="dialog" class="modal-action">
+      <button class="btn btn-ghost">Cancel</button>
+      <button value="confirm" class="btn btn-error">Restore</button>
+    </form>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+<div id="toast" class="toast toast-center toast-bottom pointer-events-none z-50 mb-16 opacity-0 transition-opacity duration-200" role="status">
+  <div class="alert alert-success border-none font-jet text-[11px] font-extrabold tracking-[0.12em] uppercase shadow-lg shadow-primary/35" id="toastMsg"></div>
+</div>
+</body>
+</html>

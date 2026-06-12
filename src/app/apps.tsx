@@ -32,4 +32,25 @@ export const apps: AppDefinition[] = [
       </svg>
     ),
   },
+  {
+    name: "Malawah",
+    href: "/malawah-app.html",
+    iconClass: "bg-linear-145 from-[#f0b429] to-[#a8741a]",
+    icon: (
+      <svg
+        viewBox="0 0 40 40"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-11 w-11"
+      >
+        <circle cx="20" cy="20" r="15" fill="#0d0c08" />
+        <path
+          d="M20 20a2 2 0 0 1 0 4a4 4 0 0 1 0-8a6 6 0 0 1 0 12a8 8 0 0 1 0-16"
+          stroke="#f0b429"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        />
+      </svg>
+    ),
+  },
 ];
