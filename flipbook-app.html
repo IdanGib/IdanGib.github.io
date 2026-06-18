@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en" data-theme="igflip">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0b12">
+<meta name="description" content="Flipbook — a stop-motion animation studio. Snap a sequence of drawings with the camera and play them back as a cartoon. Everything stays inside the app, never your photo library.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Flipbook">
+<title>Flipbook</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2322d3ee'/%3E%3Cpath d='M26 20L46 32L26 44Z' fill='%2304181c'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+<script type="module" src="/src/flipbook/main.ts"></script>
+</head>
+<body class="min-h-svh touch-manipulation bg-base-100 font-dm text-base-content">
+<div class="mx-auto flex min-h-svh max-w-[430px] flex-col">
+  <header class="sticky top-0 z-20 flex items-center justify-center border-b border-base-content/10 bg-base-100/85 px-5 pt-[calc(env(safe-area-inset-top,0px)+14px)] pb-3.5 backdrop-blur-xl">
+    <h1 class="font-jet text-[11px] font-extrabold tracking-[0.24em] uppercase text-base-content/60">Flipbook</h1>
+  </header>
+  <main class="flex flex-1 flex-col p-3.5 pb-[calc(env(safe-area-inset-bottom,0px)+28px)]">
+    <noscript><p class="py-6 text-center text-base-content/60">Flipbook needs JavaScript to run.</p></noscript>
+
+    <!-- ── Gallery view ───────────────────────────────────────────────── -->
+    <section id="galleryView" class="flex flex-1 flex-col gap-3" aria-label="Your cartoons">
+      <div class="flex items-center justify-between px-0.5 pt-1">
+        <h2 class="font-anton text-xl tracking-[0.02em] uppercase">Your cartoons</h2>
+        <button id="newCartoon" type="button" class="btn btn-primary btn-sm font-jet tracking-[0.08em] uppercase">+ New</button>
+      </div>
+      <div id="galleryEmpty" class="card hidden border border-dashed border-base-content/15 bg-base-200/50">
+        <div class="card-body items-center gap-1.5 py-12 text-center">
+          <p class="font-anton text-lg uppercase tracking-[0.02em] text-base-content/70">No cartoons yet</p>
+          <p class="max-w-[220px] text-sm leading-snug text-base-content/50">Tap <span class="font-bold text-primary">+ New</span>, then snap a sequence of drawings to bring them to life.</p>
+        </div>
+      </div>
+      <div id="projectList" class="grid grid-cols-2 gap-3"></div>
+    </section>
+
+    <!-- ── Studio view ────────────────────────────────────────────────── -->
+    <section id="studioView" class="hidden flex-1 flex-col gap-3" aria-label="Animation studio">
+      <div class="flex items-center gap-2 px-0.5 pt-1">
+        <button id="backBtn" type="button" class="btn btn-ghost btn-sm px-2 font-jet tracking-[0.06em] uppercase" aria-label="Back to cartoons">‹ Cartoons</button>
+        <input id="projName" type="text" maxlength="40" aria-label="Cartoon name" class="input input-sm ml-auto w-44 border-base-content/10 bg-base-300 text-right font-dm font-bold">
+      </div>
+
+      <div id="stage" class="relative aspect-square w-full overflow-hidden rounded-box border border-base-content/10 bg-base-300">
+        <video id="preview" class="h-full w-full object-cover" playsinline autoplay muted></video>
+        <img id="onion" alt="" aria-hidden="true" class="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-40 hidden">
+        <div id="flash" aria-hidden="true" class="pointer-events-none absolute inset-0 bg-base-content opacity-0 transition-opacity duration-150"></div>
+        <div id="cameraFallback" class="absolute inset-0 hidden">
+          <div class="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+            <p id="fallbackMsg" class="text-sm leading-snug text-base-content/70"></p>
+            <button id="fallbackBtn" type="button" class="btn btn-secondary btn-sm font-jet uppercase tracking-[0.08em]">Add a photo</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between gap-3 px-1">
+        <label class="flex cursor-pointer items-center gap-2 font-jet text-[10px] font-bold uppercase tracking-[0.12em] text-base-content/50">
+          <input id="onionToggle" type="checkbox" class="toggle toggle-sm toggle-primary" checked>
+          Ghost
+        </label>
+        <button id="shutter" type="button" class="btn btn-circle h-16 w-16 border-4 border-base-content/20 bg-accent text-accent-content shadow-lg transition-transform duration-100 ease-fluid active:scale-90 motion-reduce:transition-none" aria-label="Snap a frame">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-7 w-7" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg>
+        </button>
+        <button id="playBtn" type="button" class="btn btn-primary btn-sm gap-1.5 font-jet uppercase tracking-[0.08em]" aria-label="Play animation">
+          <svg viewBox="0 0 24 24" fill="currentColor" class="h-3.5 w-3.5" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+          Play
+        </button>
+      </div>
+
+      <div class="flex items-center justify-between px-1 pt-1">
+        <h2 class="font-jet text-[10px] font-bold uppercase tracking-[0.14em] text-base-content/40">Frames · <span id="frameCount">0</span></h2>
+      </div>
+      <div id="filmstrip" class="flex gap-2 overflow-x-auto pb-1"></div>
+
+      <div id="frameActions" class="hidden">
+        <div class="flex items-center justify-center gap-2">
+          <button id="moveLeft" type="button" class="btn btn-ghost btn-sm btn-circle" aria-label="Move frame earlier">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <button id="deleteFrame" type="button" class="btn btn-outline btn-error btn-sm font-jet uppercase tracking-[0.08em]">Delete frame</button>
+          <button id="moveRight" type="button" class="btn btn-ghost btn-sm btn-circle" aria-label="Move frame later">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <input id="fileCapture" type="file" accept="image/*" capture="environment" class="hidden">
+      <canvas id="captureCanvas" class="hidden"></canvas>
+    </section>
+  </main>
+</div>
+
+<dialog id="playerModal" class="modal">
+  <div class="modal-box border border-base-content/10 bg-base-200">
+    <h2 class="mb-3 font-anton text-lg uppercase tracking-[0.02em]">Playing</h2>
+    <img id="playerImg" alt="Animation preview" class="aspect-square w-full rounded-box bg-base-300 object-contain">
+    <div class="mt-4 flex items-center gap-3">
+      <button id="playPause" type="button" class="btn btn-primary btn-sm w-24 font-jet uppercase tracking-[0.08em]">Pause</button>
+      <input id="fps" type="range" min="1" max="12" value="6" class="range range-primary range-sm flex-1" aria-label="Frames per second">
+      <span id="fpsLabel" class="w-14 text-right font-jet text-xs text-base-content/60">6 fps</span>
+    </div>
+    <div class="modal-action">
+      <form method="dialog"><button class="btn btn-ghost">Close</button></form>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+<dialog id="confirmModal" class="modal">
+  <div class="modal-box border border-base-content/10 bg-base-200">
+    <h2 id="confirmTitle" class="text-lg font-bold"></h2>
+    <p id="confirmBody" class="py-3 text-base-content/60"></p>
+    <form method="dialog" class="modal-action">
+      <button class="btn btn-ghost">Cancel</button>
+      <button value="confirm" class="btn btn-error">Delete</button>
+    </form>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+<div id="toast" class="toast toast-center toast-bottom pointer-events-none z-50 mb-16 opacity-0 transition-opacity duration-200" role="status">
+  <div class="alert alert-success border-none font-jet text-[11px] font-extrabold tracking-[0.12em] uppercase shadow-lg shadow-primary/35" id="toastMsg"></div>
+</div>
+</body>
+</html>

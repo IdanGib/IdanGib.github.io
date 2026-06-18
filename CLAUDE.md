@@ -6,7 +6,7 @@ This file describes the codebase structure, conventions, and development workflo
 
 **idangib.github.io** is the personal site of Idan Gibly (product designer & creative technologist), deployed to GitHub Pages at `idangib.github.io`.
 
-The root page is **IG Apps** — an iOS-style home screen built with React 18, TypeScript, and Vite — that launches small self-contained web apps (the **Training Tracker** and the **Malawah** recipe calculator). Every page is styled exclusively with **Tailwind CSS 4 + daisyUI 5**: there are no hand-written stylesheets and no inline styles anywhere in the project.
+The root page is **IG Apps** — an iOS-style home screen built with React 18, TypeScript, and Vite — that launches small self-contained web apps (the **Training Tracker**, the **Malawah** recipe calculator, and **Flipbook**, a stop-motion animation studio). Every page is styled exclusively with **Tailwind CSS 4 + daisyUI 5**: there are no hand-written stylesheets and no inline styles anywhere in the project.
 
 ## Tech Stack
 
@@ -37,10 +37,12 @@ No router, no state management library. Standalone app pages use vanilla TypeScr
 │   │   ├── App.tsx                # Home screen component (renders the app grid)
 │   │   └── apps.tsx               # Typed registry of launchable apps (add new apps here)
 │   ├── tracker/main.ts            # Training Tracker logic (vanilla TS, typed)
-│   └── malawah/main.ts            # Malawah recipe calculator logic (vanilla TS, typed)
+│   ├── malawah/main.ts            # Malawah recipe calculator logic (vanilla TS, typed)
+│   └── flipbook/main.ts           # Flipbook stop-motion studio (vanilla TS, typed; IndexedDB)
 ├── index.html                     # Home entry (theme igapps)
 ├── training-tracker-app.html      # Tracker entry (theme igtracker)
 ├── malawah-app.html               # Malawah entry (theme igmalawah)
+├── flipbook-app.html              # Flipbook entry (theme igflip)
 ├── 404.html                       # GitHub Pages 404 entry (theme igapps)
 ├── cv/index.html                  # CV download entry (theme igapps)
 ├── vite.config.ts                 # Base path logic + MPA rollup inputs + tailwindcss()
@@ -52,7 +54,7 @@ No router, no state management library. Standalone app pages use vanilla TypeScr
 
 - The React app is only the launcher. Each app on the grid is an entry in `src/app/apps.tsx` (`AppDefinition`: name, href, icon tile classes, 40×40 SVG icon).
 - Apps are **separate Vite page entries** (registered in `vite.config.ts` → `build.rollupOptions.input`). Build output paths mirror source paths, so public URLs never change. App logic is vanilla TypeScript under `src/<app>/main.ts` — do not introduce React into app pages.
-- Pages select their daisyUI theme with `data-theme` on `<html>` (`igapps`, `igtracker` or `igmalawah`).
+- Pages select their daisyUI theme with `data-theme` on `<html>` (`igapps`, `igtracker`, `igmalawah` or `igflip`).
 
 ### Training Tracker (`training-tracker-app.html` + `src/tracker/main.ts`)
 
@@ -73,9 +75,19 @@ A recipe calculator: enter the flour weight (`Fw`, grams) and get the mix-in amo
 - Mobile-first like the tracker (430px max width, safe-area insets, Apple web-app metas). Theme `igmalawah`: honey gold primary, water blue secondary, salt pink accent, on warm near-black.
 - Static markup; results live in `<output>` elements updated via `textContent`. Restoring the default ratios confirms via the daisyUI modal.
 
+### Flipbook (`flipbook-app.html` + `src/flipbook/main.ts`)
+
+A stop-motion animation studio: the camera (via `getUserMedia`) captures a sequence of drawings as square JPEG frames, which play back as a looping cartoon at an adjustable FPS. An onion-skin overlay shows the previous frame to help line up the next drawing, and a gallery holds multiple named cartoons. Key invariants:
+
+- **URL must stay `/flipbook-app.html`** — it is saved to phone home screens.
+- **Storage is IndexedDB, not localStorage** (frames are photos, far larger than localStorage's ~5 MB budget). DB name `flipbook`, object stores `projects` and `frames` — renaming the DB or stores silently wipes every saved cartoon. This is the project's one deliberate storage exception; no npm dependency is added (the IndexedDB browser API is used directly).
+- **In-app only:** frames live inside the app and are never written to the device photo library. The camera stream's tracks are stopped when leaving a cartoon.
+- Mobile-first like the other apps (430px max width, safe-area insets, Apple web-app metas). Theme `igflip`: cyan primary, violet secondary, rose accent (the record-style shutter), on cool near-black.
+- Frames render to a hidden `<canvas>` (center-cropped square, `image/jpeg`); playback and onion skin use `URL.createObjectURL`, revoked on view changes. Deleting a frame or cartoon confirms via the daisyUI modal, and the capture flash respects `prefers-reduced-motion`. If the camera is unavailable, a fallback adds a photo via `<input type="file" capture>` (still never saved to Photos).
+
 ## Styling Policy (Tailwind + daisyUI only)
 
-1. **`src/styles.css` is the only CSS file.** It contains nothing but library configuration: `@import "tailwindcss"`, the daisyUI plugin, the three custom themes, and `@theme` tokens. Never add bespoke selectors/rules to it, and never create other CSS files.
+1. **`src/styles.css` is the only CSS file.** It contains nothing but library configuration: `@import "tailwindcss"`, the daisyUI plugin, the four custom themes, and `@theme` tokens. Never add bespoke selectors/rules to it, and never create other CSS files.
 2. **No `<style>` blocks and no `style=` attributes** — in HTML, JSX, or JS-generated markup. Dynamic values must be expressed as classes (e.g. native `<progress value>` instead of a styled width).
 3. **daisyUI components first** (`btn`, `card`, `toggle`, `input`, `modal`, `toast`, `alert`, `progress`, `join`, `hero`, `link`), Tailwind utilities for layout and fine detail, arbitrary values (`w-[88px]`, `grid-cols-[22px_repeat(7,1fr)]`) where the design needs them.
 4. **Theme colors via daisyUI tokens** (`bg-base-100`, `text-base-content/60`, `bg-primary`, `border-primary/60`, …) — never hard-code page palette hexes in markup. Exception: icon artwork gradients in `apps.tsx` carry their own brand colors.
@@ -84,7 +96,8 @@ A recipe calculator: enter the flour weight (`Fw`, grams) and get the mix-in amo
    - `igapps` (default): near-black `#0a0a0f`, foreground `#f0ece2`, primary purple `#c084fc`, secondary pink `#f472b6`, accent orange `#fb923c`. Pill fields (`--radius-field: 999px`).
    - `igtracker`: near-black `#0e0f0d`, foreground `#f2f0e6`, primary lime `#c6f73f`, secondary blue `#4a90d9`, accent/error rust `#e0703a`.
    - `igmalawah`: warm near-black `#0d0c08`, foreground `#f2eee1`, primary honey gold `#f0b429`, secondary water blue `#56b8dc`, accent salt pink `#f2a48f`.
-7. **Fonts** are `@theme` tokens → utilities: `font-space` (Space Grotesk — igapps pages), `font-dm`, `font-anton`, `font-jet` (tracker, malawah). Loaded via `<link>` preconnect + stylesheet in each entry's `<head>`.
+   - `igflip`: cool near-black `#0b0b12`, foreground `#eef0f8`, primary cyan `#22d3ee`, secondary violet `#a78bfa`, accent/error rose `#fb7185`.
+7. **Fonts** are `@theme` tokens → utilities: `font-space` (Space Grotesk — igapps pages), `font-dm`, `font-anton`, `font-jet` (tracker, malawah, flipbook). Loaded via `<link>` preconnect + stylesheet in each entry's `<head>`.
 8. **Motion:** use `ease-fluid` (cubic-bezier 0.16,1,0.3,1 — `@theme` token), durations 0.1–0.7s, and gate decorative animation behind `motion-safe:` (or disable with `motion-reduce:`).
 9. **Signature effects:** film grain = fixed div with `bg-[url(/grain.svg)] bg-repeat opacity-[0.04]`; floating orbs = blurred rounded divs with `motion-safe:animate-pulse`. Both `aria-hidden="true"`.
 
@@ -147,6 +160,7 @@ The `build:pages` script exists for project-site deployments but is not used in 
 |------|---------|
 | `public/cv/idan-gibly-cv.pdf` | Binary asset — do not overwrite without a new PDF |
 | `training-tracker-app.html` / `src/tracker/main.ts` | Holds live user data via localStorage — never rename the page URL or its storage keys |
-| `src/styles.css` | Single source of truth for both themes — changes affect every page |
+| `flipbook-app.html` / `src/flipbook/main.ts` | Holds user cartoons in IndexedDB (db `flipbook`, stores `projects`/`frames`) — never rename the page URL, the DB, or the stores |
+| `src/styles.css` | Single source of truth for all four themes — changes affect every page |
 | `.github/workflows/deploy.yml` | Changes here affect live deployment pipeline |
 | `vite.config.ts` | Base path logic + MPA inputs; forgetting an input silently drops a page from the build |

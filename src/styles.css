@@ -113,6 +113,40 @@
   --noise: 0;
 }
 
+/* Flipbook stop-motion studio — cyan/violet/rose on cool near-black */
+@plugin "daisyui/theme" {
+  name: "igflip";
+  color-scheme: dark;
+  --color-base-100: #0b0b12;
+  --color-base-200: #15151f;
+  --color-base-300: #1e1e2c;
+  --color-base-content: #eef0f8;
+  --color-primary: #22d3ee;
+  --color-primary-content: #04181c;
+  --color-secondary: #a78bfa;
+  --color-secondary-content: #190f33;
+  --color-accent: #fb7185;
+  --color-accent-content: #330a13;
+  --color-neutral: #3a3a4a;
+  --color-neutral-content: #eef0f8;
+  --color-info: #60a5fa;
+  --color-info-content: #0b1c33;
+  --color-success: #34d399;
+  --color-success-content: #062119;
+  --color-warning: #fbbf24;
+  --color-warning-content: #2a1f04;
+  --color-error: #fb7185;
+  --color-error-content: #330a13;
+  --radius-selector: 2rem;
+  --radius-field: 0.85rem;
+  --radius-box: 1.5rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
 @theme {
   --font-space: "Space Grotesk", system-ui, sans-serif;
   --font-dm: "DM Sans", sans-serif;

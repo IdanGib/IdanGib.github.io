@@ -53,4 +53,20 @@ export const apps: AppDefinition[] = [
       </svg>
     ),
   },
+  {
+    name: "Flipbook",
+    href: "/flipbook-app.html",
+    iconClass: "bg-linear-145 from-[#22d3ee] to-[#0e7490]",
+    icon: (
+      <svg
+        viewBox="0 0 40 40"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-11 w-11"
+      >
+        <rect x="6" y="10" width="28" height="20" rx="5" fill="#04181c" />
+        <path d="M17 15l9 5-9 5z" fill="#22d3ee" />
+      </svg>
+    ),
+  },
 ];
