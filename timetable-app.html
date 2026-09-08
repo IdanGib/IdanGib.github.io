@@ -18,8 +18,10 @@
 </head>
 <body class="min-h-svh touch-manipulation bg-base-100 bg-[linear-gradient(var(--color-base-300)_1px,transparent_1px),linear-gradient(90deg,var(--color-base-300)_1px,transparent_1px)] bg-[length:26px_26px] font-rubik text-base-content">
 <div class="mx-auto flex min-h-svh max-w-[460px] flex-col">
-  <header class="sticky top-0 z-20 flex items-center justify-center border-b border-base-content/10 bg-base-100/85 px-5 pt-[calc(env(safe-area-inset-top,0px)+14px)] pb-3.5 backdrop-blur-xl">
+  <header class="sticky top-0 z-20 grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-base-content/10 bg-base-100/85 px-3.5 pt-[calc(env(safe-area-inset-top,0px)+14px)] pb-3.5 backdrop-blur-xl">
+    <div id="classpick" class="justify-self-start"></div>
     <h1 class="font-secular text-[15px] font-normal tracking-[0.04em] text-base-content/70">מה לוקחים היום</h1>
+    <span aria-hidden="true"></span>
   </header>
 
   <main class="flex flex-1 flex-col px-3 pt-3.5 pb-[calc(env(safe-area-inset-bottom,0px)+40px)]">

@@ -1,11 +1,64 @@
 import "../styles.css";
-import { CONFIG, type Item, type ItemRef, type TextKey, type Tone } from "./config";
+import {
+  CONFIG,
+  type ClassConfig,
+  type Item,
+  type ItemRef,
+  type Labels,
+  type Settings,
+  type Subject,
+  type TextKey,
+  type Tone,
+} from "./config";
 
-const { settings, items, subjects, schedule, extras, labels, daily } = CONFIG;
+// ── The class on screen ──────────────────────────────────────────────────────
+// A class inherits the shared content and overrides what it needs, so the rest
+// of the file only ever reads the resolved class.
+interface ActiveClass {
+  id: string;
+  name: string;
+  icon: string;
+  settings: Settings;
+  items: Record<string, Item>;
+  daily: string[];
+  subjects: Record<string, Subject>;
+  schedule: Record<number, string[]>;
+  extras: Record<string, ItemRef[]>;
+  labels: Labels;
+}
+
+const resolveClass = (def: ClassConfig): ActiveClass => ({
+  id: def.id,
+  name: def.name,
+  icon: def.icon,
+  settings: { ...CONFIG.settings, ...def.settings },
+  items: { ...CONFIG.items, ...def.items },
+  daily: def.daily ?? CONFIG.daily,
+  subjects: { ...CONFIG.subjects, ...def.subjects },
+  schedule: def.schedule,
+  extras: def.extras ?? {},
+  labels: { ...CONFIG.labels, ...def.labels },
+});
+
+// Key is a stable API: changing it silently drops the day's ticks.
+const K_DONE = "timetable:done";
+const K_CLASS = "timetable:class";
+
+const readStored = (key: string): string | null => {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null; // storage unavailable — fall back to the default class
+  }
+};
+
+const classes = CONFIG.classes;
+const storedClass = readStored(K_CLASS);
+let active = resolveClass(classes.find((c) => c.id === storedClass) ?? classes[0]);
 
 // ── Text ─────────────────────────────────────────────────────────────────────
 const t = (key: TextKey, vars: Record<string, string | number> = {}): string =>
-  labels[key].replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? ""));
+  active.labels[key].replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? ""));
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 // Local time throughout: an ISO/UTC key would roll over mid-evening in Israel
@@ -30,17 +83,17 @@ interface Day {
 }
 
 const now = new Date();
-let offset = now.getHours() >= settings.switchToTomorrowAtHour ? 1 : 0;
+let offset = now.getHours() >= active.settings.switchToTomorrowAtHour ? 1 : 0;
 
 function dayFor(off: number): Day {
   const date = addDays(now, off);
   const weekday = date.getDay();
   return {
     key: dateKey(date),
-    name: labels.weekdays[weekday],
-    isSchoolDay: settings.schoolDays.includes(weekday),
-    subjects: schedule[weekday] ?? [],
-    extras: extras[dateKey(date)] ?? [],
+    name: active.labels.weekdays[weekday],
+    isSchoolDay: active.settings.schoolDays.includes(weekday),
+    subjects: active.schedule[weekday] ?? [],
+    extras: active.extras[dateKey(date)] ?? [],
   };
 }
 
@@ -58,7 +111,7 @@ interface Group {
 }
 
 function resolve(ref: ItemRef, fallback: Tone = "warning"): ResolvedItem | null {
-  const base = typeof ref === "string" ? items[ref] : ref;
+  const base = typeof ref === "string" ? active.items[ref] : ref;
   if (!base) return null; // key missing from the catalogue — skip it
   const id = typeof ref === "string" ? ref : base.name;
   return { ...base, id, tone: base.tone ?? fallback };
@@ -67,13 +120,15 @@ function resolve(ref: ItemRef, fallback: Tone = "warning"): ResolvedItem | null 
 function buildGroups(day: Day): Group[] {
   const groups: Group[] = [];
 
-  const dailyItems = daily.map((id) => resolve(id)).filter((x): x is ResolvedItem => x !== null);
-  if (dailyItems.length) groups.push({ title: labels.groupDaily, items: dailyItems });
+  const dailyItems = active.daily
+    .map((id) => resolve(id))
+    .filter((x): x is ResolvedItem => x !== null);
+  if (dailyItems.length) groups.push({ title: active.labels.groupDaily, items: dailyItems });
 
   const subjectItems: ResolvedItem[] = [];
   const names: string[] = [];
   day.subjects.forEach((key) => {
-    const subject = subjects[key];
+    const subject = active.subjects[key];
     if (!subject) return;
     names.push(subject.name);
     subject.items.forEach((id) => {
@@ -82,7 +137,11 @@ function buildGroups(day: Day): Group[] {
     });
   });
   if (subjectItems.length) {
-    groups.push({ title: labels.groupSubjects, note: names.join(" · "), items: subjectItems });
+    groups.push({
+      title: active.labels.groupSubjects,
+      note: names.join(" · "),
+      items: subjectItems,
+    });
   }
 
   const extraItems = day.extras
@@ -90,8 +149,8 @@ function buildGroups(day: Day): Group[] {
     .filter((x): x is ResolvedItem => x !== null);
   if (extraItems.length) {
     groups.push({
-      title: labels.groupExtras,
-      note: labels.extrasSource,
+      title: active.labels.groupExtras,
+      note: active.labels.extrasSource,
       highlight: true,
       items: extraItems,
     });
@@ -101,32 +160,49 @@ function buildGroups(day: Day): Group[] {
 }
 
 // ── Storage (localStorage with in-memory fallback) ───────────────────────────
-// Key is a stable API: changing it silently drops the day's ticks.
-const K_DONE = "timetable:done";
+// `timetable:done` now holds one date map per class,
+// `{ classId: { "YYYY-MM-DD": ["itemId", …] } }`. A single-class file written
+// by an older build — `{ "YYYY-MM-DD": [...] }` — is read as the first class's
+// history, so nobody's ticks are lost on the upgrade.
 const KEEP_DAYS = 14;
 
 type DoneMap = Record<string, string[]>;
+type StoredDone = Record<string, DoneMap | string[]>;
 
-let done: Record<string, Set<string>> = {};
+const done: Record<string, Record<string, Set<string>>> = {};
+
+const isLegacy = (raw: StoredDone): boolean =>
+  Object.values(raw).some((value) => Array.isArray(value));
 
 function loadDone(): void {
-  let raw: DoneMap = {};
+  let raw: StoredDone = {};
   try {
-    const v = localStorage.getItem(K_DONE);
-    if (v) raw = JSON.parse(v) as DoneMap;
+    const v = readStored(K_DONE);
+    if (v) raw = JSON.parse(v) as StoredDone;
   } catch {
-    /* storage unavailable or corrupt — start empty */
+    /* corrupt JSON — start empty */
   }
+  const byClass: Record<string, DoneMap> = isLegacy(raw)
+    ? { [classes[0].id]: raw as DoneMap }
+    : (raw as Record<string, DoneMap>);
+
   const cutoff = dateKey(addDays(now, -KEEP_DAYS));
-  for (const [key, ids] of Object.entries(raw)) {
-    if (key >= cutoff && Array.isArray(ids)) done[key] = new Set(ids);
+  for (const [classId, days] of Object.entries(byClass)) {
+    if (!days || typeof days !== "object") continue;
+    for (const [key, ids] of Object.entries(days)) {
+      if (key >= cutoff && Array.isArray(ids)) (done[classId] ??= {})[key] = new Set(ids);
+    }
   }
 }
 
 function saveDone(): void {
-  const raw: DoneMap = {};
-  for (const [key, set] of Object.entries(done)) {
-    if (set.size) raw[key] = [...set];
+  const raw: Record<string, DoneMap> = {};
+  for (const [classId, days] of Object.entries(done)) {
+    const kept: DoneMap = {};
+    for (const [key, set] of Object.entries(days)) {
+      if (set.size) kept[key] = [...set];
+    }
+    if (Object.keys(kept).length) raw[classId] = kept;
   }
   try {
     localStorage.setItem(K_DONE, JSON.stringify(raw));
@@ -135,7 +211,7 @@ function saveDone(): void {
   }
 }
 
-const doneFor = (day: Day): Set<string> => (done[day.key] ??= new Set());
+const doneFor = (day: Day): Set<string> => ((done[active.id] ??= {})[day.key] ??= new Set());
 
 // ── Audio ────────────────────────────────────────────────────────────────────
 // Recorded clips win; anything without one is read out by the browser voice,
@@ -194,6 +270,7 @@ function play(item: ResolvedItem, onend: () => void): void {
 const $ = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
 
 const els = {
+  classpick: $("classpick"),
   tabs: $("tabs"),
   headline: $("headline"),
   subline: $("subline"),
@@ -221,6 +298,73 @@ const ROW_BASE =
 const ROW_PLAIN = "bg-base-200 shadow-[0_3px_0_var(--color-base-300)]";
 const ROW_NOTE = "bg-warning/15 shadow-[0_3px_0_var(--color-warning)]";
 
+const CLASS_SUMMARY =
+  "flex cursor-pointer list-none items-center gap-1.5 rounded-full bg-base-200 px-3 py-1.5 font-rubik text-[13px] font-medium text-base-content shadow-[0_2px_0_var(--color-base-300)] transition-colors duration-150 focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-warning motion-reduce:transition-none";
+const CLASS_OPTION =
+  "flex w-full cursor-pointer items-center gap-2 text-start font-rubik text-[15px] text-base-content aria-pressed:bg-base-200 aria-pressed:font-medium focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-warning";
+const ICON_CHEVRON = `<svg viewBox="0 0 24 24" aria-hidden="true" class="h-3.5 w-3.5 fill-none stroke-current stroke-[3] [stroke-linecap:round] [stroke-linejoin:round]"><path d="M6 9l6 6 6-6"/></svg>`;
+const ICON_CHECK = `<svg viewBox="0 0 24 24" aria-hidden="true" class="ms-auto h-4 w-4 fill-none stroke-success stroke-[3.5] [stroke-linecap:round] [stroke-linejoin:round]"><path d="M4 13l6 6L20 5"/></svg>`;
+
+function switchClass(def: ClassConfig): void {
+  if (def.id === active.id) return;
+  active = resolveClass(def);
+  try {
+    localStorage.setItem(K_CLASS, def.id);
+  } catch {
+    /* storage unavailable — the choice still holds for this session */
+  }
+  stopAudio();
+  render();
+}
+
+/** One class needs no picker; the header stays as it was. */
+function renderClassPicker(): void {
+  els.classpick.replaceChildren();
+  const many = classes.length > 1;
+  els.classpick.classList.toggle("hidden", !many);
+  if (!many) return;
+
+  const box = document.createElement("details");
+  box.className = "dropdown dropdown-start";
+
+  const summary = document.createElement("summary");
+  summary.className = CLASS_SUMMARY;
+  summary.setAttribute("aria-label", active.labels.classPicker);
+  const icon = document.createElement("span");
+  icon.setAttribute("aria-hidden", "true");
+  icon.textContent = active.icon;
+  summary.append(icon, active.name);
+  summary.insertAdjacentHTML("beforeend", ICON_CHEVRON);
+  box.appendChild(summary);
+
+  const menu = document.createElement("ul");
+  menu.className =
+    "dropdown-content menu mt-2 w-48 rounded-box bg-base-100 p-1.5 shadow-[0_6px_24px_var(--color-base-300)]";
+  classes.forEach((def) => {
+    const li = document.createElement("li");
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = CLASS_OPTION;
+    b.setAttribute("aria-pressed", String(def.id === active.id));
+    b.setAttribute("aria-label", t("pickClass", { name: def.name }));
+    const emoji = document.createElement("span");
+    emoji.setAttribute("aria-hidden", "true");
+    emoji.className = "text-lg";
+    emoji.textContent = def.icon;
+    b.append(emoji, def.name);
+    if (def.id === active.id) b.insertAdjacentHTML("beforeend", ICON_CHECK);
+    b.addEventListener("click", () => {
+      box.open = false;
+      switchClass(def);
+    });
+    li.appendChild(b);
+    menu.appendChild(li);
+  });
+  box.appendChild(menu);
+
+  els.classpick.appendChild(box);
+}
+
 function renderTabs(): void {
   els.tabs.replaceChildren();
   [0, 1].forEach((off) => {
@@ -228,7 +372,8 @@ function renderTabs(): void {
     const b = document.createElement("button");
     b.type = "button";
     b.className = TAB_BASE;
-    b.textContent = `${off === 0 ? labels.tabToday : labels.tabTomorrow} · ${day.name}`;
+    const tab = off === 0 ? active.labels.tabToday : active.labels.tabTomorrow;
+    b.textContent = `${tab} · ${day.name}`;
     b.setAttribute("aria-pressed", String(off === offset));
     b.addEventListener("click", () => {
       offset = off;
@@ -304,7 +449,7 @@ function itemRow(
       playBtn.dataset.playing = "true";
       playBtn.classList.remove("bg-base-300/70");
       playBtn.classList.add("bg-warning", "text-warning-content");
-      playBtn.setAttribute("aria-label", labels.stopItem);
+      playBtn.setAttribute("aria-label", active.labels.stopItem);
       playBtn.innerHTML = ICON_STOP;
       play(item, () => {
         if (playingId === item.id) stopAudio();
@@ -341,6 +486,7 @@ function celebrate(el: HTMLElement): void {
 function render(celebrateId?: string): void {
   const day = dayFor(offset);
   const marked = doneFor(day);
+  renderClassPicker();
   renderTabs();
   els.list.replaceChildren();
 
@@ -348,7 +494,7 @@ function render(celebrateId?: string): void {
   const all = groups.flatMap((g) => g.items);
 
   if (!all.length) {
-    els.headline.textContent = labels.noSchoolTitle;
+    els.headline.textContent = active.labels.noSchoolTitle;
     els.subline.textContent = t("noSchoolSub", { day: day.name });
     els.count.classList.add("hidden");
     els.fill.setAttribute("height", "0");
@@ -401,15 +547,19 @@ function render(celebrateId?: string): void {
   els.fill.classList.toggle("fill-warning", left !== 0);
 
   els.headline.textContent =
-    left === 0 ? labels.allDone : left === 1 ? labels.remainingOne : t("remainingMany", { n: left });
-  els.subline.textContent = left === 0 ? labels.sublineDone : labels.subline;
+    left === 0
+      ? active.labels.allDone
+      : left === 1
+        ? active.labels.remainingOne
+        : t("remainingMany", { n: left });
+  els.subline.textContent = left === 0 ? active.labels.sublineDone : active.labels.subline;
   els.count.textContent = t("progress", { done: total - left, total });
 
   if (left === 0) {
     const banner = document.createElement("div");
     banner.className =
       "mt-1.5 rounded-[24px] bg-success px-4.5 py-5.5 text-center font-secular text-[26px] text-success-content shadow-[0_4px_0_color-mix(in_oklab,var(--color-success)_65%,black)]";
-    banner.append(labels.bannerTitle);
+    banner.append(active.labels.bannerTitle);
     const sub = document.createElement("p");
     sub.className = "mt-1.5 font-rubik text-[15px] font-normal opacity-90";
     sub.textContent = t("bannerSub", { day: day.name });
@@ -426,5 +576,14 @@ function render(celebrateId?: string): void {
 }
 
 // ── Init ─────────────────────────────────────────────────────────────────────
+const closePicker = (target?: Node): void => {
+  const box = els.classpick.querySelector<HTMLDetailsElement>("details[open]");
+  if (box && (!target || !box.contains(target))) box.open = false;
+};
+document.addEventListener("pointerdown", (e) => closePicker(e.target as Node));
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closePicker();
+});
+
 loadDone();
 render();
