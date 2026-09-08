@@ -1,5 +1,5 @@
 /*
- * Single styling entry for every page (home, tracker, malawah, CV, 404).
+ * Single styling entry for every page (home, tracker, malawah, timetable, CV, 404).
  * All styling lives in Tailwind utilities + daisyUI components;
  * this file only configures the libraries — no bespoke rules.
  */
@@ -113,10 +113,47 @@
   --noise: 0;
 }
 
+/* Timetable — school-bag packing list. Ink on graph paper, light by design:
+   it is a kids' checklist read in daylight, not a night-time tool. */
+@plugin "daisyui/theme" {
+  name: "igtimetable";
+  color-scheme: light;
+  --color-base-100: #edf2fa;
+  --color-base-200: #ffffff;
+  --color-base-300: #d9e4f3;
+  --color-base-content: #16264a;
+  --color-primary: #3e7bfa;
+  --color-primary-content: #ffffff;
+  --color-secondary: #7a5af8;
+  --color-secondary-content: #ffffff;
+  --color-accent: #f03e9c;
+  --color-accent-content: #ffffff;
+  --color-neutral: #5e6f91;
+  --color-neutral-content: #ffffff;
+  --color-info: #17a398;
+  --color-info-content: #ffffff;
+  --color-success: #2e9e6b;
+  --color-success-content: #ffffff;
+  --color-warning: #f5a524;
+  --color-warning-content: #2a1a02;
+  --color-error: #e4572e;
+  --color-error-content: #ffffff;
+  --radius-selector: 999px;
+  --radius-field: 0.875rem;
+  --radius-box: 1.125rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
 @theme {
   --font-space: "Space Grotesk", system-ui, sans-serif;
   --font-dm: "DM Sans", sans-serif;
   --font-anton: "Anton", sans-serif;
   --font-jet: "JetBrains Mono", monospace;
+  --font-secular: "Secular One", system-ui, sans-serif;
+  --font-rubik: "Rubik", system-ui, sans-serif;
   --ease-fluid: cubic-bezier(0.16, 1, 0.3, 1);
 }

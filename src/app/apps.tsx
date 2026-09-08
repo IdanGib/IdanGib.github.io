@@ -53,4 +53,27 @@ export const apps: AppDefinition[] = [
       </svg>
     ),
   },
+  {
+    name: "Timetable",
+    href: "/timetable-app.html",
+    iconClass: "bg-linear-145 from-[#3e7bfa] to-[#7a5af8]",
+    icon: (
+      <svg
+        viewBox="0 0 40 40"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-11 w-11"
+      >
+        <path
+          d="M14.3 14C14.3 6 25.7 6 25.7 14"
+          stroke="#ffffff"
+          strokeWidth="2.6"
+          strokeLinecap="round"
+        />
+        <rect x="6" y="13" width="28" height="22" rx="7" fill="#ffffff" />
+        <path d="M6 21.5h28" stroke="#3e7bfa" strokeWidth="2.2" opacity="0.5" />
+        <rect x="17" y="19.5" width="6" height="4" rx="1.5" fill="#3e7bfa" />
+      </svg>
+    ),
+  },
 ];
