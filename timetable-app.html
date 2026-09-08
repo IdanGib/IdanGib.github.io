@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="he" dir="rtl" data-theme="igtimetable">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#edf2fa">
+<meta name="description" content="מה לוקחים היום — רשימת הציוד לבית הספר לפי מערכת השעות, עם סימון של מה שכבר בתיק.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="מה לוקחים">
+<title>מה לוקחים היום</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%233e7bfa'/%3E%3Cg transform='translate(12 12)'%3E%3Cpath d='M14.3 14C14.3 6 25.7 6 25.7 14' fill='none' stroke='%23ffffff' stroke-width='2.6' stroke-linecap='round'/%3E%3Crect x='6' y='13' width='28' height='22' rx='7' fill='%23ffffff'/%3E%3Cpath d='M6 21.5h28' stroke='%233e7bfa' stroke-width='2.2' opacity='.5'/%3E%3Crect x='17' y='19.5' width='6' height='4' rx='1.5' fill='%233e7bfa'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&family=Secular+One&display=swap" rel="stylesheet">
+<script type="module" src="/src/timetable/main.ts"></script>
+</head>
+<body class="min-h-svh touch-manipulation bg-base-100 bg-[linear-gradient(var(--color-base-300)_1px,transparent_1px),linear-gradient(90deg,var(--color-base-300)_1px,transparent_1px)] bg-[length:26px_26px] font-rubik text-base-content">
+<div class="mx-auto flex min-h-svh max-w-[460px] flex-col">
+  <header class="sticky top-0 z-20 flex items-center justify-center border-b border-base-content/10 bg-base-100/85 px-5 pt-[calc(env(safe-area-inset-top,0px)+14px)] pb-3.5 backdrop-blur-xl">
+    <h1 class="font-secular text-[15px] font-normal tracking-[0.04em] text-base-content/70">מה לוקחים היום</h1>
+  </header>
+
+  <main class="flex flex-1 flex-col px-3 pt-3.5 pb-[calc(env(safe-area-inset-bottom,0px)+40px)]">
+    <noscript><p class="py-6 text-center text-neutral">הרשימה צריכה JavaScript כדי לעבוד.</p></noscript>
+
+    <div id="tabs" class="flex gap-1.5 rounded-full bg-base-200 p-[5px] shadow-[0_2px_0_var(--color-base-300)]" role="group" aria-label="בחירת יום"></div>
+
+    <div class="mx-0.5 mt-4.5 mb-5.5 flex items-center gap-4" role="status" aria-live="polite">
+      <svg viewBox="0 0 120 142" aria-hidden="true" class="w-28 flex-none">
+        <defs>
+          <clipPath id="bagClip"><rect x="16" y="38" width="88" height="94" rx="24"/></clipPath>
+        </defs>
+        <path d="M42 40 C42 20 78 20 78 40" fill="none" class="stroke-base-content" stroke-width="6" stroke-linecap="round"/>
+        <rect x="16" y="38" width="88" height="94" rx="24" class="fill-base-200 stroke-base-content" stroke-width="5"/>
+        <g clip-path="url(#bagClip)">
+          <rect id="fill" x="16" y="132" width="88" height="0" class="fill-warning"/>
+        </g>
+        <rect x="16" y="38" width="88" height="94" rx="24" fill="none" class="stroke-base-content" stroke-width="5"/>
+        <path d="M16 74 h88" class="stroke-base-content/55" stroke-width="4"/>
+        <rect x="50" y="66" width="20" height="16" rx="5" class="fill-base-content"/>
+      </svg>
+      <div class="min-w-0">
+        <p id="headline" class="mb-1.5 font-secular text-3xl leading-tight font-normal"></p>
+        <p id="subline" class="text-base text-neutral"></p>
+        <p id="count" class="mt-3 inline-block rounded-full bg-base-200 px-3.5 py-1.5 text-sm font-medium shadow-[0_2px_0_var(--color-base-300)]"></p>
+      </div>
+    </div>
+
+    <div id="list"></div>
+  </main>
+</div>
+</body>
+</html>

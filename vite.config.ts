@@ -30,6 +30,7 @@ export default defineConfig({
         home: entry("index.html"),
         tracker: entry("training-tracker-app.html"),
         malawah: entry("malawah-app.html"),
+        timetable: entry("timetable-app.html"),
         notFound: entry("404.html"),
         cv: entry("cv/index.html"),
       },
