@@ -138,11 +138,16 @@ export const CONFIG: TimetableConfig = {
     water: { name: "בקבוק מים", icon: "💧", tone: "primary", audioUrl: "/audio/he/water.m4a" },
     snack: { name: "ארוחת עשר", icon: "🥪", tone: "warning" },
     key: { name: "מפתח הבית", icon: "🔑", tone: "secondary" },
+    hat: { name: "כובע", icon: "🧢", tone: "success" },
 
     reader: { name: "ספר קריאה", icon: "📕" },
+    library: { name: "ספר לספרייה", icon: "📚" },
+    paint: { name: "צבעים", icon: "🎨" },
+    sciencenote: { name: "מחברת מדעים", icon: "📔" },
     shoes: { name: "נעלי ספורט", icon: "👟", note: "מגרש חיצוני" },
     sportkit: { name: "בגדי ספורט", icon: "👕" },
 
+    // חד-פעמיים — לשימוש ב־extras של תאריך מסוים
     money: { name: "20 ₪ להצגה", icon: "💵" },
     form: { name: "טופס חתום מההורים", icon: "📄" },
     whiteshirt: { name: "חולצה לבנה", icon: "👚" },
@@ -151,7 +156,12 @@ export const CONFIG: TimetableConfig = {
   daily: ["water", "snack", "key"],
 
   subjects: {
-    sport: { name: "ספורט", tone: "info", items: ["shoes", "sportkit"] },
+    sport: { name: "חינוך גופני", tone: "success", items: ["shoes", "sportkit"] },
+    art: { name: "אומנות", tone: "accent", items: ["paint"] },
+    science: { name: "מדעים", tone: "info", items: ["sciencenote"] },
+    library: { name: "שעת ספרייה", tone: "warning", items: ["library"] },
+    lifeskills: { name: "כישורי חיים", tone: "secondary", items: [] },
+    interests: { name: "תחומי עניין", tone: "neutral", items: [] },
   },
 
   labels: {
@@ -187,87 +197,112 @@ export const CONFIG: TimetableConfig = {
   },
 
   classes: [
+    // ── כיתה ג׳2 — מחנכת שרונה ממן (מערכת תשפ״ו) ─────────────────────────────
     {
       id: "gimel2",
       name: "כיתה ג׳2",
       icon: "🦊",
 
       items: {
-        mathbook: { name: "ספר חשבון", icon: "📘" },
-        mathnote: { name: "מחברת חשבון", icon: "📓" },
         hebnote: { name: "מחברת עברית", icon: "✏️" },
+        torahbook: { name: "חומש", icon: "📜" },
+        torahnote: { name: "מחברת תורה", icon: "📒" },
+        mathbook: { name: "ספר מתמטיקה", icon: "📘" },
+        mathnote: { name: "מחברת מתמטיקה", icon: "📓" },
+        ruler: { name: "סרגל", icon: "📏" },
         english: { name: "חוברת אנגלית", icon: "📗" },
-        science: { name: "מחברת מדעים", icon: "📔" },
+        englishnote: { name: "מחברת אנגלית", icon: "📝" },
         recorder: { name: "חלילית", icon: "🪈" },
-        paint: { name: "צבעי גואש", icon: "🎨" },
+        homelandnote: { name: "מחברת מולדת וחברה", icon: "📙" },
+        farmshoes: { name: "נעליים סגורות", icon: "🥾", note: "לחווה החקלאית" },
       },
 
       subjects: {
-        math: { name: "חשבון", tone: "primary", items: ["mathbook", "mathnote"] },
+        opening: { name: "פותחים יום", tone: "neutral", items: [] },
+        torah: { name: "תורה", tone: "warning", items: ["torahbook", "torahnote"] },
         hebrew: { name: "עברית", tone: "error", items: ["reader", "hebnote"] },
-        english: { name: "אנגלית", tone: "secondary", items: ["english"] },
-        science: { name: "מדעים", tone: "info", items: ["science"] },
-        art: { name: "אומנות", tone: "accent", items: ["paint"] },
-        music: { name: "מוזיקה", tone: "accent", items: ["recorder"] },
+        math: { name: "מתמטיקה", tone: "primary", items: ["mathbook", "mathnote"] },
+        geometry: { name: "גאומטריה", tone: "primary", items: ["mathnote", "ruler"] },
+        english: { name: "אנגלית", tone: "secondary", items: ["english", "englishnote"] },
+        recorder: { name: "חלילית", tone: "accent", items: ["recorder"] },
+        homeland: { name: "מולדת וחברה", tone: "success", items: ["homelandnote"] },
+        academy: { name: "אקדמיה חוקרת / בשבילי מורשת", tone: "neutral", items: [] },
+        cyber: { name: "סייבר", tone: "neutral", items: [] },
+        farm: { name: "חווה חקלאית", tone: "success", items: ["hat", "farmshoes"] },
       },
 
       schedule: {
-        0: ["math", "hebrew", "english"], // ראשון
-        1: ["hebrew", "science", "sport"], // שני
-        2: ["math", "hebrew", "sport", "art"], // שלישי
-        3: ["english", "science", "music"], // רביעי
-        4: ["math", "art"], // חמישי
-        5: ["hebrew", "music"], // שישי — יום קצר
+        // ראשון: פותחים יום · תורה · אומנות · מתמטיקה · מתמטיקה · חינוך גופני · מולדת וחברה
+        0: ["opening", "torah", "art", "math", "sport", "homeland"],
+        // שני: פותחים יום · עברית · עברית + אקדמיה חוקרת · מתמטיקה · מולדת וחברה · מדעים
+        1: ["opening", "hebrew", "academy", "math", "homeland", "science"],
+        // שלישי: פותחים יום · אומנות · מתמטיקה · תחומי עניין ×2 · אנגלית
+        2: ["opening", "art", "math", "interests", "english"],
+        // רביעי: פותחים יום · חלילית · תורה · סייבר · חינוך גופני · אנגלית
+        3: ["opening", "recorder", "torah", "cyber", "sport", "english"],
+        // חמישי: פותחים יום · עברית · מדעים · חווה חקלאית ×2 · שעת ספרייה · מתמטיקה
+        4: ["opening", "hebrew", "science", "farm", "library", "math"],
+        // שישי: פותחים יום · עברית · אקדמיה חוקרת · גאומטריה · כישורי חיים
+        5: ["opening", "hebrew", "academy", "geometry", "lifeskills"],
       },
 
-      extras: {
-        "2026-09-08": ["money", "form"],
-        "2026-09-09": [{ name: "חולצה לבנה", icon: "👚", note: "טקס בשעה 9:00" }],
+      // הודעות מהמורה ליום מסוים, למשל:
+      // "2026-09-15": ["money", "form"],
+      extras: {},
+
+      labels: {
+        extrasSource: "מהודעה של שרונה",
       },
     },
 
+    // ── כיתה א׳1 — מחנכת הדר זרביב (מערכת תשפ״ו) ─────────────────────────────
     {
       id: "alef1",
       name: "כיתה א׳1",
       icon: "🐨",
 
-      settings: {
-        schoolDays: [0, 1, 2, 3, 4], // בלי יום שישי
-      },
-
       items: {
         pencilcase: { name: "קלמר", icon: "✏️", tone: "secondary" },
-        hat: { name: "כובע", icon: "🧢", tone: "success" },
-        abcbook: { name: "חוברת אותיות", icon: "📒" },
-        abcnote: { name: "מחברת כתיבה", icon: "📝" },
-        numbers: { name: "חוברת מספרים", icon: "🔢" },
-        library: { name: "ספר לספרייה", icon: "📚" },
+        hebbook: { name: "חוברת עברית", icon: "📒" },
+        hebnote: { name: "מחברת כתיבה", icon: "📝" },
+        numbers: { name: "חוברת חשבון", icon: "🔢" },
+        mathnote: { name: "מחברת חשבון", icon: "📓" },
         drums: { name: "תוף קטן", icon: "🥁" },
       },
 
       daily: ["water", "snack", "pencilcase", "hat"],
 
       subjects: {
-        letters: { name: "אותיות", tone: "error", items: ["abcbook", "abcnote"] },
-        counting: { name: "חשבון", tone: "primary", items: ["numbers"] },
-        library: { name: "ספרייה", tone: "success", items: ["library"] },
-        music: { name: "מוזיקה", tone: "accent", items: ["drums"] },
+        assembly: { name: "כינוס בוקר", tone: "neutral", items: [] },
+        hebrew: { name: "עברית", tone: "error", items: ["hebbook", "hebnote"] },
+        math: { name: "חשבון", tone: "primary", items: ["numbers", "mathnote"] },
+        music: { name: "מוסיקה", tone: "accent", items: ["drums"] },
+        heritage: { name: "בשבילי מורשת", tone: "neutral", items: [] },
+        playtime: { name: "שעת משחק", tone: "neutral", items: [] },
+        roadsafety: { name: "זהירות בדרכים", tone: "neutral", items: [] },
       },
 
       schedule: {
-        0: ["letters", "counting"], // ראשון
-        1: ["letters", "sport"], // שני
-        2: ["counting", "library"], // שלישי
-        3: ["letters", "music"], // רביעי
-        4: ["counting", "sport"], // חמישי
+        // ראשון: עברית + כינוס בוקר · עברית + בשבילי מורשת · מוסיקה · מדעים ×2
+        0: ["hebrew", "assembly", "heritage", "music", "science"],
+        // שני: חינוך גופני · חשבון · עברית · שעת משחק · זהירות בדרכים
+        1: ["sport", "math", "hebrew", "playtime", "roadsafety"],
+        // שלישי: תחומי עניין ×2 · אומנות ×2 · כישורי חיים
+        2: ["interests", "art", "lifeskills"],
+        // רביעי: חשבון ×2 · מוסיקה · עברית · עברית + בשבילי מורשת
+        3: ["math", "music", "hebrew", "heritage"],
+        // חמישי: חשבון ×2 · עברית · שעת ספרייה · חינוך גופני
+        4: ["math", "hebrew", "library", "sport"],
+        // שישי: עברית ×2 · חשבון · כישורי חיים
+        5: ["hebrew", "math", "lifeskills"],
       },
 
-      extras: {
-        "2026-09-09": [{ name: "ממתקים ליום הולדת", icon: "🎂", note: "מסיבה אחרי ההפסקה" }],
-      },
+      // הודעות מהמורה ליום מסוים, למשל:
+      // "2026-09-15": [{ name: "ממתקים ליום הולדת", icon: "🎂", note: "מסיבה אחרי ההפסקה" }],
+      extras: {},
 
       labels: {
-        extrasSource: "מהודעה של המורה רותי",
+        extrasSource: "מהודעה של הדר",
       },
     },
   ],
