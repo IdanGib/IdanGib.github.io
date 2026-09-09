@@ -216,7 +216,7 @@ export const CONFIG: TimetableConfig = {
         recorder: { name: "חלילית", tone: "accent", items: ["recorder"] },
         homeland: { name: "מולדת וחברה", tone: "success", items: [] },
         academy: { name: "אקדמיה חוקרת / בשבילי מורשת", tone: "neutral", items: [] },
-        cyber: { name: "סייבר", tone: "neutral", items: [] },
+        cyber: { name: "סייבר", tone: "neutral", items: ["usb"] },
         farm: { name: "חווה חקלאית", tone: "success", items: [] },
       },
 
