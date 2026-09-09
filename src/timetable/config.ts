@@ -218,18 +218,12 @@ export const CONFIG: TimetableConfig = {
       },
 
       schedule: {
-        // ראשון: פותחים יום · תורה · אומנות · מתמטיקה · מתמטיקה · חינוך גופני · מולדת וחברה
-        0: ["opening", "torah", "art", "math", "sport", "homeland"],
-        // שני: פותחים יום · עברית · עברית + אקדמיה חוקרת · מתמטיקה · מולדת וחברה · מדעים
-        1: ["opening", "hebrew", "academy", "math", "homeland", "science"],
-        // שלישי: פותחים יום · אומנות · מתמטיקה · תחומי עניין ×2 · אנגלית
-        2: ["opening", "art", "math", "interests", "english"],
-        // רביעי: פותחים יום · חלילית · תורה · סייבר · חינוך גופני · אנגלית
-        3: ["opening", "recorder", "torah", "cyber", "sport", "english"],
-        // חמישי: פותחים יום · עברית · מדעים · חווה חקלאית ×2 · שעת ספרייה · מתמטיקה
-        4: ["opening", "hebrew", "science", "farm", "library", "math"],
-        // שישי: פותחים יום · עברית · אקדמיה חוקרת · גאומטריה · כישורי חיים
-        5: ["opening", "hebrew", "academy", "geometry", "lifeskills"],
+        0: ["torah", "art", "math", "sport", "homeland"],
+        1: ["hebrew", "academy", "math", "homeland", "science"],
+        2: ["art", "math", "interests", "english"],
+        3: ["recorder", "torah", "cyber", "sport", "english"],
+        4: ["hebrew", "science", "farm", "library", "math"],
+        5: ["hebrew", "academy", "geometry", "lifeskills"],
       },
 
       // הודעות מהמורה ליום מסוים, למשל:
@@ -265,17 +259,11 @@ export const CONFIG: TimetableConfig = {
       },
 
       schedule: {
-        // ראשון: עברית + כינוס בוקר · עברית + בשבילי מורשת · מוסיקה · מדעים ×2
-        0: ["hebrew", "assembly", "heritage", "music", "science"],
-        // שני: חינוך גופני · חשבון · עברית · שעת משחק · זהירות בדרכים
+        0: ["hebrew", "music", "science"],
         1: ["sport", "math", "hebrew", "playtime", "roadsafety"],
-        // שלישי: תחומי עניין ×2 · אומנות ×2 · כישורי חיים
         2: ["interests", "art", "lifeskills"],
-        // רביעי: חשבון ×2 · מוסיקה · עברית · עברית + בשבילי מורשת
         3: ["math", "music", "hebrew", "heritage"],
-        // חמישי: חשבון ×2 · עברית · שעת ספרייה · חינוך גופני
         4: ["math", "hebrew", "library", "sport"],
-        // שישי: עברית ×2 · חשבון · כישורי חיים
         5: ["hebrew", "math", "lifeskills"],
       },
 
