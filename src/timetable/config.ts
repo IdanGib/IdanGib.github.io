@@ -138,12 +138,8 @@ export const CONFIG: TimetableConfig = {
     water: { name: "בקבוק מים", icon: "💧", tone: "primary", audioUrl: "/audio/he/water.m4a" },
     snack: { name: "ארוחת עשר", icon: "🥪", tone: "warning" },
     key: { name: "מפתח הבית", icon: "🔑", tone: "secondary" },
-    hat: { name: "כובע", icon: "🧢", tone: "success" },
 
     reader: { name: "ספר קריאה", icon: "📕" },
-    library: { name: "ספר לספרייה", icon: "📚" },
-    paint: { name: "צבעים", icon: "🎨" },
-    sciencenote: { name: "מחברת מדעים", icon: "📔" },
     shoes: { name: "נעלי ספורט", icon: "👟", note: "מגרש חיצוני" },
     sportkit: { name: "בגדי ספורט", icon: "👕" },
 
@@ -155,11 +151,13 @@ export const CONFIG: TimetableConfig = {
 
   daily: ["water", "snack", "key"],
 
+  // השיעורים המשותפים לשתי הכיתות. `items` ריק = עדיין לא הוגדר מה לוקחים
+  // לשיעור; מוסיפים לכאן מפתחות מתוך `items` כשיודעים מה באמת צריך.
   subjects: {
     sport: { name: "חינוך גופני", tone: "success", items: ["shoes", "sportkit"] },
-    art: { name: "אומנות", tone: "accent", items: ["paint"] },
-    science: { name: "מדעים", tone: "info", items: ["sciencenote"] },
-    library: { name: "שעת ספרייה", tone: "warning", items: ["library"] },
+    art: { name: "אומנות", tone: "accent", items: [] },
+    science: { name: "מדעים", tone: "info", items: [] },
+    library: { name: "שעת ספרייה", tone: "warning", items: [] },
     lifeskills: { name: "כישורי חיים", tone: "secondary", items: [] },
     interests: { name: "תחומי עניין", tone: "neutral", items: [] },
   },
@@ -197,38 +195,26 @@ export const CONFIG: TimetableConfig = {
   },
 
   classes: [
-    // ── כיתה ג׳2 — מחנכת שרונה ממן (מערכת תשפ״ו) ─────────────────────────────
+    // ── כיתה ג׳2 — מחנכת שרונה ממן ───────────────────────────────────────────
+    // המערכת מועתקת מדף המערכת של בית הספר. מה לוקחים לכל שיעור עדיין לא
+    // ידוע — מוסיפים את הפריטים ל־`items` של השיעור כשמתברר מה צריך.
     {
       id: "gimel2",
       name: "כיתה ג׳2",
       icon: "🦊",
 
-      items: {
-        hebnote: { name: "מחברת עברית", icon: "✏️" },
-        torahbook: { name: "חומש", icon: "📜" },
-        torahnote: { name: "מחברת תורה", icon: "📒" },
-        mathbook: { name: "ספר מתמטיקה", icon: "📘" },
-        mathnote: { name: "מחברת מתמטיקה", icon: "📓" },
-        ruler: { name: "סרגל", icon: "📏" },
-        english: { name: "חוברת אנגלית", icon: "📗" },
-        englishnote: { name: "מחברת אנגלית", icon: "📝" },
-        recorder: { name: "חלילית", icon: "🪈" },
-        homelandnote: { name: "מחברת מולדת וחברה", icon: "📙" },
-        farmshoes: { name: "נעליים סגורות", icon: "🥾", note: "לחווה החקלאית" },
-      },
-
       subjects: {
         opening: { name: "פותחים יום", tone: "neutral", items: [] },
-        torah: { name: "תורה", tone: "warning", items: ["torahbook", "torahnote"] },
-        hebrew: { name: "עברית", tone: "error", items: ["reader", "hebnote"] },
-        math: { name: "מתמטיקה", tone: "primary", items: ["mathbook", "mathnote"] },
-        geometry: { name: "גאומטריה", tone: "primary", items: ["mathnote", "ruler"] },
-        english: { name: "אנגלית", tone: "secondary", items: ["english", "englishnote"] },
-        recorder: { name: "חלילית", tone: "accent", items: ["recorder"] },
-        homeland: { name: "מולדת וחברה", tone: "success", items: ["homelandnote"] },
+        torah: { name: "תורה", tone: "warning", items: [] },
+        hebrew: { name: "עברית", tone: "error", items: [] },
+        math: { name: "מתמטיקה", tone: "primary", items: [] },
+        geometry: { name: "גאומטריה", tone: "primary", items: [] },
+        english: { name: "אנגלית", tone: "secondary", items: [] },
+        recorder: { name: "חלילית", tone: "accent", items: [] },
+        homeland: { name: "מולדת וחברה", tone: "success", items: [] },
         academy: { name: "אקדמיה חוקרת / בשבילי מורשת", tone: "neutral", items: [] },
         cyber: { name: "סייבר", tone: "neutral", items: [] },
-        farm: { name: "חווה חקלאית", tone: "success", items: ["hat", "farmshoes"] },
+        farm: { name: "חווה חקלאית", tone: "success", items: [] },
       },
 
       schedule: {
@@ -255,7 +241,7 @@ export const CONFIG: TimetableConfig = {
       },
     },
 
-    // ── כיתה א׳1 — מחנכת הדר זרביב (מערכת תשפ״ו) ─────────────────────────────
+    // ── כיתה א׳1 — מחנכת הדר זרביב ───────────────────────────────────────────
     {
       id: "alef1",
       name: "כיתה א׳1",
@@ -263,20 +249,16 @@ export const CONFIG: TimetableConfig = {
 
       items: {
         pencilcase: { name: "קלמר", icon: "✏️", tone: "secondary" },
-        hebbook: { name: "חוברת עברית", icon: "📒" },
-        hebnote: { name: "מחברת כתיבה", icon: "📝" },
-        numbers: { name: "חוברת חשבון", icon: "🔢" },
-        mathnote: { name: "מחברת חשבון", icon: "📓" },
-        drums: { name: "תוף קטן", icon: "🥁" },
+        hat: { name: "כובע", icon: "🧢", tone: "success" },
       },
 
       daily: ["water", "snack", "pencilcase", "hat"],
 
       subjects: {
         assembly: { name: "כינוס בוקר", tone: "neutral", items: [] },
-        hebrew: { name: "עברית", tone: "error", items: ["hebbook", "hebnote"] },
-        math: { name: "חשבון", tone: "primary", items: ["numbers", "mathnote"] },
-        music: { name: "מוסיקה", tone: "accent", items: ["drums"] },
+        hebrew: { name: "עברית", tone: "error", items: [] },
+        math: { name: "חשבון", tone: "primary", items: [] },
+        music: { name: "מוסיקה", tone: "accent", items: [] },
         heritage: { name: "בשבילי מורשת", tone: "neutral", items: [] },
         playtime: { name: "שעת משחק", tone: "neutral", items: [] },
         roadsafety: { name: "זהירות בדרכים", tone: "neutral", items: [] },
