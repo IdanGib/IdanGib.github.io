@@ -40,7 +40,7 @@ No router, no state management library. Standalone app pages use vanilla TypeScr
 │   ├── tracker/main.ts            # Training Tracker logic (vanilla TS, typed)
 │   ├── malawah/main.ts            # Malawah recipe calculator logic (vanilla TS, typed)
 │   └── timetable/
-│       ├── config.ts              # Timetable content: items, subjects, schedule, labels
+│       ├── config.ts              # Timetable content: classes, items, subjects, schedule, labels
 │       └── main.ts                # Timetable logic (vanilla TS, typed)
 ├── index.html                     # Home entry (theme igapps)
 ├── training-tracker-app.html      # Tracker entry (theme igtracker)
@@ -80,11 +80,13 @@ A recipe calculator: enter the flour weight (`Fw`, grams) and get the mix-in amo
 
 ### Timetable (`timetable-app.html` + `src/timetable/`)
 
-A Hebrew, right-to-left school-bag packing list ("מה לוקחים היום"): pick **today** or **tomorrow**, and get everything that needs to go in the bag — daily items, the kit for that weekday's lessons, plus one-off extras for a specific date. Ticking items fills a backpack illustration; a full bag shows a done banner. Key invariants:
+A Hebrew, right-to-left school-bag packing list ("מה לוקחים היום"): pick a **class**, then **today** or **tomorrow**, and get everything that needs to go in the bag — daily items, the kit for that weekday's lessons, plus one-off extras for a specific date. Ticking items fills a backpack illustration; a full bag shows a done banner. Key invariants:
 
 - **URL must stay `/timetable-app.html`** — it is saved to phone home screens.
-- **localStorage key must not change:** `timetable:done` (`{ "YYYY-MM-DD": ["itemId", …] }`). Entries older than 14 days are pruned on load.
-- **`src/timetable/config.ts` is the content; `main.ts` is logic only.** Items, subjects, the weekly schedule, per-date extras and every on-screen string live in the config — adding a school subject or a note from the teacher should never mean touching `main.ts`.
+- **localStorage keys must not change:** `timetable:done` (`{ "classId": { "YYYY-MM-DD": ["itemId", …] } }`) and `timetable:class` (the id of the class on screen). Entries older than 14 days are pruned on load. The loader still reads the pre-multi-class shape (`{ "YYYY-MM-DD": [...] }`) as the **first** class's history, so that migration must survive any rewrite of the storage code.
+- **The app serves several classes.** `CONFIG.classes` holds one `ClassConfig` per class — its own items, subjects, weekly schedule, per-date extras from the teacher, and optional `settings`/`labels` overrides. Everything at the top level of `CONFIG` (item catalogue, shared subjects, daily kit, labels, settings) is the default each class inherits; a class's own records are merged over the shared ones and win on a key clash, and `daily` replaces the shared list outright. A class `id` keys stored ticks — **never rename one**; add classes to the array, don't reorder the first entry (it is the default and the migration target).
+- **`src/timetable/config.ts` is the content; `main.ts` is logic only.** Classes, items, subjects, the weekly schedule, per-date extras and every on-screen string live in the config — adding a class, a school subject or a note from the teacher should never mean touching `main.ts`.
+- The class picker is a daisyUI `dropdown` (a `<details>`, closed on outside click/Escape by `main.ts`) in the header; with a single configured class it is hidden and the header looks as it did before.
 - The page is `lang="he" dir="rtl"`. Use logical utilities (`ps-*`, `me-*`, `start-*`, `end-*`), never `left`/`right` ones.
 - Date keys are built from **local** time (`getFullYear`/`getMonth`/`getDate`), never `toISOString()` — a UTC key rolls over mid-evening in Israel and would swap the list while the bag is still being packed.
 - Items carry an optional `audioUrl` (a clip under `public/audio/`); anything without one is read aloud with the browser's Hebrew voice, so every row has a working play button.
@@ -167,7 +169,7 @@ The `build:pages` script exists for project-site deployments but is not used in 
 | `public/cv/idan-gibly-cv.pdf` | Binary asset — do not overwrite without a new PDF |
 | `public/audio/he/*` | Binary recordings of item names — do not overwrite or re-encode |
 | `training-tracker-app.html` / `src/tracker/main.ts` | Holds live user data via localStorage — never rename the page URL or its storage keys |
-| `timetable-app.html` / `src/timetable/*` | Same — never rename the page URL or the `timetable:done` key. Edit content in `config.ts`, not `main.ts` |
+| `timetable-app.html` / `src/timetable/*` | Same — never rename the page URL, the `timetable:done`/`timetable:class` keys, or a class `id`. Edit content in `config.ts`, not `main.ts` |
 | `src/styles.css` | Single source of truth for all four themes — changes affect every page |
 | `.github/workflows/deploy.yml` | Changes here affect live deployment pipeline |
 | `vite.config.ts` | Base path logic + MPA inputs; forgetting an input silently drops a page from the build |
