@@ -144,8 +144,15 @@ export const CONFIG: TimetableConfig = {
     money: { name: "20 ₪ להצגה", icon: "💵" },
     form: { name: "טופס חתום מההורים", icon: "📄" },
     whiteshirt: { name: "חולצה לבנה", icon: "👚" },
-    shvilim: {name: "שבילים 1 ומחברת ", icon: "📕"},
-    kesem: {name: "קסם וחברים 1 ומחברת", icon: "📕"},
+    mathNotebook: {name: "מחברת חשבון כחולה", icon: "📘"},
+    hebrewNotebook: {name: "מחברת עברית אדומה", icon: "📕"},
+    shvilim1: {name: "שבילים 1", icon: "📘"},
+    kesem1: {name: "קסם וחברים 1", icon: "📕"},
+    recorder: {name: "חלילית", icon: "🪈"},
+    usb: {name: "דיסק און קי", icon: "💻"},
+    torah: {name: "חומש" , icon: "📖"},
+    torahNotebook: {name: "מחברת תורה", icon: "📙"},
+    folder: {name: "קלסר", icon: "📁"}
   },
 
   daily: ["water", "snack", "key"],
@@ -194,9 +201,6 @@ export const CONFIG: TimetableConfig = {
   },
 
   classes: [
-    // ── כיתה ג׳2 — מחנכת שרונה ממן ───────────────────────────────────────────
-    // המערכת מועתקת מדף המערכת של בית הספר. מה לוקחים לכל שיעור עדיין לא
-    // ידוע — מוסיפים את הפריטים ל־`items` של השיעור כשמתברר מה צריך.
     {
       id: "gimel2",
       name: "כיתה ג׳2",
@@ -204,12 +208,12 @@ export const CONFIG: TimetableConfig = {
 
       subjects: {
         opening: { name: "פותחים יום", tone: "neutral", items: [] },
-        torah: { name: "תורה", tone: "warning", items: [] },
+        torah: { name: "תורה", tone: "warning", items: ["torah", "torahNotebook"] },
         hebrew: { name: "עברית", tone: "error", items: [] },
         math: { name: "מתמטיקה", tone: "primary", items: [] },
         geometry: { name: "גאומטריה", tone: "primary", items: [] },
         english: { name: "אנגלית", tone: "secondary", items: [] },
-        recorder: { name: "חלילית", tone: "accent", items: [] },
+        recorder: { name: "חלילית", tone: "accent", items: ["recorder"] },
         homeland: { name: "מולדת וחברה", tone: "success", items: [] },
         academy: { name: "אקדמיה חוקרת / בשבילי מורשת", tone: "neutral", items: [] },
         cyber: { name: "סייבר", tone: "neutral", items: [] },
@@ -233,8 +237,6 @@ export const CONFIG: TimetableConfig = {
         extrasSource: "מהודעה של שרונה",
       },
     },
-
-    // ── כיתה א׳1 — מחנכת הדר זרביב ───────────────────────────────────────────
     {
       id: "alef1",
       name: "כיתה א׳1",
@@ -245,12 +247,12 @@ export const CONFIG: TimetableConfig = {
       },
 
       daily: ["water", "snack", "pencilcase"],
-
+      
       subjects: {
         assembly: { name: "כינוס בוקר", tone: "neutral", items: [] },
-        hebrew: { name: "עברית", tone: "error", items: ["kesem"] },
-        math: { name: "חשבון", tone: "primary", items: ["shvilim"] },
-        music: { name: "מוסיקה", tone: "accent", items: [] },
+        hebrew: { name: "עברית", tone: "error", items: ["kesem1", "hebrewNotebook"] },
+        math: { name: "חשבון", tone: "primary", items: ["shvilim1", "mathNotebook"] },
+        music: { name: "מוסיקה", tone: "accent", items: ["folder"] },
         heritage: { name: "בשבילי מורשת", tone: "neutral", items: [] },
         playtime: { name: "שעת משחק", tone: "neutral", items: [] },
         roadsafety: { name: "זהירות בדרכים", tone: "neutral", items: [] },
