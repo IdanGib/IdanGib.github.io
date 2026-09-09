@@ -29,7 +29,6 @@ No router, no state management library. Standalone app pages use vanilla TypeScr
 ├── .github/workflows/deploy.yml   # Vite build + GitHub Pages deploy
 ├── public/
 │   ├── grain.svg                  # Film-grain tile used via bg-[url(/grain.svg)]
-│   ├── audio/he/                  # Timetable item recordings (binary — do not overwrite)
 │   └── cv/idan-gibly-cv.pdf       # PDF resume asset (binary — do not overwrite)
 ├── src/
 │   ├── styles.css                 # THE single CSS entry: Tailwind import + daisyUI themes
@@ -89,7 +88,7 @@ A Hebrew, right-to-left school-bag packing list ("מה לוקחים היום"): 
 - The class picker is a daisyUI `dropdown` (a `<details>`, closed on outside click/Escape by `main.ts`) in the header; with a single configured class it is hidden and the header looks as it did before.
 - The page is `lang="he" dir="rtl"`. Use logical utilities (`ps-*`, `me-*`, `start-*`, `end-*`), never `left`/`right` ones.
 - Date keys are built from **local** time (`getFullYear`/`getMonth`/`getDate`), never `toISOString()` — a UTC key rolls over mid-evening in Israel and would swap the list while the bag is still being packed.
-- Items carry an optional `audioUrl` (a clip under `public/audio/`); anything without one is read aloud with the browser's Hebrew voice, so every row has a working play button.
+- Items may carry an optional `audioUrl` (a clip under `public/audio/`); none do today, so every row is read aloud with the browser’s Hebrew voice.
 - A subject whose `items` list is empty has nothing to pack yet, so it stands in for itself: the row shows the subject's name, its own `icon` (or `settings.subjectIcon` as the fallback) and its tone, ticked under the id `subject:<key>`. Filling the subject's `items` in replaces that row with the kit.
 - Item tints are `Tone` values (daisyUI tokens), resolved through the `TILE` lookup of full literal classes — never a colour built by concatenation.
 - Theme `igtimetable` is **light on purpose** (ink on graph paper): it is a child's checklist read in daylight, not a night-time tool.
@@ -168,7 +167,6 @@ The `build:pages` script exists for project-site deployments but is not used in 
 | File | Caution |
 |------|---------|
 | `public/cv/idan-gibly-cv.pdf` | Binary asset — do not overwrite without a new PDF |
-| `public/audio/he/*` | Binary recordings of item names — do not overwrite or re-encode |
 | `training-tracker-app.html` / `src/tracker/main.ts` | Holds live user data via localStorage — never rename the page URL or its storage keys |
 | `timetable-app.html` / `src/timetable/*` | Same — never rename the page URL, the `timetable:done`/`timetable:class` keys, or a class `id`. Edit content in `config.ts`, not `main.ts` |
 | `src/styles.css` | Single source of truth for all four themes — changes affect every page |

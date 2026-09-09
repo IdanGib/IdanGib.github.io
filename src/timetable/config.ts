@@ -141,7 +141,7 @@ export const CONFIG: TimetableConfig = {
   },
 
   items: {
-    water: { name: "בקבוק מים", icon: "💧", tone: "primary", audioUrl: "/audio/he/water.m4a" },
+    water: { name: "בקבוק מים", icon: "💧", tone: "primary" },
     snack: { name: "ארוחת עשר", icon: "🥪", tone: "warning" },
     key: { name: "מפתח הבית", icon: "🔑", tone: "secondary" },
     reader: { name: "ספר קריאה", icon: "📕" },
