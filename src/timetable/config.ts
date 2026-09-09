@@ -138,15 +138,14 @@ export const CONFIG: TimetableConfig = {
     water: { name: "בקבוק מים", icon: "💧", tone: "primary", audioUrl: "/audio/he/water.m4a" },
     snack: { name: "ארוחת עשר", icon: "🥪", tone: "warning" },
     key: { name: "מפתח הבית", icon: "🔑", tone: "secondary" },
-
     reader: { name: "ספר קריאה", icon: "📕" },
     shoes: { name: "נעלי ספורט", icon: "👟", note: "מגרש חיצוני" },
     sportkit: { name: "בגדי ספורט", icon: "👕" },
-
-    // חד-פעמיים — לשימוש ב־extras של תאריך מסוים
     money: { name: "20 ₪ להצגה", icon: "💵" },
     form: { name: "טופס חתום מההורים", icon: "📄" },
     whiteshirt: { name: "חולצה לבנה", icon: "👚" },
+    shvilim: {name: "שבילים 1 ומחברת ", icon: "📕"},
+    kesem: {name: "קסם וחברים 1 ומחברת", icon: "📕"},
   },
 
   daily: ["water", "snack", "key"],
@@ -243,15 +242,14 @@ export const CONFIG: TimetableConfig = {
 
       items: {
         pencilcase: { name: "קלמר", icon: "✏️", tone: "secondary" },
-        hat: { name: "כובע", icon: "🧢", tone: "success" },
       },
 
-      daily: ["water", "snack", "pencilcase", "hat"],
+      daily: ["water", "snack", "pencilcase"],
 
       subjects: {
         assembly: { name: "כינוס בוקר", tone: "neutral", items: [] },
-        hebrew: { name: "עברית", tone: "error", items: [] },
-        math: { name: "חשבון", tone: "primary", items: [] },
+        hebrew: { name: "עברית", tone: "error", items: ["kesem"] },
+        math: { name: "חשבון", tone: "primary", items: ["shvilim"] },
         music: { name: "מוסיקה", tone: "accent", items: [] },
         heritage: { name: "בשבילי מורשת", tone: "neutral", items: [] },
         playtime: { name: "שעת משחק", tone: "neutral", items: [] },
