@@ -40,7 +40,10 @@ export interface Item {
 export interface Subject {
   name: string;
   tone: Tone;
-  /** Keys from `items`. */
+  /** Emoji shown when the subject stands in for itself (see `items`). */
+  icon?: string;
+  /** Keys from `items`. An empty list means nothing to pack for the lesson —
+   *  the subject then gets a row of its own, named after itself. */
   items: string[];
 }
 
@@ -52,6 +55,8 @@ export interface Settings {
   switchToTomorrowAtHour: number;
   /** Weekdays with school, 0 = Sunday. */
   schoolDays: number[];
+  /** Emoji for a subject with nothing to pack and no `icon` of its own. */
+  subjectIcon: string;
 }
 
 export interface Labels {
@@ -132,6 +137,7 @@ export const CONFIG: TimetableConfig = {
   settings: {
     switchToTomorrowAtHour: 18,
     schoolDays: [0, 1, 2, 3, 4, 5],
+    subjectIcon: "📚",
   },
 
   items: {
@@ -157,15 +163,16 @@ export const CONFIG: TimetableConfig = {
 
   daily: ["water", "snack", "key"],
 
-  // השיעורים המשותפים לשתי הכיתות. `items` ריק = עדיין לא הוגדר מה לוקחים
-  // לשיעור; מוסיפים לכאן מפתחות מתוך `items` כשיודעים מה באמת צריך.
+  // השיעורים המשותפים לשתי הכיתות. `items` ריק = אין מה לקחת לשיעור, ואז
+  // השיעור עצמו מופיע בשורה משלו; מוסיפים מפתחות מתוך `items` כשיודעים
+  // מה באמת צריך, והשורה מתחלפת בציוד.
   subjects: {
-    sport: { name: "חינוך גופני", tone: "success", items: ["shoes", "sportkit"] },
-    art: { name: "אומנות", tone: "accent", items: [] },
-    science: { name: "מדעים", tone: "info", items: [] },
-    library: { name: "שעת ספרייה", tone: "warning", items: [] },
-    lifeskills: { name: "כישורי חיים", tone: "secondary", items: [] },
-    interests: { name: "תחומי עניין", tone: "neutral", items: [] },
+    sport: { name: "חינוך גופני", tone: "success", icon: "🤸", items: ["shoes", "sportkit"] },
+    art: { name: "אומנות", tone: "accent", icon: "🎨", items: [] },
+    science: { name: "מדעים", tone: "info", icon: "🔬", items: [] },
+    library: { name: "שעת ספרייה", tone: "warning", icon: "📚", items: [] },
+    lifeskills: { name: "כישורי חיים", tone: "secondary", icon: "💬", items: [] },
+    interests: { name: "תחומי עניין", tone: "neutral", icon: "✨", items: [] },
   },
 
   labels: {
@@ -207,17 +214,17 @@ export const CONFIG: TimetableConfig = {
       icon: "🦊",
 
       subjects: {
-        opening: { name: "פותחים יום", tone: "neutral", items: [] },
-        torah: { name: "תורה", tone: "warning", items: ["torah", "torahNotebook"] },
-        hebrew: { name: "עברית", tone: "error", items: [] },
-        math: { name: "מתמטיקה", tone: "primary", items: [] },
-        geometry: { name: "גאומטריה", tone: "primary", items: [] },
-        english: { name: "אנגלית", tone: "secondary", items: [] },
-        recorder: { name: "חלילית", tone: "accent", items: ["recorder"] },
-        homeland: { name: "מולדת וחברה", tone: "success", items: [] },
-        academy: { name: "אקדמיה חוקרת / בשבילי מורשת", tone: "neutral", items: [] },
-        cyber: { name: "סייבר", tone: "neutral", items: ["usb"] },
-        farm: { name: "חווה חקלאית", tone: "success", items: [] },
+        opening: { name: "פותחים יום", tone: "neutral", icon: "☀️", items: [] },
+        torah: { name: "תורה", tone: "warning", icon: "📖", items: ["torah", "torahNotebook"] },
+        hebrew: { name: "עברית", tone: "error", icon: "✍️", items: [] },
+        math: { name: "מתמטיקה", tone: "primary", icon: "➗", items: [] },
+        geometry: { name: "גאומטריה", tone: "primary", icon: "📐", items: [] },
+        english: { name: "אנגלית", tone: "secondary", icon: "🔤", items: [] },
+        recorder: { name: "חלילית", tone: "accent", icon: "🪈", items: ["recorder"] },
+        homeland: { name: "מולדת וחברה", tone: "success", icon: "🌍", items: [] },
+        academy: { name: "אקדמיה חוקרת / בשבילי מורשת", tone: "neutral", icon: "🔎", items: [] },
+        cyber: { name: "סייבר", tone: "neutral", icon: "💻", items: ["usb"] },
+        farm: { name: "חווה חקלאית", tone: "success", icon: "🌱", items: [] },
       },
 
       schedule: {
@@ -249,13 +256,13 @@ export const CONFIG: TimetableConfig = {
       daily: ["water", "snack", "pencilcase"],
       
       subjects: {
-        assembly: { name: "כינוס בוקר", tone: "neutral", items: [] },
-        hebrew: { name: "עברית", tone: "error", items: ["kesem1", "hebrewNotebook"] },
-        math: { name: "חשבון", tone: "primary", items: ["shvilim1", "mathNotebook"] },
-        music: { name: "מוסיקה", tone: "accent", items: ["folder"] },
-        heritage: { name: "בשבילי מורשת", tone: "neutral", items: [] },
-        playtime: { name: "שעת משחק", tone: "neutral", items: [] },
-        roadsafety: { name: "זהירות בדרכים", tone: "neutral", items: [] },
+        assembly: { name: "כינוס בוקר", tone: "neutral", icon: "🌅", items: [] },
+        hebrew: { name: "עברית", tone: "error", icon: "✍️", items: ["kesem1", "hebrewNotebook"] },
+        math: { name: "חשבון", tone: "primary", icon: "➗", items: ["shvilim1", "mathNotebook"] },
+        music: { name: "מוסיקה", tone: "accent", icon: "🎵", items: ["folder"] },
+        heritage: { name: "בשבילי מורשת", tone: "neutral", icon: "🕯️", items: [] },
+        playtime: { name: "שעת משחק", tone: "neutral", icon: "🧩", items: [] },
+        roadsafety: { name: "זהירות בדרכים", tone: "neutral", icon: "🚦", items: [] },
       },
 
       schedule: {

@@ -117,6 +117,17 @@ function resolve(ref: ItemRef, fallback: Tone = "warning"): ResolvedItem | null 
   return { ...base, id, tone: base.tone ?? fallback };
 }
 
+/** Stand-in row for a subject with an empty kit. The `subject:` prefix keeps
+ *  its stored tick apart from any item key. */
+function subjectRow(key: string, subject: Subject): ResolvedItem {
+  return {
+    id: `subject:${key}`,
+    name: subject.name,
+    icon: subject.icon ?? active.settings.subjectIcon,
+    tone: subject.tone,
+  };
+}
+
 function buildGroups(day: Day): Group[] {
   const groups: Group[] = [];
 
@@ -131,9 +142,14 @@ function buildGroups(day: Day): Group[] {
     const subject = active.subjects[key];
     if (!subject) return;
     names.push(subject.name);
-    subject.items.forEach((id) => {
-      const item = resolve(id, subject.tone);
-      if (item && !subjectItems.some((x) => x.id === item.id)) subjectItems.push(item);
+    const kit = subject.items
+      .map((id) => resolve(id, subject.tone))
+      .filter((x): x is ResolvedItem => x !== null);
+    // Nothing to pack for the lesson: the subject stands in for itself, so the
+    // day's timetable is on the list even before the kit is known.
+    const rows = kit.length ? kit : [subjectRow(key, subject)];
+    rows.forEach((item) => {
+      if (!subjectItems.some((x) => x.id === item.id)) subjectItems.push(item);
     });
   });
   if (subjectItems.length) {
