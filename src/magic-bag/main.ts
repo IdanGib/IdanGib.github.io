@@ -18,49 +18,6 @@
         ).matches;
         const controls = document.getElementById("keyboard-controls");
         const liveStatus = document.getElementById("game-status");
-        const packedEffect = document.getElementById("packed-effect");
-        const lastItemEffect = document.getElementById("last-item-effect");
-        const soundTest = document.getElementById("sound-test");
-
-        // Keep audio in text form so repository patches remain portable while
-        // preserving the exact supplied MP3 bytes at runtime.
-        async function loadAudio(sound, filename) {
-          const response = await fetch(
-            `${import.meta.env.BASE_URL}magic-school-bag/assets/${filename}.base64`,
-          );
-          if (!response.ok) throw new Error(`Audio could not be loaded: ${filename}`);
-          sound.src = `data:audio/mpeg;base64,${(await response.text()).trim()}`;
-        }
-
-        await Promise.all([
-          loadAudio(packedEffect, "item-in-bag.mp3"),
-          loadAudio(lastItemEffect, "last-item-and-finish.mp3"),
-        ]);
-
-        function stopEffects() {
-          for (const sound of [packedEffect, lastItemEffect]) {
-            sound.pause();
-            sound.currentTime = 0;
-          }
-        }
-
-        function playEffect(sound, isTest = false) {
-          // Only one clip plays at a time on mobile. The final clip contains
-          // both the packing chime and the celebration in one audio stream.
-          stopEffects();
-          const playback = sound.play();
-          if (playback) void playback.catch(() => {
-            if (isTest) soundTest.textContent = "🔇";
-            liveStatus.textContent = "לא ניתן להפעיל צלילים. בדקו שהאתר לא מושתק.";
-          });
-        }
-
-        soundTest.addEventListener("click", () => {
-          hasInteracted = true;
-          soundTest.textContent = "🔊";
-          playEffect(packedEffect, true);
-        });
-
         // This JSON is the single source for lesson order, equipment, dismissal time and recorded voice.
         const DATA = await fetch(
           `${import.meta.env.BASE_URL}magic-school-bag/ori-data.json`,
@@ -839,12 +796,6 @@
             this.packingCount++;
             daySelect.disabled = true;
             this.refreshDeck();
-            if (hasInteracted) {
-              const isLastItem =
-                this.packed + this.packingCount === ITEMS.length;
-              playEffect(isLastItem ? lastItemEffect : packedEffect);
-            }
-
             this.speak("כל הכבוד!");
             this.sparkles(card.container.x, card.container.y, card.item.color);
 

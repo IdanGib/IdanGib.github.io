@@ -87,19 +87,6 @@
         outline: 3px solid #68439b;
         outline-offset: 3px;
       }
-      .sound-test {
-        width: 44px;
-        height: 44px;
-        border: 2px solid #c6b1e4;
-        border-radius: 14px;
-        background: #fff;
-        font-size: 22px;
-        cursor: pointer;
-      }
-      .sound-test:focus-visible {
-        outline: 3px solid #68439b;
-        outline-offset: 3px;
-      }
       .end-time {
         background: #fff;
         border: 2px solid #e3d4ef;
@@ -303,13 +290,10 @@
       <h1 class="sr-only">משימת תיק הקסם עם זואי</h1>
       <div class="packing-toolbar">
         <select id="school-day" aria-label="יום הלימודים"></select>
-        <button id="sound-test" class="sound-test" type="button" aria-label="בדיקת צליל" title="בדיקת צליל">🔊</button>
         <span class="end-time"
           >סיום הלימודים: <output id="end-time"></output
         ></span>
       </div>
-      <audio id="packed-effect" preload="auto"></audio>
-      <audio id="last-item-effect" preload="auto"></audio>
       <div id="game">
         <p id="loading" role="status">תיק הקסם נפתח… ✨</p>
         <div id="keyboard-controls"></div>
