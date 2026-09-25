@@ -1,0 +1,343 @@
+{
+  "$schema": "./ori-data.schema.json",
+  "student": "אורי",
+  "timeZone": "Asia/Jerusalem",
+  "days": [
+    {
+      "weekday": 0,
+      "label": "ראשון",
+      "endsAt": "12:45",
+      "lessons": [
+        {
+          "subjectId": "hebrew",
+          "label": "עברית - כינוס בוקר"
+        },
+        {
+          "subjectId": "hebrew",
+          "label": "עברית / בשבילי מורשת"
+        },
+        {
+          "subjectId": "music",
+          "label": "מוסיקה"
+        },
+        {
+          "subjectId": "science",
+          "label": "מדעים"
+        },
+        {
+          "subjectId": "science",
+          "label": "מדעים"
+        }
+      ]
+    },
+    {
+      "weekday": 1,
+      "label": "שני",
+      "endsAt": "12:45",
+      "lessons": [
+        {
+          "subjectId": "sport",
+          "label": "חינוך גופני"
+        },
+        {
+          "subjectId": "math",
+          "label": "חשבון"
+        },
+        {
+          "subjectId": "hebrew",
+          "label": "עברית"
+        },
+        {
+          "subjectId": "play",
+          "label": "שעת משחק"
+        },
+        {
+          "subjectId": "road_safety",
+          "label": "זהירות בדרכים"
+        }
+      ]
+    },
+    {
+      "weekday": 2,
+      "label": "שלישי",
+      "endsAt": "12:45",
+      "lessons": [
+        {
+          "subjectId": "interests",
+          "label": "תחומי עניין"
+        },
+        {
+          "subjectId": "interests",
+          "label": "תחומי עניין"
+        },
+        {
+          "subjectId": "art",
+          "label": "אומנות"
+        },
+        {
+          "subjectId": "art",
+          "label": "אומנות"
+        },
+        {
+          "subjectId": "life_skills",
+          "label": "כישורי חיים"
+        }
+      ]
+    },
+    {
+      "weekday": 3,
+      "label": "רביעי",
+      "endsAt": "12:45",
+      "lessons": [
+        {
+          "subjectId": "math",
+          "label": "חשבון"
+        },
+        {
+          "subjectId": "math",
+          "label": "חשבון"
+        },
+        {
+          "subjectId": "music",
+          "label": "מוסיקה"
+        },
+        {
+          "subjectId": "hebrew",
+          "label": "עברית"
+        },
+        {
+          "subjectId": "hebrew",
+          "label": "עברית / בשבילי מורשת"
+        }
+      ]
+    },
+    {
+      "weekday": 4,
+      "label": "חמישי",
+      "endsAt": "12:45",
+      "lessons": [
+        {
+          "subjectId": "math",
+          "label": "חשבון"
+        },
+        {
+          "subjectId": "math",
+          "label": "חשבון"
+        },
+        {
+          "subjectId": "hebrew",
+          "label": "עברית"
+        },
+        {
+          "subjectId": "library",
+          "label": "שעת ספרייה"
+        },
+        {
+          "subjectId": "sport",
+          "label": "חינוך גופני"
+        }
+      ]
+    },
+    {
+      "weekday": 5,
+      "label": "שישי",
+      "endsAt": "11:45",
+      "lessons": [
+        {
+          "subjectId": "hebrew",
+          "label": "עברית"
+        },
+        {
+          "subjectId": "hebrew",
+          "label": "עברית"
+        },
+        {
+          "subjectId": "math",
+          "label": "חשבון"
+        },
+        {
+          "subjectId": "life_skills",
+          "label": "כישורי חיים"
+        }
+      ]
+    }
+  ],
+  "subjects": {
+    "hebrew": {
+      "label": "עברית",
+      "equipmentStatus": "specified",
+      "itemIds": [
+        "hebrew-notebook",
+        "hebrew-workbook"
+      ]
+    },
+    "math": {
+      "label": "חשבון",
+      "equipmentStatus": "specified",
+      "itemIds": [
+        "math-notebook",
+        "math-workbook",
+        "math-equipment"
+      ]
+    },
+    "science": {
+      "label": "מדעים",
+      "equipmentStatus": "specified",
+      "itemIds": [
+        "science-book",
+        "science-notebook"
+      ]
+    },
+    "heritage": {
+      "label": "מורשת",
+      "equipmentStatus": "none",
+      "itemIds": []
+    },
+    "music": {
+      "label": "מוסיקה",
+      "equipmentStatus": "specified",
+      "itemIds": [
+        "music-folder"
+      ]
+    },
+    "art": {
+      "label": "אומנות",
+      "equipmentStatus": "specified",
+      "itemIds": [
+        "art-pad",
+        "art-colors"
+      ]
+    },
+    "sport": {
+      "label": "חינוך גופני",
+      "equipmentStatus": "specified",
+      "itemIds": [
+        "sport-shoes",
+        "sport-clothes"
+      ]
+    },
+    "library": {
+      "label": "ספרייה",
+      "equipmentStatus": "specified",
+      "itemIds": [
+        "library-book"
+      ]
+    },
+    "interests": {
+      "label": "תחומי עניין",
+      "equipmentStatus": "unknown",
+      "itemIds": []
+    },
+    "life_skills": {
+      "label": "כישורי חיים",
+      "equipmentStatus": "unknown",
+      "itemIds": []
+    },
+    "play": {
+      "label": "שעת משחק",
+      "equipmentStatus": "unknown",
+      "itemIds": []
+    },
+    "road_safety": {
+      "label": "זהירות בדרכים",
+      "equipmentStatus": "unknown",
+      "itemIds": []
+    }
+  },
+  "items": {
+    "hebrew-notebook": {
+      "label": "מחברת עברית",
+      "icon": "📕",
+      "audioUrl": "",
+      "color": "#ff7daf"
+    },
+    "hebrew-workbook": {
+      "label": "חוברת קסם וחברים",
+      "icon": "📗",
+      "imageUrl": "",
+      "audioUrl": "",
+      "color": "#ff7daf"
+    },
+    "math-notebook": {
+      "label": "מחברת חשבון",
+      "icon": "📘",
+      "audioUrl": "",
+      "color": "#8174ff"
+    },
+    "math-workbook": {
+      "label": "חוברת שבילים",
+      "icon": "📙",
+      "imageUrl": "",
+      "audioUrl": "",
+      "color": "#8174ff"
+    },
+    "math-equipment": {
+      "label": "ציוד חשבון",
+      "icon": "🔢",
+      "audioUrl": "",
+      "color": "#8174ff"
+    },
+    "science-book": {
+      "label": "פלא טבע",
+      "icon": "📗",
+      "imageUrl": "",
+      "audioUrl": "",
+      "color": "#52cfa3"
+    },
+    "science-notebook": {
+      "label": "מחברת מדעים",
+      "icon": "📓",
+      "audioUrl": "",
+      "color": "#52cfa3"
+    },
+    "music-folder": {
+      "label": "תיקיה של מוסיקה",
+      "icon": "🎵",
+      "audioUrl": "",
+      "color": "#b88ae4"
+    },
+    "art-pad": {
+      "label": "בלוק ציור",
+      "icon": "🖼️",
+      "audioUrl": "",
+      "color": "#f0a955"
+    },
+    "art-colors": {
+      "label": "צבעים",
+      "icon": "🖍️",
+      "audioUrl": "",
+      "color": "#f0a955"
+    },
+    "sport-shoes": {
+      "label": "נעלי ספורט",
+      "icon": "👟",
+      "audioUrl": "",
+      "color": "#64c6ff"
+    },
+    "sport-clothes": {
+      "label": "בגדי ספורט",
+      "icon": "👕",
+      "audioUrl": "",
+      "color": "#64c6ff"
+    },
+    "library-book": {
+      "label": "ספר ספרייה",
+      "icon": "📖",
+      "imageUrl": "",
+      "audioUrl": "",
+      "color": "#52cfa3"
+    }
+  },
+  "audio": {
+    "textToUrl": {
+      "כל הכבוד! סיימנו להכין את התיק ליום ראשון!": "",
+      "כל הכבוד! סיימנו להכין את התיק ליום שני!": "",
+      "כל הכבוד! סיימנו להכין את התיק ליום שלישי!": "",
+      "כל הכבוד! סיימנו להכין את התיק ליום רביעי!": "",
+      "כל הכבוד! סיימנו להכין את התיק ליום חמישי!": "",
+      "כל הכבוד! סיימנו להכין את התיק ליום שישי!": "",
+      "כל הכבוד!": "",
+      "ננסה שוב": ""
+    }
+  }
+}
