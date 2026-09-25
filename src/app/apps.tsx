@@ -54,6 +54,18 @@ export const apps: AppDefinition[] = [
     ),
   },
   {
+    name: "Magic Bag",
+    href: "/magic-bag-app.html",
+    iconClass: "bg-linear-145 from-[#f472b6] to-[#7c3aed]",
+    icon: (
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-11 w-11">
+        <path d="M13 15a7 7 0 0 1 14 0" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
+        <rect x="7" y="14" width="26" height="21" rx="7" fill="#fff" />
+        <path d="m20 18 1.3 3.4 3.7.2-2.9 2.4.9 3.6-3-2-3 2 .9-3.6-2.9-2.4 3.7-.2L20 18Z" fill="#a855f7" />
+      </svg>
+    ),
+  },
+  {
     name: "Timetable",
     href: "/timetable-app.html",
     iconClass: "bg-linear-145 from-[#3e7bfa] to-[#7a5af8]",

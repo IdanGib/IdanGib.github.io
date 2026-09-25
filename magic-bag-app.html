@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en" data-theme="igmagicbag">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#120d1d">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Magic Bag">
+  <meta name="description" content="A magical reward bag for kids.">
+  <title>Magic Bag</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script type="module" src="/src/magic-bag/main.ts"></script>
+</head>
+<body class="min-h-svh bg-base-100 font-dm text-base-content">
+  <div class="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_20%_0%,color-mix(in_oklab,var(--color-primary)_22%,transparent),transparent_35%),radial-gradient(circle_at_100%_70%,color-mix(in_oklab,var(--color-secondary)_15%,transparent),transparent_40%)]" aria-hidden="true"></div>
+  <div class="relative mx-auto flex min-h-svh max-w-[520px] flex-col">
+    <header class="sticky top-0 z-20 border-b border-base-content/10 bg-base-100/85 px-4 pt-[calc(env(safe-area-inset-top,0px)+12px)] pb-3 backdrop-blur-xl">
+      <nav class="flex items-center gap-1" aria-label="Magic Bag navigation">
+        <a href="#/" class="btn btn-ghost btn-circle text-xl" aria-label="Home">⌂</a>
+        <strong class="ms-1 text-lg">Magic Bag</strong>
+        <span class="flex-1"></span>
+        <a href="#/store" class="btn btn-ghost btn-circle text-xl" aria-label="Store">◆</a>
+        <a href="#/settings" class="btn btn-ghost btn-circle text-xl" aria-label="Settings">⚙</a>
+      </nav>
+    </header>
+    <main id="app" class="flex-1 px-4 py-6 pb-[calc(env(safe-area-inset-bottom,0px)+32px)]"></main>
+  </div>
+  <dialog id="modal" class="modal"><div id="modal-content" class="modal-box"></div><form method="dialog" class="modal-backdrop"><button>close</button></form></dialog>
+</body>
+</html>
