@@ -18,6 +18,14 @@
         ).matches;
         const controls = document.getElementById("keyboard-controls");
         const liveStatus = document.getElementById("game-status");
+
+        function stopVoice() {
+          if (!activeVoice) return;
+          activeVoice.pause();
+          activeVoice.currentTime = 0;
+          activeVoice = null;
+        }
+
         // This JSON is the single source for lesson order, equipment, dismissal time and recorded voice.
         const DATA = await fetch(
           `${import.meta.env.BASE_URL}magic-school-bag/ori-data.json`,
@@ -129,7 +137,7 @@
           create(data = {}) {
             // scene.restart() reuses the same Scene instance, so reset all
             // per-run state here instead of relying only on the constructor.
-            stopEffects();
+            stopVoice();
             this.packed = 0;
             this.cards = [];
             this.finished = false;
@@ -160,10 +168,7 @@
             this.scale.on("resize", this.positionControls, this);
             this.events.once("shutdown", () => {
               this.scale.off("resize", this.positionControls, this);
-              if (activeVoice) {
-                activeVoice.pause();
-                activeVoice = null;
-              }
+              stopVoice();
               controls.replaceChildren();
               controls.removeAttribute("role");
               controls.removeAttribute("aria-modal");
@@ -902,10 +907,7 @@
           speak(text, itemAudioUrl) {
             if (!hasInteracted) return;
             const url = itemAudioUrl?.trim() || DATA.audio.textToUrl[text];
-            if (activeVoice) {
-              activeVoice.pause();
-              activeVoice = null;
-            }
+            stopVoice();
             if (typeof url !== "string" || !url.trim()) return;
             const voice = new Audio(url);
             activeVoice = voice;
