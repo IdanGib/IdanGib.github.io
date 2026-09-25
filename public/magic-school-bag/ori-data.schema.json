@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://magic-school-bag.idangibly.chatgpt.site/ori-data.schema.json",
+  "title": "School bag timetable data",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["student", "timeZone", "days", "subjects", "items", "audio"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "student": { "type": "string", "minLength": 1 },
+    "timeZone": { "const": "Asia/Jerusalem" },
+    "days": {
+      "type": "array", "minItems": 6, "maxItems": 6,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["weekday", "label", "endsAt", "lessons"],
+        "properties": {
+          "weekday": { "type": "integer", "minimum": 0, "maximum": 5, "description": "Sunday = 0 through Friday = 5; array is in this order." },
+          "label": { "type": "string", "minLength": 1 },
+          "endsAt": { "type": ["string", "null"], "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$", "description": "Local dismissal time, HH:mm, or null when it is not known. Never infer it from lesson count." },
+          "lessons": {
+            "type": "array", "minItems": 1,
+            "items": {
+              "type": "object", "additionalProperties": false,
+              "required": ["subjectId", "label"],
+              "properties": {
+                "subjectId": { "type": "string", "minLength": 1, "description": "Key in subjects. Repeated lessons remain repeated here." },
+                "label": { "type": "string", "minLength": 1, "description": "Exact timetable wording, including mixed lessons." }
+              }
+            }
+          }
+        }
+      }
+    },
+    "subjects": {
+      "type": "object", "minProperties": 1,
+      "additionalProperties": {
+        "type": "object", "additionalProperties": false,
+        "required": ["label", "equipmentStatus", "itemIds"],
+        "properties": {
+          "label": { "type": "string", "minLength": 1 },
+          "equipmentStatus": { "enum": ["specified", "none", "unknown"] },
+          "itemIds": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 }, "description": "Keys in items. Empty for none or unknown. UI must not invent equipment for unknown subjects." }
+        }
+      }
+    },
+    "items": {
+      "type": "object", "additionalProperties": {
+        "type": "object", "additionalProperties": false,
+        "required": ["label", "icon", "color"],
+        "properties": {
+          "label": { "type": "string", "minLength": 1 },
+          "icon": { "type": "string", "minLength": 1, "description": "Emoji shown when imageUrl is empty or the image cannot load." },
+          "imageUrl": { "type": "string", "format": "uri-reference", "description": "Optional direct image URL. Use HTTPS or ./assets/name.png; empty shows the icon instead." },
+          "audioUrl": { "type": "string", "format": "uri-reference", "description": "Optional recording for this item's packing prompt. Use HTTPS or ./assets/name.mp3; empty means silence unless the legacy textToUrl phrase has a URL." },
+          "color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" }
+        }
+      }
+    },
+    "audio": {
+      "type": "object", "additionalProperties": false,
+      "required": ["textToUrl"],
+      "properties": {
+        "textToUrl": {
+          "type": "object", "description": "Exact spoken Hebrew phrase to playable recording URL for feedback and completion. Empty means silence; there is no synthetic speech or sound fallback.",
+          "additionalProperties": { "type": "string", "format": "uri-reference" }
+        }
+      }
+    }
+  }
+}
