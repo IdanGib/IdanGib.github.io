@@ -168,12 +168,7 @@
       "equipmentStatus": "specified",
       "itemIds": [
         "hebrew-notebook",
-        "hebrew-workbook",
-        "hebrew-reading-time",
-        "hebrew-workbook-2",
-        "hebrew-workbook-3",
-        "hebrew-workbook-4",
-        "hebrew-workbook-5"
+        "hebrew-workbook"
       ]
     },
     "math": {
@@ -182,9 +177,6 @@
       "itemIds": [
         "math-notebook",
         "math-workbook",
-        "math-workbook-2",
-        "math-workbook-3",
-        "math-workbook-4",
         "math-equipment"
       ]
     },
@@ -193,10 +185,6 @@
       "equipmentStatus": "specified",
       "itemIds": [
         "science-book",
-        "science-book-2",
-        "science-book-3",
-        "science-book-4",
-        "science-book-5",
         "science-notebook"
       ]
     },
@@ -252,59 +240,21 @@
     },
     "road_safety": {
       "label": "זהירות בדרכים",
-      "equipmentStatus": "specified",
-      "itemIds": [
-        "road-safety-book"
-      ]
+      "equipmentStatus": "unknown",
+      "itemIds": []
     }
   },
   "items": {
     "hebrew-notebook": {
-      "label": "קסם וחברים - מחברת אותיות הכתב",
+      "label": "מחברת עברית",
       "icon": "📕",
-      "imageUrl": "./assets/kesem-notebook.png",
       "audioUrl": "",
       "color": "#ff7daf"
     },
     "hebrew-workbook": {
-      "label": "קסם וחברים - הכרת האותיות 1",
+      "label": "חוברת קסם וחברים",
       "icon": "📗",
-      "imageUrl": "./assets/kesem1.png",
-      "audioUrl": "",
-      "color": "#ff7daf"
-    },
-    "hebrew-reading-time": {
-      "label": "קסם וחברים - זמן קסם",
-      "icon": "📘",
-      "imageUrl": "./assets/kesem-time.png",
-      "audioUrl": "",
-      "color": "#ff7daf"
-    },
-    "hebrew-workbook-2": {
-      "label": "קסם וחברים - ראשית קריאה וכתיבה 2",
-      "icon": "📗",
-      "imageUrl": "./assets/kesem2.png",
-      "audioUrl": "",
-      "color": "#ff7daf"
-    },
-    "hebrew-workbook-3": {
-      "label": "קסם וחברים - ראשית קריאה וכתיבה 3",
-      "icon": "📗",
-      "imageUrl": "./assets/kesem3.png",
-      "audioUrl": "",
-      "color": "#ff7daf"
-    },
-    "hebrew-workbook-4": {
-      "label": "קסם וחברים - ראשית קריאה וכתיבה 4",
-      "icon": "📗",
-      "imageUrl": "./assets/kesem4.png",
-      "audioUrl": "",
-      "color": "#ff7daf"
-    },
-    "hebrew-workbook-5": {
-      "label": "קסם וחברים - ראשית קריאה וכתיבה 5",
-      "icon": "📗",
-      "imageUrl": "./assets/kesem5.png",
+      "imageUrl": "",
       "audioUrl": "",
       "color": "#ff7daf"
     },
@@ -315,72 +265,22 @@
       "color": "#8174ff"
     },
     "math-workbook": {
-      "label": "שבילים חדשים 1",
+      "label": "חוברת שבילים",
       "icon": "📙",
-      "imageUrl": "./assets/shvilim1.png",
-      "audioUrl": "",
-      "color": "#8174ff"
-    },
-    "math-workbook-2": {
-      "label": "שבילים חדשים 2",
-      "icon": "📙",
-      "imageUrl": "./assets/shvilim2.png",
-      "audioUrl": "",
-      "color": "#8174ff"
-    },
-    "math-workbook-3": {
-      "label": "שבילים חדשים 3",
-      "icon": "📙",
-      "imageUrl": "./assets/shvilim3.png",
-      "audioUrl": "",
-      "color": "#8174ff"
-    },
-    "math-workbook-4": {
-      "label": "שבילים חדשים 4",
-      "icon": "📙",
-      "imageUrl": "./assets/shvilim4.png",
+      "imageUrl": "",
       "audioUrl": "",
       "color": "#8174ff"
     },
     "math-equipment": {
-      "label": "שבילים חדשים - מארז אביזרים",
+      "label": "ציוד חשבון",
       "icon": "🔢",
-      "imageUrl": "./assets/shvilim-kit.png",
       "audioUrl": "",
       "color": "#8174ff"
     },
     "science-book": {
-      "label": "פלא טבע 1 - חושים",
+      "label": "פלא טבע",
       "icon": "📗",
-      "imageUrl": "./assets/teva1.png",
-      "audioUrl": "",
-      "color": "#52cfa3"
-    },
-    "science-book-2": {
-      "label": "פלא טבע 2 - סביבה",
-      "icon": "📗",
-      "imageUrl": "./assets/teva2.png",
-      "audioUrl": "",
-      "color": "#52cfa3"
-    },
-    "science-book-3": {
-      "label": "פלא טבע 3 - צמחים",
-      "icon": "📗",
-      "imageUrl": "./assets/teva3.png",
-      "audioUrl": "",
-      "color": "#52cfa3"
-    },
-    "science-book-4": {
-      "label": "פלא טבע 4 - בעלי חיים",
-      "icon": "📗",
-      "imageUrl": "./assets/teva4.png",
-      "audioUrl": "",
-      "color": "#52cfa3"
-    },
-    "science-book-5": {
-      "label": "פלא טבע 5 - האדם",
-      "icon": "📗",
-      "imageUrl": "./assets/teva5.png",
+      "imageUrl": "",
       "audioUrl": "",
       "color": "#52cfa3"
     },
@@ -426,13 +326,6 @@
       "imageUrl": "",
       "audioUrl": "",
       "color": "#52cfa3"
-    },
-    "road-safety-book": {
-      "label": "סימני דרך",
-      "icon": "🚦",
-      "imageUrl": "./assets/simaney-derech.png",
-      "audioUrl": "",
-      "color": "#f0a955"
     }
   },
   "audio": {
