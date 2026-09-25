@@ -31,6 +31,7 @@ export default defineConfig({
         tracker: entry("training-tracker-app.html"),
         malawah: entry("malawah-app.html"),
         timetable: entry("timetable-app.html"),
+        magicBag: entry("magic-bag-app.html"),
         notFound: entry("404.html"),
         cv: entry("cv/index.html"),
       },

@@ -113,6 +113,40 @@
   --noise: 0;
 }
 
+/* Magic Bag — purple and pink reward app with gold stars */
+@plugin "daisyui/theme" {
+  name: "igmagicbag";
+  color-scheme: dark;
+  --color-base-100: #120d1d;
+  --color-base-200: #1d152d;
+  --color-base-300: #2b1e42;
+  --color-base-content: #f7f2ff;
+  --color-primary: #c084fc;
+  --color-primary-content: #24102f;
+  --color-secondary: #f472b6;
+  --color-secondary-content: #310c20;
+  --color-accent: #facc15;
+  --color-accent-content: #291d00;
+  --color-neutral: #746785;
+  --color-neutral-content: #ffffff;
+  --color-info: #60a5fa;
+  --color-info-content: #071d3c;
+  --color-success: #4ade80;
+  --color-success-content: #062713;
+  --color-warning: #facc15;
+  --color-warning-content: #291d00;
+  --color-error: #fb7185;
+  --color-error-content: #340812;
+  --radius-selector: 1rem;
+  --radius-field: 1rem;
+  --radius-box: 1.5rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
 /* Timetable — school-bag packing list. Ink on graph paper, light by design:
    it is a kids' checklist read in daylight, not a night-time tool. */
 @plugin "daisyui/theme" {
