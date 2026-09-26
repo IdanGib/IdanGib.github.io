@@ -254,7 +254,7 @@
     "hebrew-workbook": {
       "label": "חוברת קסם וחברים",
       "icon": "📗",
-      "imageUrl": "",
+      "imageUrl": "/magic-school-bag/assets/kesem1.png",
       "audioUrl": "",
       "color": "#ff7daf"
     },
@@ -267,7 +267,7 @@
     "math-workbook": {
       "label": "חוברת שבילים",
       "icon": "📙",
-      "imageUrl": "",
+      "imageUrl": "/magic-school-bag/assets/shvilim1.png",
       "audioUrl": "",
       "color": "#8174ff"
     },
@@ -280,7 +280,7 @@
     "science-book": {
       "label": "פלא טבע",
       "icon": "📗",
-      "imageUrl": "",
+      "imageUrl": "/magic-school-bag/assets/teva1.png",
       "audioUrl": "",
       "color": "#52cfa3"
     },
