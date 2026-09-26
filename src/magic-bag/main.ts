@@ -493,7 +493,10 @@
               const action = document.createElement("span");
               action.className = "item-action";
               action.textContent = "גררי לתיק או לחצי כאן";
-              button.append(subject, icon, label, action);
+              const copy = document.createElement("span");
+              copy.className = "item-copy";
+              copy.append(subject, label, action);
+              button.append(icon, copy);
               button.addEventListener("pointerdown", (event) => {
                 if (
                   !this.canPack(card) ||
