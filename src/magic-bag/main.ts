@@ -479,6 +479,8 @@
                 const image = document.createElement("img");
                 image.alt = "";
                 image.decoding = "async";
+                // Keep native image gestures from taking over the card drag.
+                image.draggable = false;
                 image.addEventListener("load", () => {
                   fallbackIcon.hidden = true;
                   icon.classList.add("has-image");
