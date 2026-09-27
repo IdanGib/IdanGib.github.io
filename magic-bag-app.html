@@ -143,6 +143,15 @@
       .item-button[data-deck-front="true"] {
         pointer-events: auto;
       }
+      .item-button.item-button-clicked {
+        animation: item-click 180ms ease-out;
+      }
+      @keyframes item-click {
+        50% {
+          transform: translateY(var(--deck-y, 0px))
+            scale(calc(var(--deck-scale, 1) * 0.96));
+        }
+      }
       /* Keep the next card readable as soon as the front card is dragged away. */
       .item-button[data-deck-depth="2"] > * {
         visibility: hidden;
@@ -251,6 +260,9 @@
       @media (prefers-reduced-motion: reduce) {
         .item-button {
           transition: none;
+        }
+        .item-button.item-button-clicked {
+          animation-duration: 1ms;
         }
         .jumping-star {
           animation-duration: 200ms;

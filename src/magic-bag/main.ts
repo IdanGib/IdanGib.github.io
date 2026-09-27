@@ -462,7 +462,7 @@
               button.style.setProperty("--item-tint", `${color}22`);
               button.setAttribute(
                 "aria-label",
-                `הכניסי לתיק: ${item.label}, ${item.subject}, ${this.lessonLabel(item)}`,
+                `${item.label}, ${item.subject}, ${this.lessonLabel(item)}. גררי לתיק${item.audioUrl?.trim() ? " או לחצי להשמעה" : ""}`,
               );
               const subject = document.createElement("span");
               subject.className = "item-subject";
@@ -494,7 +494,9 @@
               label.textContent = item.label;
               const action = document.createElement("span");
               action.className = "item-action";
-              action.textContent = "גררי לתיק או לחצי כאן";
+              action.textContent = item.audioUrl?.trim()
+                ? "גררי לתיק או לחצי להשמעה"
+                : "גררי לתיק";
               const copy = document.createElement("span");
               copy.className = "item-copy";
               copy.append(subject, label, action);
@@ -515,7 +517,7 @@
                 };
                 button.setPointerCapture(event.pointerId);
               });
-              button.addEventListener("click", (event) => {
+              button.addEventListener("click", () => {
                 if (
                   !this.canPack(card) ||
                   this.activeDragCard ||
@@ -523,12 +525,17 @@
                 )
                   return;
                 hasInteracted = true;
-                this.pack(card, () => {
-                  if (event.detail === 0 && !this.finished)
-                    this.cards
-                      .find((entry) => !entry.packed)
-                      ?.button.focus({ preventScroll: true });
-                });
+                button.classList.remove("item-button-clicked");
+                // Restart the small acknowledgement animation on repeated clicks.
+                void button.offsetWidth;
+                button.classList.add("item-button-clicked");
+                button.addEventListener(
+                  "animationend",
+                  () => button.classList.remove("item-button-clicked"),
+                  { once: true },
+                );
+                const audioUrl = item.audioUrl?.trim();
+                if (audioUrl) this.speak("", audioUrl);
               });
               panel.append(button);
               card.button = button;
