@@ -290,7 +290,7 @@
       "color": "#52cfa3"
     },
     "music-folder": {
-      "label": "תיקיה של מוסיקה",
+      "label": "קלסר מוסיקה",
       "icon": "🎵",
       "audioUrl": "/magic-school-bag/assets/audio/music.m4a",
       "color": "#b88ae4"
