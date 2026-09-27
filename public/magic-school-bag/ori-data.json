@@ -204,8 +204,7 @@
       "label": "אומנות",
       "equipmentStatus": "specified",
       "itemIds": [
-        "art-pad",
-        "art-colors"
+        "art"
       ]
     },
     "sport": {
@@ -248,76 +247,70 @@
     "hebrew-notebook": {
       "label": "מחברת עברית",
       "icon": "📕",
-      "audioUrl": "",
+      "audioUrl": "/magic-school-bag/assets/audio/hebrew-notebook.m4a",
       "color": "#ff7daf"
     },
     "hebrew-workbook": {
       "label": "חוברת קסם וחברים",
       "icon": "📗",
       "imageUrl": "/magic-school-bag/assets/kesem1.png",
-      "audioUrl": "",
+      "audioUrl": "/magic-school-bag/assets/audio/kesem.m4a",
       "color": "#ff7daf"
     },
     "math-notebook": {
       "label": "מחברת חשבון",
       "icon": "📘",
-      "audioUrl": "",
+      "audioUrl": "/magic-school-bag/assets/audio/math-notebook.m4a",
       "color": "#8174ff"
     },
     "math-workbook": {
       "label": "חוברת שבילים",
       "icon": "📙",
       "imageUrl": "/magic-school-bag/assets/shvilim1.png",
-      "audioUrl": "",
+      "audioUrl": "/magic-school-bag/assets/audio/shvilim.m4a",
       "color": "#8174ff"
     },
     "math-equipment": {
       "label": "ציוד חשבון",
       "icon": "🔢",
-      "audioUrl": "",
+      "audioUrl": "/magic-school-bag/assets/audio/math-kit.m4a",
       "color": "#8174ff"
     },
     "science-book": {
       "label": "פלא טבע",
       "icon": "📗",
       "imageUrl": "/magic-school-bag/assets/teva1.png",
-      "audioUrl": "",
+      "audioUrl": "/magic-school-bag/assets/audio/teva.m4a",
       "color": "#52cfa3"
     },
     "science-notebook": {
       "label": "מחברת מדעים",
       "icon": "📓",
-      "audioUrl": "",
+      "audioUrl": "/magic-school-bag/assets/audio/science-notebook.m4a",
       "color": "#52cfa3"
     },
     "music-folder": {
       "label": "תיקיה של מוסיקה",
       "icon": "🎵",
-      "audioUrl": "",
+      "audioUrl": "/magic-school-bag/assets/audio/music.m4a",
       "color": "#b88ae4"
     },
     "art-pad": {
-      "label": "בלוק ציור",
+      "label": "תיקית אומנות",
       "icon": "🖼️",
-      "audioUrl": "",
-      "color": "#f0a955"
-    },
-    "art-colors": {
-      "label": "צבעים",
-      "icon": "🖍️",
-      "audioUrl": "",
+      "audioUrl": "/magic-school-bag/assets/audioart.m4a",
       "color": "#f0a955"
     },
     "sport-shoes": {
       "label": "נעלי ספורט",
       "icon": "👟",
-      "audioUrl": "",
+      "audioUrl": "/magic-school-bag/assets/audio/sport-shoes.m4a",
       "color": "#64c6ff"
     },
     "sport-clothes": {
       "label": "בגדי ספורט",
       "icon": "👕",
-      "audioUrl": "",
+      "audioUrl": "/magic-school-bag/assets/audio/sport-clothes.m4a",
       "color": "#64c6ff"
     },
     "library-book": {
@@ -336,7 +329,7 @@
       "כל הכבוד! סיימנו להכין את התיק ליום רביעי!": "",
       "כל הכבוד! סיימנו להכין את התיק ליום חמישי!": "",
       "כל הכבוד! סיימנו להכין את התיק ליום שישי!": "",
-      "כל הכבוד!": "",
+      "כל הכבוד!": "/magic-school-bag/assets/audio/greate.m4a",
       "ננסה שוב": ""
     }
   }
