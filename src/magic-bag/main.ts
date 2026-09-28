@@ -6,6 +6,10 @@
         const kidNameInput = document.getElementById("kid-name");
         const cancelSettings = document.getElementById("cancel-settings");
         const openSettings = document.getElementById("open-settings");
+        let resolveInitialProfile;
+        const initialProfileReady = new Promise((resolve) => {
+          resolveInitialProfile = resolve;
+        });
 
         function loadProfile() {
           try {
@@ -50,6 +54,8 @@
           document.title = `תיק הקסם ✨ | ${kidProfile.name}`;
           document.getElementById("page-title").textContent =
             `משימת תיק הקסם עם ${kidProfile.name}`;
+          resolveInitialProfile?.();
+          resolveInitialProfile = null;
           profileDialog.close();
           const scene = window.magicBagGame?.scene.getScene("MagicBag");
           if (scene?.scene.isActive()) scene.scene.restart({});
@@ -62,9 +68,9 @@
 
         if (!kidProfile) {
           editProfile(true);
-          await new Promise((resolve) =>
-            profileDialog.addEventListener("close", resolve, { once: true }),
-          );
+          // Profile validity, rather than the dialog's UI lifecycle, controls
+          // when the game can safely start and read `kidProfile`.
+          await initialProfileReady;
         }
         document.title = `תיק הקסם ✨ | ${kidProfile.name}`;
         document.getElementById("page-title").textContent =
@@ -1429,7 +1435,8 @@
             },
           });
         }
-      })().catch(() => {
+      })().catch((error) => {
+        console.error("Magic bag failed to initialize", error);
         document.getElementById("loading").textContent =
           "לא הצלחנו לטעון את נתוני המערכת. נסו לרענן את הדף.";
       });
