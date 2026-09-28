@@ -1,5 +1,77 @@
 // @ts-nocheck -- Phaser is provided by the vendored browser bundle.
       (async () => {
+        const PROFILE_STORAGE_KEY = "magic-bag-kid-profile";
+        const profileDialog = document.getElementById("profile-dialog");
+        const profileForm = document.getElementById("profile-form");
+        const kidNameInput = document.getElementById("kid-name");
+        const cancelSettings = document.getElementById("cancel-settings");
+        const openSettings = document.getElementById("open-settings");
+
+        function loadProfile() {
+          try {
+            const profile = JSON.parse(localStorage.getItem(PROFILE_STORAGE_KEY));
+            if (
+              typeof profile?.name === "string" &&
+              profile.name.trim() &&
+              ["boy", "girl"].includes(profile.gender)
+            ) {
+              return { name: profile.name.trim(), gender: profile.gender };
+            }
+          } catch (_) {
+            // Treat unavailable or malformed browser storage as a first visit.
+          }
+          return null;
+        }
+
+        let kidProfile = loadProfile();
+
+        function editProfile(firstVisit = false) {
+          kidNameInput.value = kidProfile?.name ?? "";
+          profileForm.querySelectorAll('[name="gender"]').forEach((input) => {
+            input.checked = input.value === kidProfile?.gender;
+          });
+          cancelSettings.hidden = firstVisit;
+          profileDialog.showModal();
+          requestAnimationFrame(() => kidNameInput.focus());
+        }
+
+        profileForm.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const formData = new FormData(profileForm);
+          const name = String(formData.get("kidName") ?? "").trim();
+          const gender = formData.get("gender");
+          if (!name || !["boy", "girl"].includes(gender)) return;
+          kidProfile = { name, gender };
+          try {
+            localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(kidProfile));
+          } catch (_) {
+            // The current session can still be personalized without persistence.
+          }
+          document.title = `תיק הקסם ✨ | ${kidProfile.name}`;
+          document.getElementById("page-title").textContent =
+            `משימת תיק הקסם עם ${kidProfile.name}`;
+          profileDialog.close();
+          const scene = window.magicBagGame?.scene.getScene("MagicBag");
+          if (scene?.scene.isActive()) scene.scene.restart({});
+        });
+        cancelSettings.addEventListener("click", () => profileDialog.close());
+        profileDialog.addEventListener("cancel", (event) => {
+          if (!kidProfile) event.preventDefault();
+        });
+        openSettings.addEventListener("click", () => editProfile(false));
+
+        if (!kidProfile) {
+          editProfile(true);
+          await new Promise((resolve) =>
+            profileDialog.addEventListener("close", resolve, { once: true }),
+          );
+        }
+        document.title = `תיק הקסם ✨ | ${kidProfile.name}`;
+        document.getElementById("page-title").textContent =
+          `משימת תיק הקסם עם ${kidProfile.name}`;
+        const genderText = (girlText, boyText) =>
+          kidProfile.gender === "girl" ? girlText : boyText;
+
         const portraitQuery = window.matchMedia("(max-width: 760px)");
         let portrait = portraitQuery.matches;
         let W = portrait ? 420 : 1100;
@@ -324,7 +396,7 @@
               ease: "Sine.easeInOut",
             });
 
-            this.crispText(mascotX, portrait ? 712 : 745, "זואי", {
+            this.crispText(mascotX, portrait ? 712 : 745, kidProfile.name, {
               fontFamily: "Arial",
               fontSize: 20,
               fontStyle: "bold",
@@ -462,7 +534,7 @@
               button.style.setProperty("--item-tint", `${color}22`);
               button.setAttribute(
                 "aria-label",
-                `${item.label}, ${item.subject}, ${this.lessonLabel(item)}. גררי לתיק${item.audioUrl?.trim() ? " או לחצי להשמעה" : ""}`,
+                `${item.label}, ${item.subject}, ${this.lessonLabel(item)}. ${genderText("גררי", "גרור")} לתיק${item.audioUrl?.trim() ? genderText(" או לחצי להשמעה", " או לחץ להשמעה") : ""}`,
               );
               const subject = document.createElement("span");
               subject.className = "item-subject";
@@ -495,8 +567,8 @@
               const action = document.createElement("span");
               action.className = "item-action";
               action.textContent = item.audioUrl?.trim()
-                ? "גררי לתיק או לחצי להשמעה"
-                : "גררי לתיק";
+                ? genderText("גררי לתיק או לחצי להשמעה", "גרור לתיק או לחץ להשמעה")
+                : genderText("גררי לתיק", "גרור לתיק");
               const copy = document.createElement("span");
               copy.className = "item-copy";
               copy.append(subject, label, action);
@@ -984,8 +1056,8 @@
             this.finished = true;
             this.stackPanel.hidden = true;
             daySelect.disabled = false;
-            this.instruction.setText("התיק מוכן! 🎉");
-            liveStatus.textContent = "כל הכבוד! התיק מוכן!";
+            this.instruction.setText(`${kidProfile.name}, התיק מוכן! 🎉`);
+            liveStatus.textContent = `כל הכבוד ${kidProfile.name}! התיק מוכן!`;
             this.speak(
               `כל הכבוד! סיימנו להכין את התיק ליום ${DAYS[selectedDay]}!`,
             );
@@ -1044,7 +1116,7 @@
               .setOrigin(0.5)
               .setDepth(102);
 
-            const title = this.crispText(cx, cy - 34, "כל הכבוד", {
+            const title = this.crispText(cx, cy - 34, `כל הכבוד ${kidProfile.name}`, {
               fontFamily: "Arial",
               fontSize: portrait ? 34 : 40,
               fontStyle: "bold",
@@ -1088,7 +1160,8 @@
             btnVisual.fillStyle(0x9d73df, 1);
             btnVisual.fillRoundedRect(-95, -29, 190, 58, 29);
 
-            const btnText = this.crispText(cx, cy + 141, "שחקי שוב ✨", {
+            const replayLabel = kidProfile.gender === "girl" ? "שחקי שוב" : "שחק שוב";
+            const btnText = this.crispText(cx, cy + 141, `${replayLabel} ✨`, {
               fontFamily: "Arial",
               fontSize: 20,
               fontStyle: "bold",
@@ -1125,8 +1198,8 @@
             const replay = document.createElement("button");
             replay.type = "button";
             replay.className = "keyboard-control";
-            replay.textContent = "שחקי שוב ✨";
-            replay.setAttribute("aria-label", "שחקי שוב");
+            replay.textContent = `${replayLabel} ✨`;
+            replay.setAttribute("aria-label", replayLabel);
             replay.addEventListener("click", () => this.restartGame());
             replay.addEventListener("keydown", (event) => {
               if (event.key === "Tab") event.preventDefault();
@@ -1211,6 +1284,7 @@
           },
           render: { antialias: true },
         });
+        window.magicBagGame = game;
 
         daySelect.addEventListener("change", () => {
           const scene = game.scene.getScene("MagicBag");
