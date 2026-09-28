@@ -204,7 +204,7 @@
       "label": "אומנות",
       "equipmentStatus": "specified",
       "itemIds": [
-        "art"
+        "art-folder"
       ]
     },
     "sport": {
@@ -295,10 +295,10 @@
       "audioUrl": "/magic-school-bag/assets/audio/music.m4a",
       "color": "#b88ae4"
     },
-    "art-pad": {
+    "art-folder": {
       "label": "תיקית אומנות",
       "icon": "🖼️",
-      "audioUrl": "/magic-school-bag/assets/audioart.m4a",
+      "audioUrl": "/magic-school-bag/assets/audio/art.m4a",
       "color": "#f0a955"
     },
     "sport-shoes": {
