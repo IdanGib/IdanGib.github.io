@@ -60,12 +60,62 @@ function requiredElement<T extends HTMLElement>(id: string): T {
       (async () => {
         const appLifetime = new AbortController();
         const PROFILE_STORAGE_KEY = "magic-bag-kid-profile";
+        // Load the recording metadata before profile setup. On a first visit,
+        // submitting that form is the browser-approved gesture that lets the
+        // welcome recording start as the bag screen is revealed.
+        const dataUrl = new URL("magic-school-bag/ori-data.json", new URL(import.meta.env.BASE_URL, location.href));
+        const DATA: SchoolData = await fetch(dataUrl).then(async (response) => {
+          if (!response.ok)
+            throw new Error(`School bag data could not be loaded (${response.status})`);
+          return validateSchoolData(await response.json());
+        });
         const profileDialog = requiredElement<HTMLDialogElement>("profile-dialog");
         const profileForm = requiredElement<HTMLFormElement>("profile-form");
         const kidNameInput = requiredElement<HTMLInputElement>("kid-name");
         const cancelSettings = requiredElement<HTMLButtonElement>("cancel-settings");
         const openSettings = requiredElement<HTMLButtonElement>("open-settings");
         let hasInteracted = false;
+        let activeVoice: HTMLAudioElement | null = null;
+        let appEntryVoice: HTMLAudioElement | null = null;
+        let appEntryPlayed = false;
+        let appEntryStarting = false;
+
+        function appEntryIsPlaying(): boolean {
+          return !!appEntryVoice && !appEntryVoice.ended && !appEntryVoice.paused;
+        }
+
+        function stopVoice(force = false): void {
+          if (!activeVoice || (!force && activeVoice === appEntryVoice)) return;
+          activeVoice.pause();
+          activeVoice.currentTime = 0;
+          activeVoice = null;
+        }
+
+        async function startAppEntry(day: number): Promise<boolean> {
+          if (appEntryPlayed || appEntryStarting || appEntryIsPlaying()) return appEntryPlayed;
+          const audioUrl = DATA.generalAudio.appEntry.humanAudioByWeekday[String(day)]?.trim();
+          if (!audioUrl) return false;
+
+          appEntryStarting = true;
+          const voice = new Audio(resolveMediaUrl(audioUrl, dataUrl));
+          appEntryVoice = voice;
+          activeVoice = voice;
+          voice.addEventListener("ended", () => {
+            if (activeVoice === voice) activeVoice = null;
+            if (appEntryVoice === voice) appEntryVoice = null;
+          }, { once: true });
+          try {
+            await voice.play();
+            appEntryPlayed = true;
+            return true;
+          } catch (_) {
+            if (activeVoice === voice) activeVoice = null;
+            if (appEntryVoice === voice) appEntryVoice = null;
+            return false;
+          } finally {
+            appEntryStarting = false;
+          }
+        }
         let resolveInitialProfile: (() => void) | undefined;
         const initialProfileReady = new Promise<void>((resolve) => {
           resolveInitialProfile = resolve;
@@ -127,6 +177,9 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           resolveInitialProfile?.();
           resolveInitialProfile = undefined;
           profileDialog.close();
+          // Keep this call in the submit gesture: awaiting scene creation first
+          // causes mobile browsers to reject the welcome recording as autoplay.
+          void startAppEntry(nextSchoolDay(DATA));
           const scene = window.magicBagGame?.scene.getScene("MagicBag") as MagicBagScene | undefined;
           if (scene?.scene.isActive()) scene.scene.restart({});
         });
@@ -166,28 +219,13 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           3,
           Math.max(2, Math.ceil(window.devicePixelRatio || 1)),
         );
-        let activeVoice: HTMLAudioElement | null = null;
-        let appEntryPlayed = false;
         const reducedMotion = window.matchMedia(
           "(prefers-reduced-motion: reduce)",
         ).matches;
         const controls = requiredElement<HTMLDivElement>("keyboard-controls");
         const liveStatus = requiredElement<HTMLParagraphElement>("game-status");
 
-        function stopVoice() {
-          if (!activeVoice) return;
-          activeVoice.pause();
-          activeVoice.currentTime = 0;
-          activeVoice = null;
-        }
-
         // This JSON is the single source for lesson order, equipment, dismissal time and recorded voice.
-        const dataUrl = new URL("magic-school-bag/ori-data.json", new URL(import.meta.env.BASE_URL, location.href));
-        const DATA: SchoolData = await fetch(dataUrl).then(async (response) => {
-          if (!response.ok)
-            throw new Error(`School bag data could not be loaded (${response.status})`);
-          return validateSchoolData(await response.json());
-        });
         const DAYS = DATA.days.map((day) => day.label);
 
         const daySelect = requiredElement<HTMLSelectElement>("school-day");
@@ -1048,15 +1086,16 @@ function requiredElement<T extends HTMLElement>(id: string): T {
 
           playAppEntry(): void {
             if (appEntryPlayed || !hasInteracted) return;
-            appEntryPlayed = true;
             const message = DATA.generalAudio.appEntry;
             const text = message.textTemplate.replace("{day}", DAYS[selectedDay]);
             liveStatus.textContent = text;
-            this.speak(message.humanAudioByWeekday[String(selectedDay)]);
+            void startAppEntry(selectedDay);
           }
 
           speak(audioUrl?: string): void {
             if (!hasInteracted) return;
+            // Item taps and scene restarts must not cut off the welcome message.
+            if (appEntryIsPlaying() || appEntryStarting) return;
             const url = audioUrl?.trim();
             stopVoice();
             if (typeof url !== "string" || !url.trim()) return;
@@ -1407,7 +1446,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
 
         window.addEventListener("pagehide", () => {
           appLifetime.abort();
-          stopVoice();
+          stopVoice(true);
           game.destroy(true);
           if (window.magicBagGame === game) delete window.magicBagGame;
         }, { once: true });
