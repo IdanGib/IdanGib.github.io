@@ -81,6 +81,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
         let hasInteracted = false;
         let activeVoice: HTMLAudioElement | null = null;
         let appEntryVoice: HTMLAudioElement | null = null;
+        let appEntryVoiceDay: number | null = null;
         let appEntryPlayedDay: number | null = null;
         let appEntryStarting = false;
 
@@ -96,6 +97,13 @@ function requiredElement<T extends HTMLElement>(id: string): T {
         }
 
         async function startAppEntry(day: number): Promise<boolean> {
+          if (appEntryVoice && appEntryVoiceDay !== day) {
+            appEntryVoice.pause();
+            appEntryVoice.currentTime = 0;
+            if (activeVoice === appEntryVoice) activeVoice = null;
+            appEntryVoice = null;
+            appEntryVoiceDay = null;
+          }
           if (appEntryPlayedDay === day || appEntryStarting || appEntryIsPlaying())
             return appEntryPlayedDay === day;
           const audioUrl = DATA.generalAudio.appEntry.humanAudioByWeekday[String(day)]?.trim();
@@ -104,10 +112,14 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           appEntryStarting = true;
           const voice = new Audio(resolveMediaUrl(audioUrl, dataUrl));
           appEntryVoice = voice;
+          appEntryVoiceDay = day;
           activeVoice = voice;
           voice.addEventListener("ended", () => {
             if (activeVoice === voice) activeVoice = null;
-            if (appEntryVoice === voice) appEntryVoice = null;
+            if (appEntryVoice === voice) {
+              appEntryVoice = null;
+              appEntryVoiceDay = null;
+            }
           }, { once: true });
           try {
             await voice.play();
@@ -115,7 +127,10 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             return true;
           } catch (_) {
             if (activeVoice === voice) activeVoice = null;
-            if (appEntryVoice === voice) appEntryVoice = null;
+            if (appEntryVoice === voice) {
+              appEntryVoice = null;
+              appEntryVoiceDay = null;
+            }
             return false;
           } finally {
             appEntryStarting = false;
@@ -256,6 +271,19 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           );
         }
         renderDayInfo();
+
+        function showDayStart(): void {
+          const profile = currentProfile();
+          const message = DATA.generalAudio.appEntry;
+          daySelect.blur();
+          daySelect.disabled = true;
+          dayStartTitle.textContent = `מתכוננים ליום ${DAYS[selectedDay]}!`;
+          dayStartMessage.textContent = `${profile.name}, הגיע הזמן להכין יחד את תיק הקסם ליום ${DAYS[selectedDay]}.`;
+          liveStatus.textContent = message.textTemplate.replace("{day}", DAYS[selectedDay]);
+          if (!dayStartDialog.open) dayStartDialog.showModal();
+          void startAppEntry(selectedDay);
+          requestAnimationFrame(() => dayStartButton.focus());
+        }
 
         class MagicBagScene extends Phaser.Scene {
           cards: CardState[] = [];
@@ -1414,6 +1442,10 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           signal: appLifetime.signal,
         });
 
+        // Introduce the automatically selected day as soon as the main screen
+        // appears, just as we do when the child chooses a different day.
+        showDayStart();
+
         daySelect.addEventListener("change", () => {
           const scene = game.scene.getScene("MagicBag") as MagicBagScene;
           if (
@@ -1428,21 +1460,14 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           selectedDay = Number(daySelect.value);
           ITEMS = packingListFor(DATA, selectedDay);
           renderDayInfo();
-          const profile = currentProfile();
-          dayStartTitle.textContent = `מתכוננים ליום ${DAYS[selectedDay]}!`;
-          dayStartMessage.textContent = `${profile.name}, הגיע הזמן להכין יחד את תיק הקסם ליום ${DAYS[selectedDay]}.`;
-          dayStartDialog.showModal();
-          requestAnimationFrame(() => dayStartButton.focus());
+          showDayStart();
         });
 
-        // The day switch stays blocked until the child explicitly starts. This
-        // click is also the browser-approved gesture used to play the recording.
+        // The day switch stays blocked until the child explicitly starts.
         dayStartDialog.addEventListener("cancel", (event) => event.preventDefault());
         dayStartButton.addEventListener("click", () => {
           hasInteracted = true;
-          stopVoice(true);
-          appEntryPlayedDay = null;
-          void startAppEntry(selectedDay);
+          daySelect.blur();
           dayStartDialog.close();
           const scene = game.scene.getScene("MagicBag") as MagicBagScene;
           scene.scene.restart({});
