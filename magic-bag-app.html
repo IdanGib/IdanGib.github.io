@@ -116,12 +116,20 @@
       }
       .packing-toolbar select {
         font: inherit;
+        font-weight: bold;
         color: var(--ink-strong);
-        padding: 8px 12px;
-        border-radius: 14px;
-        border: 2px solid var(--accent-border);
+        min-width: 180px;
+        padding: 11px 16px;
+        border-radius: 18px;
+        border: 3px solid var(--accent);
         background: white;
+        box-shadow: 0 6px 18px var(--shadow);
         cursor: pointer;
+        transition: transform 160ms ease, box-shadow 160ms ease;
+      }
+      .packing-toolbar select:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 9px 22px var(--shadow);
       }
       .packing-toolbar select:focus-visible {
         outline: 3px solid var(--accent-dark);
