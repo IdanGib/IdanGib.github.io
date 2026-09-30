@@ -65,6 +65,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
         const kidNameInput = requiredElement<HTMLInputElement>("kid-name");
         const cancelSettings = requiredElement<HTMLButtonElement>("cancel-settings");
         const openSettings = requiredElement<HTMLButtonElement>("open-settings");
+        let hasInteracted = false;
         let resolveInitialProfile: (() => void) | undefined;
         const initialProfileReady = new Promise<void>((resolve) => {
           resolveInitialProfile = resolve;
@@ -112,6 +113,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           const name = String(formData.get("kidName") ?? "").trim();
           const gender = formData.get("gender");
           if (!name || (gender !== "boy" && gender !== "girl")) return;
+          hasInteracted = true;
           kidProfile = { name, gender };
           applyProfileColors(kidProfile);
           try {
@@ -165,7 +167,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           Math.max(2, Math.ceil(window.devicePixelRatio || 1)),
         );
         let activeVoice: HTMLAudioElement | null = null;
-        let hasInteracted = false;
+        let appEntryPlayed = false;
         const reducedMotion = window.matchMedia(
           "(prefers-reduced-motion: reduce)",
         ).matches;
@@ -305,9 +307,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             this.game.canvas.setAttribute("aria-hidden", "true");
             requestAnimationFrame(() => this.positionControls());
 
-            this.time.delayedCall(850, () => {
-              if (hasInteracted) this.speakCurrent();
-            });
+            this.time.delayedCall(850, () => this.playAppEntry());
           }
 
           drawBackground() {
@@ -655,7 +655,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                   { once: true },
                 );
                 const audioUrl = item.audioUrl?.trim();
-                if (audioUrl) this.speak("", audioUrl);
+                if (audioUrl) this.speak(audioUrl);
               });
               button.addEventListener("keydown", (event) => {
                 if (event.key !== "ArrowDown" || !this.canPack(card)) return;
@@ -943,7 +943,6 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             card.phase = "packing";
             daySelect.disabled = true;
             this.refreshDeck();
-            this.speak("כל הכבוד!");
             this.sparkles(card.container.x, card.container.y, card.item.color);
 
             this.tweens.add({
@@ -998,8 +997,6 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             this.returningCard = card;
             card.phase = "returning";
             this.refreshDeck();
-            this.speak("ננסה שוב");
-
             this.tweens.add({
               targets: card.container,
               x: card.homeX,
@@ -1046,12 +1043,21 @@ function requiredElement<T extends HTMLElement>(id: string): T {
 
           speakCurrent() {
             const item = this.currentItem();
-            if (item) this.speak(`עכשיו נשים בתיק: ${item.label}`, item.audioUrl);
+            if (item?.audioUrl) this.speak(item.audioUrl);
           }
 
-          speak(text: string, itemAudioUrl?: string): void {
+          playAppEntry(): void {
+            if (appEntryPlayed || !hasInteracted) return;
+            appEntryPlayed = true;
+            const message = DATA.generalAudio.appEntry;
+            const text = message.textTemplate.replace("{day}", DAYS[selectedDay]);
+            liveStatus.textContent = text;
+            this.speak(message.humanAudioByWeekday[String(selectedDay)]);
+          }
+
+          speak(audioUrl?: string): void {
             if (!hasInteracted) return;
-            const url = itemAudioUrl?.trim() || DATA.audio.textToUrl[text];
+            const url = audioUrl?.trim();
             stopVoice();
             if (typeof url !== "string" || !url.trim()) return;
             const voice = new Audio(resolveMediaUrl(url, dataUrl));
@@ -1118,10 +1124,9 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             if (this.stackPanel) this.stackPanel.hidden = true;
             daySelect.disabled = false;
             this.instruction.setText(`${currentProfile().name}, התיק מוכן! 🎉`);
-            liveStatus.textContent = `כל הכבוד ${currentProfile().name}! התיק מוכן!`;
-            this.speak(
-              `כל הכבוד! סיימנו להכין את התיק ליום ${DAYS[selectedDay]}!`,
-            );
+            const finalMessage = DATA.generalAudio.finalDialog;
+            liveStatus.textContent = `${finalMessage.text} ${currentProfile().name}! התיק מוכן!`;
+            this.speak(finalMessage.humanAudioUrl);
             this.confetti();
 
             this.tweens.add({
@@ -1177,7 +1182,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               .setOrigin(0.5)
               .setDepth(102);
 
-            const title = this.crispText(cx, cy - 34, `כל הכבוד ${currentProfile().name}`, {
+            const title = this.crispText(cx, cy - 34, `${finalMessage.text} ${currentProfile().name}`, {
               fontFamily: "Arial",
               fontSize: portrait ? 34 : 40,
               fontStyle: "bold",
@@ -1346,6 +1351,24 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           render: { antialias: true },
         });
         window.magicBagGame = game;
+
+        // Browsers require a user gesture before recorded audio can start. Play
+        // the one-time greeting on the first gesture, never on scene restarts.
+        const playInitialGreeting = () => {
+          hasInteracted = true;
+          const scene = game.scene.getScene("MagicBag") as MagicBagScene;
+          if (scene?.scene.isActive()) scene.playAppEntry();
+        };
+        window.addEventListener("pointerdown", playInitialGreeting, {
+          once: true,
+          capture: true,
+          signal: appLifetime.signal,
+        });
+        window.addEventListener("keydown", playInitialGreeting, {
+          once: true,
+          capture: true,
+          signal: appLifetime.signal,
+        });
 
         daySelect.addEventListener("change", () => {
           const scene = game.scene.getScene("MagicBag") as MagicBagScene;

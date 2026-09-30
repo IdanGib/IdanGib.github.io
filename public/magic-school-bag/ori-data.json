@@ -321,16 +321,22 @@
       "color": "#52cfa3"
     }
   },
-  "audio": {
-    "textToUrl": {
-      "כל הכבוד! סיימנו להכין את התיק ליום ראשון!": "",
-      "כל הכבוד! סיימנו להכין את התיק ליום שני!": "",
-      "כל הכבוד! סיימנו להכין את התיק ליום שלישי!": "",
-      "כל הכבוד! סיימנו להכין את התיק ליום רביעי!": "",
-      "כל הכבוד! סיימנו להכין את התיק ליום חמישי!": "",
-      "כל הכבוד! סיימנו להכין את התיק ליום שישי!": "",
-      "כל הכבוד!": "",
-      "ננסה שוב": ""
-    }
+  "generalAudio": {
+    "appEntry": {
+      "textTemplate": "בואו נכין מערכת ליום {day}",
+      "humanAudioByWeekday": {
+        "0": "./assets/audio/sunday .m4a",
+        "1": "./assets/audio/monday.m4a",
+        "2": "./assets/audio/tuesday.m4a",
+        "3": "./assets/audio/wednesday.m4a",
+        "4": "./assets/audio/thursday.m4a",
+        "5": "./assets/audio/friday.m4a"
+      }
+    },
+    "finalDialog": {
+      "text": "כל הכבוד",
+      "humanAudioUrl": "./assets/audio/greate.m4a"
+    },
+    "soundEffects": {}
   }
 }
