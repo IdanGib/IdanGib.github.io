@@ -203,6 +203,11 @@
         font-size: 20px;
         line-height: 1.5;
       }
+      .day-start-audio {
+        width: 100%;
+        height: 54px;
+        accent-color: var(--accent);
+      }
       .day-start-button {
         width: 100%;
         min-height: 64px;
@@ -589,6 +594,14 @@
         <div class="day-start-icon" aria-hidden="true">✨🎒✨</div>
         <h2 id="day-start-title"></h2>
         <p id="day-start-message"></p>
+        <audio
+          id="day-start-audio"
+          class="day-start-audio"
+          controls
+          preload="auto"
+          aria-label="האזנה להקדמה ליום הלימודים"
+          hidden
+        ></audio>
         <button id="day-start-button" class="day-start-button" type="button">בואו נתחיל ✨</button>
       </div>
     </dialog>
