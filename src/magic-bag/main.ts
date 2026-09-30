@@ -77,6 +77,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
         const dayStartDialog = requiredElement<HTMLDialogElement>("day-start-dialog");
         const dayStartTitle = requiredElement<HTMLHeadingElement>("day-start-title");
         const dayStartMessage = requiredElement<HTMLParagraphElement>("day-start-message");
+        const dayStartAudio = requiredElement<HTMLAudioElement>("day-start-audio");
         const dayStartButton = requiredElement<HTMLButtonElement>("day-start-button");
         let hasInteracted = false;
         let activeVoice: HTMLAudioElement | null = null;
@@ -107,20 +108,31 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           if (appEntryPlayedDay === day || appEntryStarting || appEntryIsPlaying())
             return appEntryPlayedDay === day;
           const audioUrl = DATA.generalAudio.appEntry.humanAudioByWeekday[String(day)]?.trim();
-          if (!audioUrl) return false;
+          if (!audioUrl) {
+            dayStartAudio.hidden = true;
+            dayStartAudio.removeAttribute("src");
+            dayStartAudio.load();
+            return false;
+          }
 
           appEntryStarting = true;
-          const voice = new Audio(resolveMediaUrl(audioUrl, dataUrl));
+          const resolvedAudioUrl = resolveMediaUrl(audioUrl, dataUrl);
+          if (dayStartAudio.src !== resolvedAudioUrl) {
+            dayStartAudio.src = resolvedAudioUrl;
+            dayStartAudio.load();
+          }
+          dayStartAudio.hidden = false;
+          const voice = dayStartAudio;
           appEntryVoice = voice;
           appEntryVoiceDay = day;
           activeVoice = voice;
-          voice.addEventListener("ended", () => {
+          voice.onended = () => {
             if (activeVoice === voice) activeVoice = null;
             if (appEntryVoice === voice) {
               appEntryVoice = null;
               appEntryVoiceDay = null;
             }
-          }, { once: true });
+          };
           try {
             await voice.play();
             appEntryPlayedDay = day;
