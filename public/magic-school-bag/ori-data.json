@@ -317,7 +317,7 @@
       "label": "ספר ספרייה",
       "icon": "📖",
       "imageUrl": "",
-      "audioUrl": "",
+      "audioUrl": "./assets/audio/lib.m4a",
       "color": "#52cfa3"
     }
   },
