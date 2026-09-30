@@ -21,6 +21,46 @@
       * {
         box-sizing: border-box;
       }
+      :root {
+        --page: #fff8fd;
+        --glow-start: #ffe3f1;
+        --glow-end: #e7e0ff;
+        --ink: #51425f;
+        --ink-strong: #5f4976;
+        --ink-soft: #80698f;
+        --accent: #9d73df;
+        --accent-dark: #68439b;
+        --accent-border: #c6b1e4;
+        --accent-pale: #f1e7ff;
+        --accent-hover: #f7efff;
+        --dialog-border: #ffadd2;
+        --field-border: #d8c6e8;
+        --surface-border: #e3d4ef;
+        --focus-fill: #f4eaff;
+        --shadow: rgba(83, 52, 103, 0.18);
+        --shadow-strong: rgba(83, 52, 103, 0.3);
+        --backdrop: rgba(74, 53, 87, 0.48);
+      }
+      :root[data-gender="boy"] {
+        --page: #f4fbff;
+        --glow-start: #d9f3ff;
+        --glow-end: #dceaff;
+        --ink: #24465f;
+        --ink-strong: #24516f;
+        --ink-soft: #527087;
+        --accent: #2789c7;
+        --accent-dark: #12628f;
+        --accent-border: #8fc7e5;
+        --accent-pale: #dff3ff;
+        --accent-hover: #eaf8ff;
+        --dialog-border: #60c8dd;
+        --field-border: #afd5e8;
+        --surface-border: #c6e3ef;
+        --focus-fill: #e4f6ff;
+        --shadow: rgba(27, 83, 112, 0.18);
+        --shadow-strong: rgba(27, 83, 112, 0.3);
+        --backdrop: rgba(22, 60, 80, 0.48);
+      }
       html,
       body {
         margin: 0;
@@ -28,16 +68,16 @@
         min-height: 100%;
       }
       html {
-        background: #fff8fd;
+        background: var(--page);
       }
       body {
         font-family: Arial, "Noto Sans Hebrew", sans-serif;
         padding: 16px;
         overflow-x: hidden;
         background:
-          radial-gradient(circle at 16% 16%, #ffe3f1 0, transparent 35%),
-          radial-gradient(circle at 84% 84%, #e7e0ff 0, transparent 36%),
-          #fff8fd;
+          radial-gradient(circle at 16% 16%, var(--glow-start) 0, transparent 35%),
+          radial-gradient(circle at 84% 84%, var(--glow-end) 0, transparent 36%),
+          var(--page);
       }
       #game {
         width: 100%;
@@ -55,7 +95,7 @@
         max-height: 100%;
         border-radius: 28px;
         touch-action: none;
-        box-shadow: 0 28px 80px rgba(83, 52, 103, 0.18);
+        box-shadow: 0 28px 80px var(--shadow);
       }
       [hidden] {
         display: none !important;
@@ -68,7 +108,7 @@
         justify-content: center;
         flex-wrap: wrap;
         gap: 8px 16px;
-        color: #5f4976;
+        color: var(--ink-strong);
         font-size: 16px;
       }
       .packing-toolbar strong {
@@ -76,15 +116,15 @@
       }
       .packing-toolbar select {
         font: inherit;
-        color: #5f4976;
+        color: var(--ink-strong);
         padding: 8px 12px;
         border-radius: 14px;
-        border: 2px solid #c6b1e4;
+        border: 2px solid var(--accent-border);
         background: white;
         cursor: pointer;
       }
       .packing-toolbar select:focus-visible {
-        outline: 3px solid #68439b;
+        outline: 3px solid var(--accent-dark);
         outline-offset: 3px;
       }
       .settings-button {
@@ -93,34 +133,34 @@
         width: 42px;
         height: 42px;
         padding: 0;
-        border: 2px solid #c6b1e4;
+        border: 2px solid var(--accent-border);
         border-radius: 14px;
-        color: #5f4976;
+        color: var(--ink-strong);
         background: #fff;
         font-size: 21px;
         cursor: pointer;
       }
       .settings-button:hover {
-        background: #f7efff;
+        background: var(--accent-hover);
       }
       .settings-button:focus-visible,
       .profile-dialog button:focus-visible,
       .profile-dialog input:focus-visible {
-        outline: 3px solid #68439b;
+        outline: 3px solid var(--accent-dark);
         outline-offset: 3px;
       }
       .profile-dialog {
         width: min(440px, calc(100% - 32px));
         padding: 0;
         overflow: hidden;
-        color: #51425f;
-        border: 4px solid #ffadd2;
+        color: var(--ink);
+        border: 4px solid var(--dialog-border);
         border-radius: 36px;
         background: #fff;
-        box-shadow: 0 28px 80px rgba(83, 52, 103, 0.3);
+        box-shadow: 0 28px 80px var(--shadow-strong);
       }
       .profile-dialog::backdrop {
-        background: rgba(74, 53, 87, 0.48);
+        background: var(--backdrop);
         backdrop-filter: blur(5px);
       }
       .profile-form {
@@ -135,11 +175,11 @@
         margin: 0;
       }
       .profile-form h2 {
-        color: #72548b;
+        color: var(--ink-strong);
         font-size: 30px;
       }
       .profile-form p {
-        color: #80698f;
+        color: var(--ink-soft);
         line-height: 1.5;
       }
       .profile-name {
@@ -151,8 +191,8 @@
       .profile-name input {
         width: 100%;
         padding: 12px 14px;
-        color: #51425f;
-        border: 2px solid #d8c6e8;
+        color: var(--ink);
+        border: 2px solid var(--field-border);
         border-radius: 14px;
         font: inherit;
       }
@@ -174,17 +214,17 @@
         display: grid;
         place-items: center;
         min-height: 72px;
-        border: 2px solid #d8c6e8;
+        border: 2px solid var(--field-border);
         border-radius: 18px;
-        background: #fff8fd;
+        background: var(--page);
         font-size: 18px;
         font-weight: bold;
         cursor: pointer;
       }
       .gender-options label:has(input:checked) {
-        border-color: #9d73df;
-        background: #f1e7ff;
-        box-shadow: 0 0 0 2px #9d73df22;
+        border-color: var(--accent);
+        background: var(--accent-pale);
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 16%, transparent);
       }
       .gender-options input {
         position: absolute;
@@ -195,7 +235,7 @@
         border: 0;
         border-radius: 999px;
         color: #fff;
-        background: #9d73df;
+        background: var(--accent);
         font: inherit;
         font-size: 18px;
         font-weight: bold;
@@ -203,27 +243,27 @@
       }
       .cancel-profile {
         border: 0;
-        color: #72548b;
+        color: var(--ink-strong);
         background: transparent;
         font: inherit;
         cursor: pointer;
       }
       .end-time {
         background: #fff;
-        border: 2px solid #e3d4ef;
+        border: 2px solid var(--surface-border);
         padding: 7px 12px;
         border-radius: 14px;
       }
       .end-time output {
         font-weight: bold;
-        color: #51425f;
+        color: var(--ink);
       }
       .item-button:focus,
       .keyboard-control:focus {
         outline: none;
       }
       .item-button:focus-visible {
-        background: #f4eaff;
+        background: var(--focus-fill);
       }
       .packing-panel {
         position: absolute;
@@ -243,7 +283,7 @@
         height: 100%;
         margin: 0;
         padding: 16px 18px;
-        color: #51425f;
+        color: var(--ink);
         background: white;
         border: 2px solid var(--item-border);
         border-radius: 28px;
@@ -285,7 +325,7 @@
         font-size: 13px;
         font-weight: bold;
         line-height: 1.4;
-        color: #80698f;
+        color: var(--ink-soft);
       }
       .item-copy {
         display: flex;
@@ -336,7 +376,7 @@
         line-height: 1.25;
       }
       .item-action {
-        color: #80698f;
+        color: var(--ink-soft);
         font-size: 13px;
         line-height: 1.4;
       }
@@ -423,7 +463,7 @@
         left: 50%;
         top: 45%;
         transform: translate(-50%, -50%);
-        color: #5f4976;
+        color: var(--ink-strong);
         text-align: center;
         font-size: 18px;
       }

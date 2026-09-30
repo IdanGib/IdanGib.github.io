@@ -25,6 +25,32 @@ interface PendingDrag { card: CardState; pointerId: number; x: number; y: number
 interface SceneRestartData { packedIds?: string[] }
 interface Point { x: number; y: number }
 
+const GIRL_PALETTE = {
+  page: "#fff8fd", pageNumber: 0xfff8fd, blobOne: 0xffd9eb,
+  blobTwo: 0xded7ff, sparkleOne: "#e5b6d1", sparkleTwo: "#bfb4ee",
+  heading: "#5f4976", copy: "#7f6d92", label: "#745c87",
+  shadow: 0x684c73, mascot: 0xffb8d7, mascotEar: 0xffcde3,
+  mascotInk: 0x4f405e, mascotCheek: 0xff80ae, bagStrap: 0xa17be7,
+  bagStrapHover: 0xb689ff, bag: 0x9d73df, bagHover: 0xb688ff,
+  bagPanel: 0xcaa9f6, bagPanelHover: 0xddc3ff, bagTop: 0x8259c2,
+  bagPocket: 0xff8ebe, bagPocketLine: 0xffbad7, progress: "#a889c5",
+  overlay: 0x4a3557, dialogBorder: 0xffadd2, dialogTitle: "#72548b",
+  dialogCopy: "#927ba1", accent: 0x9d73df,
+};
+
+const BOY_PALETTE: typeof GIRL_PALETTE = {
+  page: "#f4fbff", pageNumber: 0xf4fbff, blobOne: 0xcdefff,
+  blobTwo: 0xd5e6ff, sparkleOne: "#79c9e6", sparkleTwo: "#8faee5",
+  heading: "#24516f", copy: "#527087", label: "#31647f",
+  shadow: 0x24506a, mascot: 0x58c7df, mascotEar: 0x92e0ee,
+  mascotInk: 0x203f55, mascotCheek: 0x43a9d1, bagStrap: 0x287fb5,
+  bagStrapHover: 0x43a9d1, bag: 0x2789c7, bagHover: 0x36a4d8,
+  bagPanel: 0x72c5e8, bagPanelHover: 0x91d8ef, bagTop: 0x176b9c,
+  bagPocket: 0x50c6af, bagPocketLine: 0x92e1d1, progress: "#6598b6",
+  overlay: 0x163c50, dialogBorder: 0x60c8dd, dialogTitle: "#24516f",
+  dialogCopy: "#527087", accent: 0x2789c7,
+};
+
 function requiredElement<T extends HTMLElement>(id: string): T {
   const element = document.getElementById(id);
   if (!element) throw new Error(`Missing required element #${id}`);
@@ -64,6 +90,12 @@ function requiredElement<T extends HTMLElement>(id: string): T {
 
         let kidProfile = loadProfile();
 
+        function applyProfileColors(profile: Profile): void {
+          document.documentElement.dataset.gender = profile.gender;
+          document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+            ?.setAttribute("content", profile.gender === "boy" ? "#2789c7" : "#9d73df");
+        }
+
         function editProfile(firstVisit = false): void {
           kidNameInput.value = kidProfile?.name ?? "";
           profileForm.querySelectorAll<HTMLInputElement>('[name="gender"]').forEach((input) => {
@@ -81,6 +113,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           const gender = formData.get("gender");
           if (!name || (gender !== "boy" && gender !== "girl")) return;
           kidProfile = { name, gender };
+          applyProfileColors(kidProfile);
           try {
             localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(kidProfile));
           } catch (_) {
@@ -108,6 +141,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           await initialProfileReady;
         }
         if (!kidProfile) throw new Error("Profile setup ended without a valid profile");
+        applyProfileColors(kidProfile);
         document.title = `תיק הקסם ✨ | ${kidProfile.name}`;
         requiredElement("page-title").textContent =
           `משימת תיק הקסם עם ${kidProfile.name}`;
@@ -117,6 +151,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
         };
         const genderText = (girlText: string, boyText: string): string =>
           currentProfile().gender === "girl" ? girlText : boyText;
+        const palette = () => currentProfile().gender === "boy" ? BOY_PALETTE : GIRL_PALETTE;
 
         const portraitQuery = window.matchMedia("(max-width: 760px)");
         let portrait = portraitQuery.matches;
@@ -230,7 +265,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             this.cameras.main
               .setZoom(renderScale)
               .centerOn(W / 2, H / 2)
-              .setBackgroundColor("#fff8fd");
+              .setBackgroundColor(palette().page);
 
             this.drawBackground();
             this.drawHeader();
@@ -277,12 +312,12 @@ function requiredElement<T extends HTMLElement>(id: string): T {
 
           drawBackground() {
             const g = this.add.graphics();
-            g.fillStyle(0xfff8fd);
+            g.fillStyle(palette().pageNumber);
             g.fillRect(0, 0, W, H);
 
             const blobs = [
-              [85, 90, 190, 0xffd9eb, 0.65],
-              [1030, 75, 230, 0xded7ff, 0.58],
+              [85, 90, 190, palette().blobOne, 0.65],
+              [1030, 75, 230, palette().blobTwo, 0.58],
               [1010, 660, 250, 0xd9f8ed, 0.55],
               [70, 650, 220, 0xffefbf, 0.62],
             ];
@@ -298,7 +333,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               const s = this.crispText(x, y, Math.random() > 0.5 ? "✦" : "•", {
                 fontFamily: "Arial",
                 fontSize: Phaser.Math.Between(10, 20),
-                color: Math.random() > 0.5 ? "#e5b6d1" : "#bfb4ee",
+                color: Math.random() > 0.5 ? palette().sparkleOne : palette().sparkleTwo,
               })
                 .setOrigin(0.5)
                 .setAlpha(Phaser.Math.FloatBetween(0.25, 0.65));
@@ -346,13 +381,13 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               fontFamily: "Arial",
               fontSize: portrait ? 29 : 36,
               fontStyle: "bold",
-              color: "#5f4976",
+              color: palette().heading,
             }).setOrigin(0.5);
 
             this.instruction = this.crispText(W / 2, 95, "", {
               fontFamily: "Arial",
               fontSize: portrait ? 21 : 24,
-              color: "#7f6d92",
+              color: palette().copy,
               align: "center",
               wordWrap: { width: portrait ? 380 : 800 },
             }).setOrigin(0.5);
@@ -369,25 +404,25 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               .setScale(this.mascotScale);
 
             const g = this.add.graphics();
-            g.fillStyle(0x7f617f, 0.12);
+            g.fillStyle(palette().shadow, 0.12);
             g.fillEllipse(0, 79, 135, 28);
 
-            g.fillStyle(0xffb8d7);
+            g.fillStyle(palette().mascot);
             g.fillCircle(0, 0, 64);
-            g.fillStyle(0xffcde3);
+            g.fillStyle(palette().mascotEar);
             g.fillCircle(-30, -51, 25);
             g.fillCircle(30, -51, 25);
 
-            g.fillStyle(0x4f405e);
+            g.fillStyle(palette().mascotInk);
             g.fillCircle(-20, -6, 6);
             g.fillCircle(20, -6, 6);
 
-            g.lineStyle(4, 0x4f405e);
+            g.lineStyle(4, palette().mascotInk);
             g.beginPath();
             g.arc(0, 8, 22, 0.15, Math.PI - 0.15);
             g.strokePath();
 
-            g.fillStyle(0xff80ae, 0.45);
+            g.fillStyle(palette().mascotCheek, 0.45);
             g.fillCircle(-40, 17, 11);
             g.fillCircle(40, 17, 11);
 
@@ -407,7 +442,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               fontFamily: "Arial",
               fontSize: 20,
               fontStyle: "bold",
-              color: "#745c87",
+              color: palette().label,
             }).setOrigin(0.5);
           }
 
@@ -419,7 +454,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             this.bagGraphics = this.add.graphics();
 
             const shadow = this.add.graphics();
-            shadow.fillStyle(0x684c73, 0.12);
+            shadow.fillStyle(palette().shadow, 0.12);
             shadow.fillEllipse(0, 146, 260, 48);
 
             const star = this.crispText(0, -5, "★", {
@@ -435,7 +470,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               fontFamily: "Arial",
               fontSize: 21,
               fontStyle: "bold",
-              color: "#7d668f",
+              color: palette().copy,
             }).setOrigin(0.5);
 
             this.tweens.add({
@@ -452,7 +487,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             const g = this.bagGraphics;
             g.clear();
 
-            g.lineStyle(18, hovered ? 0xb689ff : 0xa17be7, 1);
+            g.lineStyle(18, hovered ? palette().bagStrapHover : palette().bagStrap, 1);
             g.beginPath();
             g.arc(-64, 12, 83, 1.65, 4.55);
             g.strokePath();
@@ -460,19 +495,19 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             g.arc(64, 12, 83, -1.4, 1.4);
             g.strokePath();
 
-            g.fillStyle(hovered ? 0xb688ff : 0x9d73df);
+            g.fillStyle(hovered ? palette().bagHover : palette().bag);
             g.fillRoundedRect(-108, -120, 216, 250, 48);
 
-            g.fillStyle(hovered ? 0xddc3ff : 0xcaa9f6);
+            g.fillStyle(hovered ? palette().bagPanelHover : palette().bagPanel);
             g.fillRoundedRect(-92, -101, 184, 211, 40);
 
-            g.fillStyle(0x8259c2);
+            g.fillStyle(palette().bagTop);
             g.fillRoundedRect(-78, -98, 156, 52, 25);
 
-            g.fillStyle(0xff8ebe);
+            g.fillStyle(palette().bagPocket);
             g.fillRoundedRect(-66, 38, 132, 58, 22);
 
-            g.lineStyle(3, 0xffbad7);
+            g.lineStyle(3, palette().bagPocketLine);
             g.strokeRoundedRect(-66, 38, 132, 58, 22);
           }
 
@@ -486,7 +521,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                 {
                   fontFamily: "Arial",
                   fontSize: portrait ? 39 : 42,
-                  color: "#a889c5",
+                  color: palette().progress,
                 },
               ).setOrigin(0.5),
             );
@@ -496,7 +531,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             this.progressStars.forEach((star, index) => {
               const filled = index < this.packed;
               star.setText(filled ? "★" : "☆");
-              star.setColor(filled ? "#f0b93e" : "#a889c5");
+              star.setColor(filled ? "#f0b93e" : palette().progress);
             });
             liveStatus.textContent = `יום ${DAYS[selectedDay]}: ${this.packed} מתוך ${ITEMS.length} פריטים בתיק`;
           }
@@ -1105,7 +1140,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             const cy = H / 2;
 
             this.add
-              .rectangle(cx, cy, W, H, 0x4a3557, 0.28)
+              .rectangle(cx, cy, W, H, palette().overlay, 0.28)
               .setDepth(100)
               .setInteractive();
 
@@ -1126,7 +1161,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               54,
             );
 
-            modalCard.lineStyle(5, 0xffadd2, 1);
+            modalCard.lineStyle(5, palette().dialogBorder, 1);
             modalCard.strokeRoundedRect(
               -modalWidth / 2,
               -190,
@@ -1146,7 +1181,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               fontFamily: "Arial",
               fontSize: portrait ? 34 : 40,
               fontStyle: "bold",
-              color: "#72548b",
+              color: palette().dialogTitle,
             })
               .setOrigin(0.5)
               .setDepth(102);
@@ -1165,7 +1200,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               {
                 fontFamily: "Arial",
                 fontSize: 21,
-                color: "#927ba1",
+                color: palette().dialogCopy,
               },
             )
               .setOrigin(0.5)
@@ -1174,7 +1209,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             // Keep the exact same rectangular interactive area and behavior,
             // but draw a much rounder pill-shaped visual button on top.
             const btnBg = this.add
-              .rectangle(cx, cy + 141, 190, 58, 0x9d73df, 0)
+              .rectangle(cx, cy + 141, 190, 58, palette().accent, 0)
               .setDepth(103)
               .setInteractive({ useHandCursor: true });
 
@@ -1183,7 +1218,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               .setPosition(cx, cy + 141)
               .setDepth(103);
 
-            btnVisual.fillStyle(0x9d73df, 1);
+            btnVisual.fillStyle(palette().accent, 1);
             btnVisual.fillRoundedRect(-95, -29, 190, 58, 29);
 
             const replayLabel = currentProfile().gender === "girl" ? "שחקי שוב" : "שחק שוב";
