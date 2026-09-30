@@ -44,3 +44,14 @@ If you change an item label or a day's name, make sure the corresponding spoken 
 Keep the JSON syntax valid: double quotes around keys and strings, commas between entries, and no trailing comma after the last entry. `public/magic-school-bag/ori-data.schema.json` describes the accepted fields.
 
 Attach your edited `ori-data.json` and tell Sites: “Replace `public/magic-school-bag/ori-data.json` in `magic-school-bag` with this file and publish it.” Attach any new local media files too and say which `public/magic-school-bag/assets/` names they should use. You can also ask Sites to make specific changes directly, such as “Set the `science-book` imageUrl to …”.
+
+## Validate before publishing
+
+The app validates the complete data structure and its relationships at startup. A broken subject reference, item reference, weekday order, dismissal-time format, or equipment-status combination stops initialization and reports the validation error in the browser console; the app never guesses replacement values.
+
+- `specified` requires at least one valid item ID.
+- `none` means that no equipment is needed and its `itemIds` must be empty.
+- `unknown` means that equipment information was not supplied and its `itemIds` must also be empty. Do not use `unknown` to invent a default item.
+- `endsAt` is either the supplied local `HH:mm` time or `null`; never derive it from the number of lessons.
+
+Run `npm test` for the focused timetable/date tests and `npm run lint` for TypeScript validation before publishing.

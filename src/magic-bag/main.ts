@@ -1,23 +1,58 @@
-// @ts-nocheck -- Phaser is provided by the vendored browser bundle.
+import {
+  nextSchoolDay,
+  packingListFor,
+  resolveMediaUrl,
+  validateSchoolData,
+  type PackingItem,
+  type SchoolData,
+} from "./school-data";
+
+type Gender = "boy" | "girl";
+interface Profile { name: string; gender: Gender }
+type CardPhase = "ready" | "dragging" | "returning" | "packing" | "packed";
+interface CardState {
+  item: PackingItem;
+  container: Phaser.GameObjects.Container;
+  button: HTMLButtonElement;
+  phase: CardPhase;
+  prepared?: boolean;
+  homeX: number;
+  homeY: number;
+  dragOffsetX: number;
+  dragOffsetY: number;
+}
+interface PendingDrag { card: CardState; pointerId: number; x: number; y: number }
+interface SceneRestartData { packedIds?: string[] }
+interface Point { x: number; y: number }
+
+function requiredElement<T extends HTMLElement>(id: string): T {
+  const element = document.getElementById(id);
+  if (!element) throw new Error(`Missing required element #${id}`);
+  return element as T;
+}
+
       (async () => {
+        const appLifetime = new AbortController();
         const PROFILE_STORAGE_KEY = "magic-bag-kid-profile";
-        const profileDialog = document.getElementById("profile-dialog");
-        const profileForm = document.getElementById("profile-form");
-        const kidNameInput = document.getElementById("kid-name");
-        const cancelSettings = document.getElementById("cancel-settings");
-        const openSettings = document.getElementById("open-settings");
-        let resolveInitialProfile;
-        const initialProfileReady = new Promise((resolve) => {
+        const profileDialog = requiredElement<HTMLDialogElement>("profile-dialog");
+        const profileForm = requiredElement<HTMLFormElement>("profile-form");
+        const kidNameInput = requiredElement<HTMLInputElement>("kid-name");
+        const cancelSettings = requiredElement<HTMLButtonElement>("cancel-settings");
+        const openSettings = requiredElement<HTMLButtonElement>("open-settings");
+        let resolveInitialProfile: (() => void) | undefined;
+        const initialProfileReady = new Promise<void>((resolve) => {
           resolveInitialProfile = resolve;
         });
 
-        function loadProfile() {
+        function loadProfile(): Profile | null {
           try {
-            const profile = JSON.parse(localStorage.getItem(PROFILE_STORAGE_KEY));
+            const stored = localStorage.getItem(PROFILE_STORAGE_KEY);
+            if (!stored) return null;
+            const profile: unknown = JSON.parse(stored);
             if (
-              typeof profile?.name === "string" &&
-              profile.name.trim() &&
-              ["boy", "girl"].includes(profile.gender)
+              typeof profile === "object" && profile !== null &&
+              "name" in profile && typeof profile.name === "string" && profile.name.trim() &&
+              "gender" in profile && (profile.gender === "boy" || profile.gender === "girl")
             ) {
               return { name: profile.name.trim(), gender: profile.gender };
             }
@@ -29,9 +64,9 @@
 
         let kidProfile = loadProfile();
 
-        function editProfile(firstVisit = false) {
+        function editProfile(firstVisit = false): void {
           kidNameInput.value = kidProfile?.name ?? "";
-          profileForm.querySelectorAll('[name="gender"]').forEach((input) => {
+          profileForm.querySelectorAll<HTMLInputElement>('[name="gender"]').forEach((input) => {
             input.checked = input.value === kidProfile?.gender;
           });
           cancelSettings.hidden = firstVisit;
@@ -44,7 +79,7 @@
           const formData = new FormData(profileForm);
           const name = String(formData.get("kidName") ?? "").trim();
           const gender = formData.get("gender");
-          if (!name || !["boy", "girl"].includes(gender)) return;
+          if (!name || (gender !== "boy" && gender !== "girl")) return;
           kidProfile = { name, gender };
           try {
             localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(kidProfile));
@@ -52,12 +87,12 @@
             // The current session can still be personalized without persistence.
           }
           document.title = `תיק הקסם ✨ | ${kidProfile.name}`;
-          document.getElementById("page-title").textContent =
+          requiredElement("page-title").textContent =
             `משימת תיק הקסם עם ${kidProfile.name}`;
           resolveInitialProfile?.();
-          resolveInitialProfile = null;
+          resolveInitialProfile = undefined;
           profileDialog.close();
-          const scene = window.magicBagGame?.scene.getScene("MagicBag");
+          const scene = window.magicBagGame?.scene.getScene("MagicBag") as MagicBagScene | undefined;
           if (scene?.scene.isActive()) scene.scene.restart({});
         });
         cancelSettings.addEventListener("click", () => profileDialog.close());
@@ -72,11 +107,16 @@
           // when the game can safely start and read `kidProfile`.
           await initialProfileReady;
         }
+        if (!kidProfile) throw new Error("Profile setup ended without a valid profile");
         document.title = `תיק הקסם ✨ | ${kidProfile.name}`;
-        document.getElementById("page-title").textContent =
+        requiredElement("page-title").textContent =
           `משימת תיק הקסם עם ${kidProfile.name}`;
-        const genderText = (girlText, boyText) =>
-          kidProfile.gender === "girl" ? girlText : boyText;
+        const currentProfile = (): Profile => {
+          if (!kidProfile) throw new Error("A profile is required before starting the game");
+          return kidProfile;
+        };
+        const genderText = (girlText: string, boyText: string): string =>
+          currentProfile().gender === "girl" ? girlText : boyText;
 
         const portraitQuery = window.matchMedia("(max-width: 760px)");
         let portrait = portraitQuery.matches;
@@ -89,13 +129,13 @@
           3,
           Math.max(2, Math.ceil(window.devicePixelRatio || 1)),
         );
-        let activeVoice = null;
+        let activeVoice: HTMLAudioElement | null = null;
         let hasInteracted = false;
         const reducedMotion = window.matchMedia(
           "(prefers-reduced-motion: reduce)",
         ).matches;
-        const controls = document.getElementById("keyboard-controls");
-        const liveStatus = document.getElementById("game-status");
+        const controls = requiredElement<HTMLDivElement>("keyboard-controls");
+        const liveStatus = requiredElement<HTMLParagraphElement>("game-status");
 
         function stopVoice() {
           if (!activeVoice) return;
@@ -105,75 +145,18 @@
         }
 
         // This JSON is the single source for lesson order, equipment, dismissal time and recorded voice.
-        const DATA = await fetch(
-          `${import.meta.env.BASE_URL}magic-school-bag/ori-data.json`,
-        ).then((response) => {
+        const dataUrl = new URL("magic-school-bag/ori-data.json", new URL(import.meta.env.BASE_URL, location.href));
+        const DATA: SchoolData = await fetch(dataUrl).then(async (response) => {
           if (!response.ok)
-            throw new Error("School bag data could not be loaded");
-          return response.json();
+            throw new Error(`School bag data could not be loaded (${response.status})`);
+          return validateSchoolData(await response.json());
         });
         const DAYS = DATA.days.map((day) => day.label);
 
-        function dayGroups(dayIndex) {
-          const groups = new Map();
-          DATA.days[dayIndex].lessons.forEach((lesson, index) => {
-            const group = groups.get(lesson.subjectId);
-            if (group) {
-              group.lessons.push(index + 1);
-              group.lessonNames.push(lesson.label);
-            } else {
-              const subject = DATA.subjects[lesson.subjectId];
-              groups.set(lesson.subjectId, {
-                key: lesson.subjectId,
-                subject: subject.label,
-                status: subject.equipmentStatus,
-                itemIds: subject.itemIds,
-                lessons: [index + 1],
-                lessonNames: [lesson.label],
-              });
-            }
-          });
-          return [...groups.values()];
-        }
-
-        function packingListFor(dayIndex) {
-          return dayGroups(dayIndex).flatMap((group) =>
-            group.itemIds.map((id) => {
-              const item = DATA.items[id];
-              return {
-                id,
-                label: item.label,
-                icon: item.icon,
-                imageUrl: item.imageUrl,
-                audioUrl: item.audioUrl,
-                color: Number.parseInt(item.color.slice(1), 16),
-                groupKey: group.key,
-                subject: group.subject,
-                lessons: group.lessons,
-                lessonNames: group.lessonNames,
-              };
-            }),
-          );
-        }
-
-        function nextSchoolDay(date = new Date()) {
-          const weekday = new Intl.DateTimeFormat("en-US", {
-            timeZone: DATA.timeZone,
-            weekday: "short",
-          }).format(date);
-          const tomorrow =
-            (["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(
-              weekday,
-            ) +
-              1) %
-            7;
-          return tomorrow === 6 ? 0 : tomorrow;
-        }
-
-        const daySelect = document.getElementById("school-day");
-        const endTime = document.getElementById("end-time");
-        let selectedDay = nextSchoolDay();
-        let ITEMS = packingListFor(selectedDay);
+        const daySelect = requiredElement<HTMLSelectElement>("school-day");
+        const endTime = requiredElement<HTMLOutputElement>("end-time");
+        let selectedDay = nextSchoolDay(DATA);
+        let ITEMS: PackingItem[] = packingListFor(DATA, selectedDay);
         DAYS.forEach((day, index) => {
           const option = document.createElement("option");
           option.value = String(index);
@@ -195,16 +178,34 @@
         renderDayInfo();
 
         class MagicBagScene extends Phaser.Scene {
-          constructor() {
-            super("MagicBag");
-            this.packed = 0;
-            this.cards = [];
-            this.finished = false;
-            this.activeDragCard = null;
-            this.activeDragPointerId = null;
+          cards: CardState[] = [];
+          finished = false;
+          activeDragCard: CardState | null = null;
+          activeDragPointerId: number | null = null;
+          pendingDrag: PendingDrag | null = null;
+          returningCard: CardState | null = null;
+          suppressClickUntil = 0;
+          dragPreview: HTMLButtonElement | null = null;
+          instruction!: Phaser.GameObjects.Text;
+          mascot!: Phaser.GameObjects.Container;
+          mascotScale = 1;
+          bag!: Phaser.GameObjects.Container;
+          bagGraphics!: Phaser.GameObjects.Graphics;
+          bagScale = 1;
+          progressStars: Phaser.GameObjects.Text[] = [];
+          stackPanel: HTMLDivElement | null = null;
+          replayButton: HTMLButtonElement | null = null;
+          private pendingPackResolutions = new Set<(completed: boolean) => void>();
+
+          get packed(): number {
+            return this.cards.filter((card) => card.phase === "packed").length;
           }
 
-          crispText(x, y, text, style = {}) {
+          constructor() {
+            super("MagicBag");
+          }
+
+          crispText(x: number, y: number, text: string, style: Record<string, unknown> = {}): Phaser.GameObjects.Text {
             // Text and emoji use their own canvas textures; supersample those too.
             return this.add.text(x, y, text, {
               ...style,
@@ -212,11 +213,10 @@
             });
           }
 
-          create(data = {}) {
+          create(data: SceneRestartData = {}): void {
             // scene.restart() reuses the same Scene instance, so reset all
             // per-run state here instead of relying only on the constructor.
             stopVoice();
-            this.packed = 0;
             this.cards = [];
             this.finished = false;
             this.activeDragCard = null;
@@ -225,7 +225,6 @@
             this.returningCard = null;
             this.suppressClickUntil = 0;
             this.dragPreview = null;
-            this.packingCount = 0;
             daySelect.disabled = false;
 
             this.cameras.main
@@ -251,21 +250,23 @@
               controls.removeAttribute("role");
               controls.removeAttribute("aria-modal");
               controls.removeAttribute("aria-label");
+              this.clearDragPreview();
+              this.pendingPackResolutions.forEach((resolve) => resolve(false));
+              this.pendingPackResolutions.clear();
             });
             if (data.packedIds?.length) {
               for (const card of this.cards) {
                 if (!data.packedIds.includes(card.item.id)) continue;
-                card.packed = true;
+                card.phase = "packed";
                 card.container.setVisible(false).disableInteractive();
                 card.button.hidden = true;
-                this.packed++;
               }
               this.refreshDeck();
               this.updateProgress();
               this.updateInstruction();
               if (this.packed === ITEMS.length) this.finish();
             }
-            document.getElementById("loading").hidden = true;
+            requiredElement("loading").hidden = true;
             this.game.canvas.setAttribute("aria-hidden", "true");
             requestAnimationFrame(() => this.positionControls());
 
@@ -319,7 +320,7 @@
             }
           }
 
-          cloud(x, y, scale) {
+          cloud(x: number, y: number, scale: number): void {
             const c = this.add.container(x, y);
             const g = this.add.graphics();
             g.fillStyle(0xffffff, 0.72);
@@ -402,7 +403,7 @@
               ease: "Sine.easeInOut",
             });
 
-            this.crispText(mascotX, portrait ? 712 : 745, kidProfile.name, {
+            this.crispText(mascotX, portrait ? 712 : 745, currentProfile().name, {
               fontFamily: "Arial",
               fontSize: 20,
               fontStyle: "bold",
@@ -447,7 +448,7 @@
             });
           }
 
-          redrawBag(hovered) {
+          redrawBag(hovered: boolean): void {
             const g = this.bagGraphics;
             g.clear();
 
@@ -505,12 +506,17 @@
               this.cards.push({
                 item,
                 container: this.createCard(item),
-                packed: false,
+                button: document.createElement("button"),
+                phase: "ready",
+                homeX: 0,
+                homeY: 0,
+                dragOffsetX: 0,
+                dragOffsetY: 0,
               });
             });
           }
 
-          createCard() {
+          createCard(_item: PackingItem): Phaser.GameObjects.Container {
             // A hidden scene object carries drag coordinates and animation state.
             // The same full-size DOM card is visible at rest, in flight, and returning.
             return this.add.container(0, 0).setVisible(false);
@@ -540,8 +546,9 @@
               button.style.setProperty("--item-tint", `${color}22`);
               button.setAttribute(
                 "aria-label",
-                `${item.label}, ${item.subject}, ${this.lessonLabel(item)}. ${genderText("גררי", "גרור")} לתיק${item.audioUrl?.trim() ? genderText(" או לחצי להשמעה", " או לחץ להשמעה") : ""}`,
+                `${item.label}, ${item.subject}, ${this.lessonLabel(item)}. ${genderText("גררי", "גרור")} לתיק. חץ מטה אורז מהמקלדת${item.audioUrl?.trim() ? genderText("; לחצי להשמעה", "; לחץ להשמעה") : ""}`,
               );
+              button.setAttribute("aria-keyshortcuts", "ArrowDown");
               const subject = document.createElement("span");
               subject.className = "item-subject";
               subject.textContent = [item.subject, this.lessonLabel(item)]
@@ -564,7 +571,7 @@
                   icon.classList.add("has-image");
                 }, { once: true });
                 image.addEventListener("error", () => image.remove(), { once: true });
-                image.src = item.imageUrl;
+                image.src = resolveMediaUrl(item.imageUrl, dataUrl);
                 icon.append(image);
               }
               const label = document.createElement("span");
@@ -615,28 +622,35 @@
                 const audioUrl = item.audioUrl?.trim();
                 if (audioUrl) this.speak("", audioUrl);
               });
+              button.addEventListener("keydown", (event) => {
+                if (event.key !== "ArrowDown" || !this.canPack(card)) return;
+                event.preventDefault();
+                hasInteracted = true;
+                void this.pack(card);
+              });
               panel.append(button);
               card.button = button;
             });
             this.refreshDeck();
           }
 
-          canPack(card) {
+          canPack(card: CardState): boolean {
             return (
               !this.finished &&
-              !this.packingCount &&
               !this.returningCard &&
-              card === this.cards.find((entry) => !entry.packed)
+              !this.activeDragCard &&
+              card.phase === "ready" &&
+              card === this.cards.find((entry) => entry.phase !== "packed")
             );
           }
 
-          lessonLabel(item) {
+          lessonLabel(item: PackingItem): string {
             if (!item.lessons.length) return "";
             return `${item.lessons.length === 1 ? "שיעור" : "שיעורים"} ${item.lessons.join(", ")}`;
           }
 
           refreshDeck() {
-            const remaining = this.cards.filter((card) => !card.packed);
+            const remaining = this.cards.filter((card) => card.phase !== "packed");
             this.cards.forEach((card) => {
               const depth = remaining.indexOf(card);
               const visible = depth >= 0 && depth < 3;
@@ -682,7 +696,7 @@
             }
           }
 
-          pointerPosition(event) {
+          pointerPosition(event: Pick<PointerEvent, "clientX" | "clientY">): Point {
             const canvas = this.game.canvas.getBoundingClientRect();
             return {
               x: ((event.clientX - canvas.left) * W) / canvas.width,
@@ -690,7 +704,7 @@
             };
           }
 
-          prepareCard(card) {
+          prepareCard(card: CardState): void {
             const bounds = card.button.getBoundingClientRect();
             const position = this.pointerPosition({
               clientX: bounds.left + bounds.width / 2,
@@ -709,8 +723,8 @@
             card.button.style.visibility = "hidden";
           }
 
-          showDragPreview(card) {
-            const preview = card.button.cloneNode(true);
+          showDragPreview(card: CardState): void {
+            const preview = card.button.cloneNode(true) as HTMLButtonElement;
             preview.classList.add("drag-preview");
             preview.style.visibility = "";
             const bounds = card.button.getBoundingClientRect();
@@ -726,7 +740,7 @@
             this.positionDragPreview(card);
           }
 
-          positionDragPreview(card) {
+          positionDragPreview(card: CardState): void {
             if (!this.dragPreview) return;
             const canvas = this.game.canvas.getBoundingClientRect();
             const bounds = controls.getBoundingClientRect();
@@ -749,7 +763,7 @@
             );
           }
 
-          bagBounds() {
+          bagBounds(): { left: number; right: number; top: number; bottom: number } {
             // The backpack itself is animated, so derive the drop area from its
             // CURRENT x/y rather than from a fixed rectangle created earlier.
             return {
@@ -760,12 +774,12 @@
             };
           }
 
-          isInsideBag(x, y) {
+          isInsideBag(x: number, y: number): boolean {
             const { left, right, top, bottom } = this.bagBounds();
             return x >= left && x <= right && y >= top && y <= bottom;
           }
 
-          dragScaleAt(x, y) {
+          dragScaleAt(x: number, y: number): number {
             const { left, right, top, bottom } = this.bagBounds();
             const dx = Math.max(left - x, 0, x - right);
             const dy = Math.max(top - y, 0, y - bottom);
@@ -774,7 +788,7 @@
             return 1 - 0.55 * eased;
           }
 
-          updateDraggedCard(card, pointer) {
+          updateDraggedCard(card: CardState, pointer: Point): void {
             // Measure proximity before scaling so the effect cannot feed back
             // into itself. Scale the grab offset to keep that point under the pointer.
             const scale = this.dragScaleAt(
@@ -791,7 +805,7 @@
             const lifetime = new AbortController();
             const options = { signal: lifetime.signal };
             this.events.once("shutdown", () => lifetime.abort());
-            const releaseCapture = (pending) => {
+            const releaseCapture = (pending: PendingDrag | null) => {
               if (pending?.card.button.hasPointerCapture(pending.pointerId))
                 pending.card.button.releasePointerCapture(pending.pointerId);
             };
@@ -831,6 +845,7 @@
                   this.prepareCard(pending.card);
                   this.showDragPreview(pending.card);
                   this.activeDragCard = pending.card;
+                  pending.card.phase = "dragging";
                   this.activeDragPointerId = event.pointerId;
                   const start = this.pointerPosition({
                     clientX: pending.x,
@@ -881,14 +896,16 @@
             );
           }
 
-          pack(card, onComplete = () => {}) {
-            if (!this.canPack(card)) return;
+          pack(card: CardState): Promise<boolean> {
+            if (!this.canPack(card) && card.phase !== "dragging") return Promise.resolve(false);
+            let settle!: (completed: boolean) => void;
+            const result = new Promise<boolean>((resolve) => { settle = resolve; });
+            this.pendingPackResolutions.add(settle);
             this.tweens.killTweensOf(card.container);
             if (!card.prepared) this.prepareCard(card);
             if (!this.dragPreview) this.showDragPreview(card);
             card.button.hidden = true;
-            card.packed = true;
-            this.packingCount++;
+            card.phase = "packing";
             daySelect.disabled = true;
             this.refreshDeck();
             this.speak("כל הכבוד!");
@@ -907,11 +924,9 @@
               onComplete: () => {
                 this.clearDragPreview();
                 card.container.setVisible(false);
-                this.packed++;
-                this.packingCount--;
+                card.phase = "packed";
                 this.refreshDeck();
                 daySelect.disabled =
-                  this.packingCount > 0 ||
                   !!this.activeDragCard ||
                   this.packed === ITEMS.length;
                 this.updateProgress();
@@ -929,20 +944,24 @@
                 if (this.packed === ITEMS.length) {
                   this.time.delayedCall(750, () => {
                     this.finish();
-                    onComplete();
+                    this.pendingPackResolutions.delete(settle);
+                    settle(true);
                   });
                 } else {
                   this.updateInstruction();
                   this.time.delayedCall(250, () => this.speakCurrent());
-                  onComplete();
+                  this.pendingPackResolutions.delete(settle);
+                  settle(true);
                 }
               },
             });
+            return result;
           }
 
-          returnHome(card) {
+          returnHome(card: CardState): void {
             this.tweens.killTweensOf(card.container);
             this.returningCard = card;
+            card.phase = "returning";
             this.refreshDeck();
             this.speak("ננסה שוב");
 
@@ -957,12 +976,13 @@
               onComplete: () => {
                 this.clearDragPreview();
                 this.returningCard = null;
+                card.phase = "ready";
                 card.container.setVisible(false);
                 card.button.style.visibility = "";
                 card.prepared = false;
                 this.refreshDeck();
                 daySelect.disabled =
-                  this.packingCount > 0 || !!this.activeDragCard;
+                  !!this.activeDragCard;
               },
             });
 
@@ -977,7 +997,7 @@
           }
 
           currentItem() {
-            return this.cards.find((c) => !c.packed)?.item;
+            return this.cards.find((c) => c.phase !== "packed")?.item;
           }
 
           updateInstruction() {
@@ -994,12 +1014,12 @@
             if (item) this.speak(`עכשיו נשים בתיק: ${item.label}`, item.audioUrl);
           }
 
-          speak(text, itemAudioUrl) {
+          speak(text: string, itemAudioUrl?: string): void {
             if (!hasInteracted) return;
             const url = itemAudioUrl?.trim() || DATA.audio.textToUrl[text];
             stopVoice();
             if (typeof url !== "string" || !url.trim()) return;
-            const voice = new Audio(url);
+            const voice = new Audio(resolveMediaUrl(url, dataUrl));
             activeVoice = voice;
             voice.addEventListener(
               "ended",
@@ -1013,7 +1033,7 @@
             });
           }
 
-          sparkles(x, y, color) {
+          sparkles(x: number, y: number, color: number): void {
             for (let i = 0; i < 18; i++) {
               const p = this.add.circle(
                 x,
@@ -1060,10 +1080,10 @@
 
           finish() {
             this.finished = true;
-            this.stackPanel.hidden = true;
+            if (this.stackPanel) this.stackPanel.hidden = true;
             daySelect.disabled = false;
-            this.instruction.setText(`${kidProfile.name}, התיק מוכן! 🎉`);
-            liveStatus.textContent = `כל הכבוד ${kidProfile.name}! התיק מוכן!`;
+            this.instruction.setText(`${currentProfile().name}, התיק מוכן! 🎉`);
+            liveStatus.textContent = `כל הכבוד ${currentProfile().name}! התיק מוכן!`;
             this.speak(
               `כל הכבוד! סיימנו להכין את התיק ליום ${DAYS[selectedDay]}!`,
             );
@@ -1084,7 +1104,7 @@
             const cx = W / 2;
             const cy = H / 2;
 
-            const overlay = this.add
+            this.add
               .rectangle(cx, cy, W, H, 0x4a3557, 0.28)
               .setDepth(100)
               .setInteractive();
@@ -1122,7 +1142,7 @@
               .setOrigin(0.5)
               .setDepth(102);
 
-            const title = this.crispText(cx, cy - 34, `כל הכבוד ${kidProfile.name}`, {
+            const title = this.crispText(cx, cy - 34, `כל הכבוד ${currentProfile().name}`, {
               fontFamily: "Arial",
               fontSize: portrait ? 34 : 40,
               fontStyle: "bold",
@@ -1166,7 +1186,7 @@
             btnVisual.fillStyle(0x9d73df, 1);
             btnVisual.fillRoundedRect(-95, -29, 190, 58, 29);
 
-            const replayLabel = kidProfile.gender === "girl" ? "שחקי שוב" : "שחק שוב";
+            const replayLabel = currentProfile().gender === "girl" ? "שחקי שוב" : "שחק שוב";
             const btnText = this.crispText(cx, cy + 141, `${replayLabel} ✨`, {
               fontFamily: "Arial",
               fontSize: 20,
@@ -1293,30 +1313,29 @@
         window.magicBagGame = game;
 
         daySelect.addEventListener("change", () => {
-          const scene = game.scene.getScene("MagicBag");
+          const scene = game.scene.getScene("MagicBag") as MagicBagScene;
           if (
             !scene?.scene.isActive() ||
             scene.activeDragCard ||
             scene.pendingDrag ||
-            scene.packingCount ||
             scene.returningCard
           ) {
             daySelect.value = String(selectedDay);
             return;
           }
           selectedDay = Number(daySelect.value);
-          ITEMS = packingListFor(selectedDay);
+          ITEMS = packingListFor(DATA, selectedDay);
           renderDayInfo();
           scene.scene.restart({});
         });
 
         window.addEventListener("resize", () => {
           requestAnimationFrame(() => {
-            const scene = game.scene.getScene("MagicBag");
+            const scene = game.scene.getScene("MagicBag") as MagicBagScene;
             if (!scene?.scene.isActive()) return;
             if (portrait !== portraitQuery.matches) {
               const packedIds = scene.cards
-                .filter((card) => card.packed)
+                .filter((card) => card.phase === "packed")
                 .map((card) => card.item.id);
               portrait = portraitQuery.matches;
               W = portrait ? 420 : 1100;
@@ -1326,7 +1345,14 @@
               scene.positionControls();
             }
           });
-        });
+        }, { signal: appLifetime.signal });
+
+        window.addEventListener("pagehide", () => {
+          appLifetime.abort();
+          stopVoice();
+          game.destroy(true);
+          if (window.magicBagGame === game) delete window.magicBagGame;
+        }, { once: true });
 
         // Use the same scene state for optional browser-agent access.
         const modelContext = document.modelContext;
@@ -1336,7 +1362,7 @@
             once: true,
           });
           const getScene = () => {
-            const scene = game.scene.getScene("MagicBag");
+            const scene = game.scene.getScene("MagicBag") as MagicBagScene;
             if (!scene?.scene.isActive() || !scene.cards.length)
               throw new Error("The game is still loading.");
             return scene;
@@ -1357,11 +1383,11 @@
                 label: card.item.label,
                 subject: card.item.subject,
                 lessons: card.item.lessons,
-                packed: card.packed,
+                packed: card.phase === "packed",
               })),
             };
           };
-          const register = (tool) => {
+          const register = (tool: ModelContextTool): void => {
             try {
               Promise.resolve(
                 modelContext.registerTool(tool, { signal: lifecycle.signal }),
@@ -1402,10 +1428,12 @@
               additionalProperties: false,
             },
             annotations: { readOnlyHint: false, untrustedContentHint: false },
-            async execute(input) {
-              const ids = input?.itemIds;
+            async execute(input: unknown) {
+              const ids = typeof input === "object" && input !== null && "itemIds" in input
+                ? input.itemIds
+                : undefined;
               if (
-                !input ||
+                typeof input !== "object" || input === null ||
                 Object.keys(input).some((key) => key !== "itemIds") ||
                 !Array.isArray(ids) ||
                 !ids.length ||
@@ -1419,17 +1447,19 @@
                 scene.activeDragCard ||
                 scene.pendingDrag ||
                 scene.returningCard ||
-                scene.cards.filter((card) => card.packed).length !==
-                  scene.packed
+                scene.cards.some((card) => card.phase === "packing")
               )
                 throw new Error("Wait for the current action to finish.");
-              const remaining = scene.cards.filter((card) => !card.packed);
+              const remaining = scene.cards.filter((card) => card.phase !== "packed");
               if (ids.some((id, index) => remaining[index]?.item.id !== id))
                 throw new Error("Pack the front items in timetable order.");
               for (const id of ids) {
                 const card = scene.cards.find((card) => card.item.id === id);
-                if (!card.packed)
-                  await new Promise((resolve) => scene.pack(card, resolve));
+                if (!card) throw new Error(`Item ${id} is no longer available.`);
+                if (card.phase !== "packed") {
+                  const completed = await scene.pack(card);
+                  if (!completed) throw new Error("Packing was interrupted by a restart.");
+                }
               }
               return readProgress();
             },
@@ -1437,6 +1467,6 @@
         }
       })().catch((error) => {
         console.error("Magic bag failed to initialize", error);
-        document.getElementById("loading").textContent =
+        requiredElement("loading").textContent =
           "לא הצלחנו לטעון את נתוני המערכת. נסו לרענן את הדף.";
       });
