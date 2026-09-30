@@ -1,5 +1,4 @@
 import {
-  nextSchoolDay,
   packingListFor,
   resolveMediaUrl,
   validateSchoolData,
@@ -197,9 +196,6 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           resolveInitialProfile?.();
           resolveInitialProfile = undefined;
           profileDialog.close();
-          // Keep this call in the submit gesture: awaiting scene creation first
-          // causes mobile browsers to reject the welcome recording as autoplay.
-          void startAppEntry(nextSchoolDay(DATA));
           const scene = window.magicBagGame?.scene.getScene("MagicBag") as MagicBagScene | undefined;
           if (scene?.scene.isActive()) scene.scene.restart({});
         });
@@ -250,18 +246,30 @@ function requiredElement<T extends HTMLElement>(id: string): T {
 
         const daySelect = requiredElement<HTMLSelectElement>("school-day");
         const endTime = requiredElement<HTMLOutputElement>("end-time");
-        let selectedDay = nextSchoolDay(DATA);
-        let ITEMS: PackingItem[] = packingListFor(DATA, selectedDay);
+        // Deliberately start without guessing a day for the child. A day only
+        // becomes active after an explicit choice in the selector.
+        let selectedDay = -1;
+        let ITEMS: PackingItem[] = [];
+        const promptOption = document.createElement("option");
+        promptOption.value = "";
+        promptOption.textContent = "בחרו יום ✨";
+        promptOption.disabled = true;
+        promptOption.selected = true;
+        daySelect.append(promptOption);
         DAYS.forEach((day, index) => {
           const option = document.createElement("option");
           option.value = String(index);
           option.textContent = `יום ${day}`;
           daySelect.append(option);
         });
-        daySelect.value = String(selectedDay);
 
         function renderDayInfo() {
+          if (selectedDay < 0) {
+            endTime.closest<HTMLElement>(".end-time")!.hidden = true;
+            return;
+          }
           const day = DATA.days[selectedDay];
+          endTime.closest<HTMLElement>(".end-time")!.hidden = false;
           endTime.textContent = day.endsAt ?? "לא נמסרה שעת סיום";
           endTime.setAttribute(
             "aria-label",
@@ -604,7 +612,9 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               star.setText(filled ? "★" : "☆");
               star.setColor(filled ? "#f0b93e" : palette().progress);
             });
-            liveStatus.textContent = `יום ${DAYS[selectedDay]}: ${this.packed} מתוך ${ITEMS.length} פריטים בתיק`;
+            liveStatus.textContent = selectedDay < 0
+              ? "בחרו יום"
+              : `יום ${DAYS[selectedDay]}: ${this.packed} מתוך ${ITEMS.length} פריטים בתיק`;
           }
 
           drawCards() {
@@ -1109,6 +1119,8 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               this.instruction.setText(
                 `עכשיו בתיק:   ${item.icon} ${item.label}`,
               );
+            } else if (selectedDay < 0) {
+              this.instruction.setText("בחרו יום");
             }
           }
 
@@ -1118,7 +1130,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           }
 
           playAppEntry(): void {
-            if (appEntryPlayedDay === selectedDay || !hasInteracted) return;
+            if (selectedDay < 0 || appEntryPlayedDay === selectedDay || !hasInteracted) return;
             const message = DATA.generalAudio.appEntry;
             const text = message.textTemplate.replace("{day}", DAYS[selectedDay]);
             liveStatus.textContent = text;
@@ -1442,10 +1454,6 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           signal: appLifetime.signal,
         });
 
-        // Introduce the automatically selected day as soon as the main screen
-        // appears, just as we do when the child chooses a different day.
-        showDayStart();
-
         daySelect.addEventListener("change", () => {
           const scene = game.scene.getScene("MagicBag") as MagicBagScene;
           if (
@@ -1458,6 +1466,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             return;
           }
           selectedDay = Number(daySelect.value);
+          if (!Number.isInteger(selectedDay) || !DATA.days[selectedDay]) return;
           ITEMS = packingListFor(DATA, selectedDay);
           renderDayInfo();
           showDayStart();
