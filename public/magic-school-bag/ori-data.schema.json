@@ -10,7 +10,7 @@
     "days",
     "subjects",
     "items",
-    "audio"
+    "generalAudio"
   ],
   "properties": {
     "$schema": {
@@ -191,16 +191,52 @@
         }
       }
     },
-    "audio": {
+    "generalAudio": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "textToUrl"
+        "appEntry",
+        "finalDialog",
+        "soundEffects"
       ],
       "properties": {
-        "textToUrl": {
+        "appEntry": {
           "type": "object",
-          "description": "Exact spoken Hebrew phrase to playable recording URL for feedback and completion. Empty means silence; there is no synthetic speech or sound fallback.",
+          "additionalProperties": false,
+          "required": ["textTemplate", "humanAudioByWeekday"],
+          "properties": {
+            "textTemplate": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Visible/spoken greeting template; {day} is replaced with the selected Hebrew weekday."
+            },
+            "humanAudioByWeekday": {
+              "type": "object",
+              "description": "Human recordings for Sunday (0) through Friday (5). Empty URLs make that greeting silent.",
+              "required": ["0", "1", "2", "3", "4", "5"],
+              "additionalProperties": false,
+              "patternProperties": {
+                "^[0-5]$": { "type": "string", "format": "uri-reference" }
+              }
+            }
+          }
+        },
+        "finalDialog": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["text", "humanAudioUrl"],
+          "properties": {
+            "text": { "type": "string", "minLength": 1 },
+            "humanAudioUrl": {
+              "type": "string",
+              "format": "uri-reference",
+              "description": "Human voice played exactly when the final dialog appears."
+            }
+          }
+        },
+        "soundEffects": {
+          "type": "object",
+          "description": "Named non-voice effects, kept separate from human recordings. Empty means no effects are enabled.",
           "additionalProperties": {
             "type": "string",
             "format": "uri-reference"

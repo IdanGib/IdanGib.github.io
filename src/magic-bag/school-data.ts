@@ -33,7 +33,17 @@ export interface SchoolData {
   days: SchoolDay[];
   subjects: Record<string, Subject>;
   items: Record<string, SchoolItem>;
-  audio: { textToUrl: Record<string, string> };
+  generalAudio: {
+    appEntry: {
+      textTemplate: string;
+      humanAudioByWeekday: Record<string, string>;
+    };
+    finalDialog: {
+      text: string;
+      humanAudioUrl: string;
+    };
+    soundEffects: Record<string, string>;
+  };
 }
 
 export interface PackingItem extends Omit<SchoolItem, "color"> {
@@ -65,7 +75,7 @@ const nonEmpty = (value: unknown): value is string =>
 export function validateSchoolData(value: unknown): SchoolData {
   const errors: string[] = [];
   if (!isRecord(value)) throw new Error("School data must be an object.");
-  const { days, subjects, items, audio } = value;
+  const { days, subjects, items, generalAudio } = value;
   if (!nonEmpty(value.student)) errors.push("student must be a non-empty string");
   if (value.timeZone !== "Asia/Jerusalem")
     errors.push('timeZone must be "Asia/Jerusalem"');
@@ -73,8 +83,26 @@ export function validateSchoolData(value: unknown): SchoolData {
     errors.push("days must contain Sunday through Friday");
   if (!isRecord(subjects)) errors.push("subjects must be an object");
   if (!isRecord(items)) errors.push("items must be an object");
-  if (!isRecord(audio) || !isRecord(audio.textToUrl))
-    errors.push("audio.textToUrl must be an object");
+  if (!isRecord(generalAudio)) {
+    errors.push("generalAudio must be an object");
+  } else {
+    const { appEntry, finalDialog, soundEffects } = generalAudio;
+    if (!isRecord(appEntry) || !nonEmpty(appEntry.textTemplate) ||
+        !isRecord(appEntry.humanAudioByWeekday)) {
+      errors.push("generalAudio.appEntry requires textTemplate and humanAudioByWeekday");
+    } else {
+      for (let weekday = 0; weekday < 6; weekday++) {
+        if (typeof appEntry.humanAudioByWeekday[String(weekday)] !== "string")
+          errors.push(`generalAudio.appEntry.humanAudioByWeekday.${weekday} must be a string`);
+      }
+    }
+    if (!isRecord(finalDialog) || !nonEmpty(finalDialog.text) ||
+        typeof finalDialog.humanAudioUrl !== "string")
+      errors.push("generalAudio.finalDialog requires text and humanAudioUrl");
+    if (!isRecord(soundEffects) ||
+        Object.values(soundEffects).some((url) => typeof url !== "string"))
+      errors.push("generalAudio.soundEffects must contain string URLs");
+  }
 
   if (Array.isArray(days)) {
     days.forEach((day, dayIndex) => {
@@ -138,11 +166,6 @@ export function validateSchoolData(value: unknown): SchoolData {
         if (item[field] !== undefined && typeof item[field] !== "string")
           errors.push(`${path}.${field} must be a string when present`);
       }
-    });
-  }
-  if (isRecord(audio) && isRecord(audio.textToUrl)) {
-    Object.entries(audio.textToUrl).forEach(([text, url]) => {
-      if (!text || typeof url !== "string") errors.push("audio.textToUrl values must be strings");
     });
   }
   if (errors.length) throw new Error(`Invalid school bag data:\n- ${errors.join("\n- ")}`);

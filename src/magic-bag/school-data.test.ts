@@ -18,7 +18,14 @@ const fixture = validateSchoolData({
     none: { label: "ללא", equipmentStatus: "none", itemIds: [] },
   },
   items: { book: { label: "ספר", icon: "📘", color: "#123ABC" } },
-  audio: { textToUrl: {} },
+  generalAudio: {
+    appEntry: {
+      textTemplate: "בואו נכין מערכת ליום {day}",
+      humanAudioByWeekday: Object.fromEntries(Array.from({ length: 6 }, (_, day) => [day, ""])),
+    },
+    finalDialog: { text: "כל הכבוד", humanAudioUrl: "" },
+    soundEffects: {},
+  },
 });
 
 test("repeated subjects produce equipment once and retain lesson metadata", () => {

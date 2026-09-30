@@ -25,19 +25,25 @@ Use HTTPS URLs that open the media file directly without a sign-in. You can also
 
 You may add `imageUrl` to any item, including notebooks and folders; it is already present as an empty field on the book and workbook entries. An item ID connects it to a subject's `itemIds`, so keep IDs unchanged when changing a name or picture.
 
-## Change other text and sounds
+## Change general messages and sounds
 
 - `subjects.<subjectId>.label` changes the subject shown above each item card.
 - `days[].lessons[].label` changes the displayed timetable wording. Keep the array in lesson order and preserve repeated lessons.
-- `audio.textToUrl` holds recordings for short feedback (`"כל הכבוד!"`, `"ננסה שוב"`) and the six day-specific completion messages. Put a direct audio URL in the value for the exact Hebrew phrase. Leave it empty for silence.
+- `generalAudio.appEntry.textTemplate` is the one-time welcome message. Keep `{day}` where the selected weekday belongs.
+- `generalAudio.appEntry.humanAudioByWeekday` contains the six human recordings, keyed from Sunday (`"0"`) through Friday (`"5"`).
+- `generalAudio.finalDialog` keeps the final message text and its human recording together. It plays only when the final dialog opens.
+- `generalAudio.soundEffects` is deliberately separate from speech. It is currently empty, so the app plays no sound effects. Future effects can be added here without confusing them with voice recordings.
 
 For example:
 
 ```json
-"כל הכבוד!": "https://example.com/well-done.mp3"
+"finalDialog": {
+  "text": "כל הכבוד",
+  "humanAudioUrl": "https://example.com/well-done.mp3"
+}
 ```
 
-If you change an item label or a day's name, make sure the corresponding spoken recording still says the right words. The timetable and equipment lists come from this same JSON file; avoid changing them while editing media unless intended.
+General voice plays in only two situations: the first entry to the app and the opening of the final dialog. Item recordings continue to belong directly to their item. If you change an item label or a day's name, make sure the corresponding spoken recording still says the right words. The timetable and equipment lists come from this same JSON file; avoid changing them while editing media unless intended.
 
 ## Publish your edits
 
