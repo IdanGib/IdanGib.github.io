@@ -229,8 +229,8 @@
     },
     "life_skills": {
       "label": "כישורי חיים",
-      "equipmentStatus": "unknown",
-      "itemIds": []
+      "equipmentStatus": "specified",
+      "itemIds": ["life_skills-notebook"]
     },
     "play": {
       "label": "שעת משחק",
@@ -239,8 +239,8 @@
     },
     "road_safety": {
       "label": "זהירות בדרכים",
-      "equipmentStatus": "unknown",
-      "itemIds": []
+      "equipmentStatus": "specified",
+      "itemIds": ["road_safety-book"]
     }
   },
   "items": {
@@ -319,7 +319,35 @@
       "imageUrl": "",
       "audioUrl": "./assets/audio/lib.m4a",
       "color": "#52cfa3"
+    },
+    "life_skills-notebook": {
+      "label": "מחברת כישורי חיים",
+      "icon": "📖",
+      "imageUrl": "",
+      "audioUrl": "",
+      "color": "#524fa3"
+    },
+    "road_safety-book": {
+      "label": "זהירות בדרכים",
+      "icon": "📖",
+      "imageUrl": "",
+      "audioUrl": "./assets/audio/simaney-derech.m4a",
+      "color": "#524fa3"
     }
+    "case": {
+      "label": "קלמר",
+      "icon": "",
+      "imageUrl": "./assets/pencil-case.png",
+      "audioUrl": "./assets/audio/case.m4a",
+      "color": "#524fa3"
+    },
+    "water": {
+      "label": "בקבוק מים",
+      "icon": "💦",
+      "imageUrl": "",
+      "audioUrl": "./assets/audio/water.m4a",
+      "color": "#524fa3"
+    },
   },
   "generalAudio": {
     "appEntry": {
