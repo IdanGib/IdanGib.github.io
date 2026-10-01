@@ -329,14 +329,14 @@
     },
     "road_safety-book": {
       "label": "זהירות בדרכים",
-      "icon": "📖",
-      "imageUrl": "",
+      "icon": "📙",
+      "imageUrl": "./assets/simaney-derech.png",
       "audioUrl": "./assets/audio/simaney-derech.m4a",
       "color": "#524fa3"
     },
     "case": {
       "label": "קלמר",
-      "icon": "",
+      "icon": "✏️",
       "imageUrl": "./assets/pencil-case.png",
       "audioUrl": "./assets/audio/case.m4a",
       "color": "#524fa3"
