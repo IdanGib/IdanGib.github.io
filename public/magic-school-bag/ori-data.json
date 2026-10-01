@@ -347,7 +347,7 @@
       "imageUrl": "",
       "audioUrl": "./assets/audio/water.m4a",
       "color": "#524fa3"
-    },
+    }
   },
   "generalAudio": {
     "appEntry": {
