@@ -5,6 +5,7 @@ import {
   type PackingItem,
   type SchoolData,
 } from "./school-data";
+import { dayIndexFromUrl, dayUrl, restoreForwardedDayPath } from "./day-route";
 
 type Gender = "boy" | "girl";
 interface Profile { name: string; gender: Gender }
@@ -246,10 +247,10 @@ function requiredElement<T extends HTMLElement>(id: string): T {
 
         const daySelect = requiredElement<HTMLSelectElement>("school-day");
         const endTime = requiredElement<HTMLOutputElement>("end-time");
-        // Deliberately start without guessing a day for the child. A day only
-        // becomes active after an explicit choice in the selector.
-        let selectedDay = -1;
-        let ITEMS: PackingItem[] = [];
+        // The URL is the source of truth. The selector only navigates to a new
+        // URL, which makes each day's packing list directly shareable.
+        let selectedDay = dayIndexFromUrl(window.location, DATA.days);
+        let ITEMS: PackingItem[] = selectedDay < 0 ? [] : packingListFor(DATA, selectedDay);
         const promptOption = document.createElement("option");
         promptOption.value = "";
         promptOption.textContent = "בחרו יום ✨";
@@ -262,6 +263,14 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           option.textContent = `יום ${day}`;
           daySelect.append(option);
         });
+        if (selectedDay >= 0) daySelect.value = String(selectedDay);
+
+        const restoredDayUrl = restoreForwardedDayPath(
+          window.location,
+          import.meta.env.BASE_URL,
+          window.location.href,
+        );
+        if (restoredDayUrl) history.replaceState(null, "", restoredDayUrl);
 
         function renderDayInfo() {
           if (selectedDay < 0) {
@@ -1459,22 +1468,15 @@ function requiredElement<T extends HTMLElement>(id: string): T {
         });
 
         daySelect.addEventListener("change", () => {
-          const scene = game.scene.getScene("MagicBag") as MagicBagScene;
-          if (
-            !scene?.scene.isActive() ||
-            scene.activeDragCard ||
-            scene.pendingDrag ||
-            scene.returningCard
-          ) {
-            daySelect.value = String(selectedDay);
-            return;
-          }
-          selectedDay = Number(daySelect.value);
-          if (!Number.isInteger(selectedDay) || !DATA.days[selectedDay]) return;
-          ITEMS = packingListFor(DATA, selectedDay);
-          renderDayInfo();
-          showDayStart();
+          const nextDayIndex = Number(daySelect.value);
+          const nextDay = DATA.days[nextDayIndex];
+          if (!Number.isInteger(nextDayIndex) || !nextDay) return;
+          window.location.assign(
+            dayUrl(import.meta.env.BASE_URL, window.location.href, nextDay.weekday),
+          );
         });
+
+        if (selectedDay >= 0) showDayStart();
 
         // The day switch stays blocked until the child explicitly starts.
         dayStartDialog.addEventListener("cancel", (event) => event.preventDefault());
