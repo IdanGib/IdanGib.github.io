@@ -583,7 +583,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             this.progressStars = ITEMS.map((_, index) =>
               this.crispText(
                 W / 2 + (index - (ITEMS.length - 1) / 2) * spacing,
-                156,
+                120,
                 "☆",
                 {
                   fontFamily: "Arial",
