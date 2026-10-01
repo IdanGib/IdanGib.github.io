@@ -1116,11 +1116,15 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           updateInstruction() {
             const item = this.currentItem();
             if (item) {
-              this.instruction.setText(
-                `עכשיו בתיק:   ${item.icon} ${item.label}`,
-              );
+              this.instruction
+                .setFontSize(portrait ? 21 : 24)
+                .setFontStyle("normal")
+                .setText(`עכשיו בתיק:   ${item.icon} ${item.label}`);
             } else if (selectedDay < 0) {
-              this.instruction.setText("בחרו יום");
+              this.instruction
+                .setFontSize(portrait ? 32 : 38)
+                .setFontStyle("bold")
+                .setText("בחרו יום");
             }
           }
 

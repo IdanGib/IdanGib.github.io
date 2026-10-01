@@ -22,7 +22,10 @@ declare namespace Phaser {
       disableInteractive(): this; destroy(): void;
       on(event: string, callback: () => void): this;
     }
-    class Text extends GameObject { setText(value: string): this; setColor(value: string): this; }
+    class Text extends GameObject {
+      setText(value: string): this; setColor(value: string): this;
+      setFontSize(value: number | string): this; setFontStyle(value: string): this;
+    }
     class Container extends GameObject { add(children: GameObject | GameObject[]): this; }
     class Graphics extends GameObject {
       clear(): this; fillStyle(color: number, alpha?: number): this; lineStyle(width: number, color: number, alpha?: number): this;
