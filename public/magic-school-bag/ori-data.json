@@ -259,7 +259,7 @@
     },
     "hebrew-workbook": {
       "label": "חוברת קסם וחברים",
-      "icon": "📗",
+      "icon": "📕",
       "imageUrl": "./assets/kesem1.png",
       "audioUrl": "./assets/audio/kesem.m4a",
       "color": "#ff7daf"
@@ -272,7 +272,7 @@
     },
     "math-workbook": {
       "label": "חוברת שבילים",
-      "icon": "📙",
+      "icon": "📘",
       "imageUrl": "./assets/shvilim1.png",
       "audioUrl": "./assets/audio/shvilim.m4a",
       "color": "#8174ff"
@@ -292,7 +292,7 @@
     },
     "science-notebook": {
       "label": "מחברת מדעים",
-      "icon": "📓",
+      "icon": "📗",
       "audioUrl": "./assets/audio/science-notebook.m4a",
       "color": "#52cfa3"
     },
@@ -329,7 +329,7 @@
     },
     "life_skills-notebook": {
       "label": "מחברת כישורי חיים",
-      "icon": "📖",
+      "icon": "📓",
       "imageUrl": "",
       "audioUrl": "",
       "color": "#524fa3"
