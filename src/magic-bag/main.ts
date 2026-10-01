@@ -302,7 +302,6 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           returningCard: CardState | null = null;
           suppressClickUntil = 0;
           dragPreview: HTMLButtonElement | null = null;
-          instruction!: Phaser.GameObjects.Text;
           mascot!: Phaser.GameObjects.Container;
           mascotScale = 1;
           bag!: Phaser.GameObjects.Container;
@@ -354,7 +353,6 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             this.drawBag();
             this.drawProgress();
             this.drawCards();
-            this.updateInstruction();
             this.setupDrag();
             this.setupKeyboardControls();
             this.updateProgress();
@@ -379,7 +377,6 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               }
               this.refreshDeck();
               this.updateProgress();
-              this.updateInstruction();
               if (this.packed === ITEMS.length) this.finish();
             }
             requiredElement("loading").hidden = true;
@@ -463,15 +460,6 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               color: palette().heading,
             }).setOrigin(0.5);
 
-            this.instruction = this.crispText(W / 2, 95, "", {
-              fontFamily: "Arial",
-              fontSize: portrait ? 21 : 24,
-              color: palette().copy,
-              align: "center",
-              wordWrap: { width: portrait ? 380 : 800 },
-            }).setOrigin(0.5);
-
-            this.updateInstruction();
           }
 
           drawMascot() {
@@ -1063,7 +1051,6 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                     settle(true);
                   });
                 } else {
-                  this.updateInstruction();
                   this.time.delayedCall(250, () => this.speakCurrent());
                   this.pendingPackResolutions.delete(settle);
                   settle(true);
@@ -1111,21 +1098,6 @@ function requiredElement<T extends HTMLElement>(id: string): T {
 
           currentItem() {
             return this.cards.find((c) => c.phase !== "packed")?.item;
-          }
-
-          updateInstruction() {
-            const item = this.currentItem();
-            if (item) {
-              this.instruction
-                .setFontSize(portrait ? 21 : 24)
-                .setFontStyle("normal")
-                .setText(`עכשיו בתיק:   ${item.icon} ${item.label}`);
-            } else if (selectedDay < 0) {
-              this.instruction
-                .setFontSize(portrait ? 32 : 38)
-                .setFontStyle("bold")
-                .setText("בחרו יום");
-            }
           }
 
           speakCurrent() {
@@ -1211,7 +1183,6 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             this.finished = true;
             if (this.stackPanel) this.stackPanel.hidden = true;
             daySelect.disabled = false;
-            this.instruction.setText(`${currentProfile().name}, התיק מוכן! 🎉`);
             const finalMessage = DATA.generalAudio.finalDialog;
             liveStatus.textContent = `${finalMessage.text} ${currentProfile().name}! התיק מוכן!`;
             this.speak(finalMessage.humanAudioUrl);
