@@ -162,6 +162,13 @@
       ]
     }
   ],
+  "dailyItems": {
+    "label": "ציוד לכל יום",
+    "itemIds": [
+      "case",
+      "water"
+    ]
+  },
   "subjects": {
     "hebrew": {
       "label": "עברית",

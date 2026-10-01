@@ -25,6 +25,19 @@ Use HTTPS URLs that open the media file directly without a sign-in. You can also
 
 You may add `imageUrl` to any item, including notebooks and folders; it is already present as an empty field on the book and workbook entries. An item ID connects it to a subject's `itemIds`, so keep IDs unchanged when changing a name or picture.
 
+## Change the items packed every day
+
+The top-level `dailyItems` section lists equipment that is added to every school day's packing list, independently of that day's lessons:
+
+```json
+"dailyItems": {
+  "label": "ציוד לכל יום",
+  "itemIds": ["case", "water"]
+}
+```
+
+`label` is the heading displayed on these cards. Each entry in `itemIds` must be a unique key defined under `items`. Add or remove IDs here when the child's everyday equipment changes; do not copy these IDs into every subject.
+
 ## Change general messages and sounds
 
 - `subjects.<subjectId>.label` changes the subject shown above each item card.
@@ -59,5 +72,6 @@ The app validates the complete data structure and its relationships at startup. 
 - `none` means that no equipment is needed and its `itemIds` must be empty.
 - `unknown` means that equipment information was not supplied and its `itemIds` must also be empty. Do not use `unknown` to invent a default item.
 - `endsAt` is either the supplied local `HH:mm` time or `null`; never derive it from the number of lessons.
+- Every `dailyItems.itemIds` entry must reference an item defined under `items`; duplicate IDs are rejected.
 
 Run `npm test` for the focused timetable/date tests and `npm run lint` for TypeScript validation before publishing.

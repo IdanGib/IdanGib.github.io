@@ -13,11 +13,15 @@ const fixture = validateSchoolData({
       ? [{ subjectId: "math", label: "ראשון" }, { subjectId: "math", label: "שני" }]
       : [{ subjectId: "none", label: "ללא ציוד" }],
   })),
+  dailyItems: { label: "ציוד לכל יום", itemIds: ["case"] },
   subjects: {
     math: { label: "חשבון", equipmentStatus: "specified", itemIds: ["book"] },
     none: { label: "ללא", equipmentStatus: "none", itemIds: [] },
   },
-  items: { book: { label: "ספר", icon: "📘", color: "#123ABC" } },
+  items: {
+    book: { label: "ספר", icon: "📘", color: "#123ABC" },
+    case: { label: "קלמר", icon: "✏️", color: "#ABC123" },
+  },
   generalAudio: {
     appEntry: {
       textTemplate: "בואו נכין מערכת ליום {day}",
@@ -31,8 +35,14 @@ const fixture = validateSchoolData({
 test("repeated subjects produce equipment once and retain lesson metadata", () => {
   assert.deepEqual(dayGroups(fixture, 0)[0]?.lessons, [1, 2]);
   const list = packingListFor(fixture, 0);
-  assert.equal(list.length, 1);
-  assert.deepEqual(list[0]?.lessonNames, ["ראשון", "שני"]);
+  assert.equal(list.length, 2);
+  assert.equal(list[0]?.id, "case");
+  assert.equal(list[0]?.subject, "ציוד לכל יום");
+  assert.deepEqual(list[1]?.lessonNames, ["ראשון", "שני"]);
+});
+
+test("daily items are included on days whose lessons need no equipment", () => {
+  assert.deepEqual(packingListFor(fixture, 1).map(({ id }) => id), ["case"]);
 });
 
 test("next school day uses Jerusalem local time and skips Saturday", () => {
@@ -47,4 +57,10 @@ test("validation reports broken relationships and equipment status", () => {
   const subjects = broken.subjects as Record<string, { itemIds: string[] }>;
   subjects.none!.itemIds = ["missing"];
   assert.throws(() => validateSchoolData(broken), /may not list items|missing item/);
+});
+
+test("validation reports missing daily item references", () => {
+  const broken = structuredClone(fixture) as unknown as Record<string, unknown>;
+  (broken.dailyItems as { itemIds: string[] }).itemIds = ["missing"];
+  assert.throws(() => validateSchoolData(broken), /dailyItems.*missing item/);
 });

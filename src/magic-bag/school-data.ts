@@ -31,6 +31,10 @@ export interface SchoolData {
   student: string;
   timeZone: "Asia/Jerusalem";
   days: SchoolDay[];
+  dailyItems: {
+    label: string;
+    itemIds: string[];
+  };
   subjects: Record<string, Subject>;
   items: Record<string, SchoolItem>;
   generalAudio: {
@@ -75,7 +79,7 @@ const nonEmpty = (value: unknown): value is string =>
 export function validateSchoolData(value: unknown): SchoolData {
   const errors: string[] = [];
   if (!isRecord(value)) throw new Error("School data must be an object.");
-  const { days, subjects, items, generalAudio } = value;
+  const { days, dailyItems, subjects, items, generalAudio } = value;
   if (!nonEmpty(value.student)) errors.push("student must be a non-empty string");
   if (value.timeZone !== "Asia/Jerusalem")
     errors.push('timeZone must be "Asia/Jerusalem"');
@@ -83,6 +87,17 @@ export function validateSchoolData(value: unknown): SchoolData {
     errors.push("days must contain Sunday through Friday");
   if (!isRecord(subjects)) errors.push("subjects must be an object");
   if (!isRecord(items)) errors.push("items must be an object");
+  if (!isRecord(dailyItems) || !nonEmpty(dailyItems.label) ||
+      !Array.isArray(dailyItems.itemIds) || dailyItems.itemIds.some((itemId) => !nonEmpty(itemId))) {
+    errors.push("dailyItems requires a label and string item IDs");
+  } else {
+    if (new Set(dailyItems.itemIds).size !== dailyItems.itemIds.length)
+      errors.push("dailyItems.itemIds must be unique");
+    dailyItems.itemIds.forEach((itemId) => {
+      if (isRecord(items) && !(itemId in items))
+        errors.push(`dailyItems.itemIds references missing item ${itemId}`);
+    });
+  }
   if (!isRecord(generalAudio)) {
     errors.push("generalAudio must be an object");
   } else {
@@ -197,7 +212,15 @@ export function dayGroups(data: SchoolData, dayIndex: number): SubjectGroup[] {
 }
 
 export function packingListFor(data: SchoolData, dayIndex: number): PackingItem[] {
-  return dayGroups(data, dayIndex).flatMap((group) =>
+  const dailyGroup: SubjectGroup = {
+    key: "daily",
+    subject: data.dailyItems.label,
+    status: "specified",
+    itemIds: data.dailyItems.itemIds,
+    lessons: [],
+    lessonNames: [],
+  };
+  return [dailyGroup, ...dayGroups(data, dayIndex)].flatMap((group) =>
     group.itemIds.map((id) => {
       const item = data.items[id];
       return {
