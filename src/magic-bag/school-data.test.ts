@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { dayGroups, nextSchoolDay, packingListFor, validateSchoolData } from "./school-data.ts";
+import { dayIndexFromUrl, dayUrl, restoreForwardedDayPath } from "./day-route.ts";
 
 const fixture = validateSchoolData({
   student: "אורי",
@@ -63,4 +64,25 @@ test("validation reports missing daily item references", () => {
   const broken = structuredClone(fixture) as unknown as Record<string, unknown>;
   (broken.dailyItems as { itemIds: string[] }).itemIds = ["missing"];
   assert.throws(() => validateSchoolData(broken), /dailyItems.*missing item/);
+});
+
+test("day URLs select data by weekday and remain shareable under a base path", () => {
+  assert.equal(
+    dayUrl("/IdanGib.github.io/", "https://example.com/old", 4).href,
+    "https://example.com/IdanGib.github.io/magic-bag-app.html/day/4",
+  );
+  assert.equal(
+    dayIndexFromUrl({ pathname: "/IdanGib.github.io/magic-bag-app.html/day/4", search: "" }, fixture.days),
+    4,
+  );
+  assert.equal(dayIndexFromUrl({ pathname: "/magic-bag-app.html/day/9", search: "" }, fixture.days), -1);
+});
+
+test("GitHub Pages fallback day is read and restored to the clean path", () => {
+  const location = { pathname: "/magic-bag-app.html", search: "?magic-bag-day=2" };
+  assert.equal(dayIndexFromUrl(location, fixture.days), 2);
+  assert.equal(
+    restoreForwardedDayPath(location, "/", "https://example.com/magic-bag-app.html?magic-bag-day=2")?.href,
+    "https://example.com/magic-bag-app.html/day/2",
+  );
 });

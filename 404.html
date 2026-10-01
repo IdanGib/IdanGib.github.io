@@ -6,6 +6,17 @@
     <meta name="robots" content="noindex" />
     <meta name="theme-color" content="#0a0a0f" />
     <title>Page not found — IG Apps</title>
+    <script>
+      // GitHub Pages has no rewrite rules. Forward shareable Magic Bag day
+      // paths to the app entry point; the app immediately restores this path.
+      const magicBagDay = location.pathname.match(
+        /^(.*\/)?magic-bag-app\.html\/day\/(\d+)\/?$/,
+      );
+      if (magicBagDay) {
+        const appPath = `${magicBagDay[1] || "/"}magic-bag-app.html`;
+        location.replace(`${appPath}?magic-bag-day=${magicBagDay[2]}`);
+      }
+    </script>
     <link
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a0a0f'/%3E%3Ctext x='32' y='42' font-family='sans-serif' font-size='26' font-weight='700' fill='%23c084fc' text-anchor='middle'%3EIG%3C/text%3E%3C/svg%3E"
