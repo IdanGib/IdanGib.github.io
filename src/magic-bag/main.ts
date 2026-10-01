@@ -307,7 +307,9 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           bag!: Phaser.GameObjects.Container;
           bagGraphics!: Phaser.GameObjects.Graphics;
           bagScale = 1;
-          progressStars: Phaser.GameObjects.Text[] = [];
+          progressMeter: HTMLDivElement | null = null;
+          progressText: HTMLSpanElement | null = null;
+          progressBar: HTMLProgressElement | null = null;
           stackPanel: HTMLDivElement | null = null;
           replayButton: HTMLButtonElement | null = null;
           private pendingPackResolutions = new Set<(completed: boolean) => void>();
@@ -351,10 +353,10 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             this.drawHeader();
             this.drawMascot();
             this.drawBag();
-            this.drawProgress();
             this.drawCards();
             this.setupDrag();
             this.setupKeyboardControls();
+            this.drawProgress();
             this.updateProgress();
             this.scale.on("resize", this.positionControls, this);
             this.events.once("shutdown", () => {
@@ -579,30 +581,47 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           }
 
           drawProgress() {
-            const spacing = portrait ? 45 : 50;
-            this.progressStars = ITEMS.map((_, index) =>
-              this.crispText(
-                W / 2 + (index - (ITEMS.length - 1) / 2) * spacing,
-                120,
-                "☆",
-                {
-                  fontFamily: "Arial",
-                  fontSize: portrait ? 39 : 42,
-                  color: palette().progress,
-                },
-              ).setOrigin(0.5),
-            );
+            const meter = document.createElement("div");
+            meter.className = "magic-meter";
+            meter.setAttribute("role", "group");
+
+            const summary = document.createElement("div");
+            summary.className = "magic-meter-summary";
+            const star = document.createElement("span");
+            star.className = "magic-meter-star";
+            star.textContent = "★";
+            star.setAttribute("aria-hidden", "true");
+            const text = document.createElement("span");
+            summary.append(star, text);
+
+            const progress = document.createElement("progress");
+            progress.className = "magic-meter-bar";
+            progress.setAttribute("aria-label", "התקדמות אריזת התיק");
+            meter.append(summary, progress);
+            controls.append(meter);
+            this.progressMeter = meter;
+            this.progressText = text;
+            this.progressBar = progress;
+            this.positionControls();
           }
 
           updateProgress() {
-            this.progressStars.forEach((star, index) => {
-              const filled = index < this.packed;
-              star.setText(filled ? "★" : "☆");
-              star.setColor(filled ? "#f0b93e" : palette().progress);
-            });
+            const packed = this.packed;
+            const total = ITEMS.length;
+            if (this.progressText)
+              this.progressText.textContent = `${packed} מתוך ${total} פריטים בתיק`;
+            if (this.progressBar) {
+              // A max of one keeps an empty session determinate without dividing by zero.
+              this.progressBar.max = total || 1;
+              this.progressBar.value = packed;
+              this.progressBar.setAttribute(
+                "aria-valuetext",
+                `${packed} מתוך ${total} פריטים בתיק`,
+              );
+            }
             liveStatus.textContent = selectedDay < 0
               ? "בחרו יום"
-              : `יום ${DAYS[selectedDay]}: ${this.packed} מתוך ${ITEMS.length} פריטים בתיק`;
+              : `יום ${DAYS[selectedDay]}: ${packed} מתוך ${total} פריטים בתיק`;
           }
 
           drawCards() {
@@ -782,6 +801,13 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             const bounds = controls.getBoundingClientRect();
             const sx = canvas.width / W;
             const sy = canvas.height / H;
+            if (this.progressMeter) {
+              Object.assign(this.progressMeter.style, {
+                left: `${canvas.left - bounds.left + W / 2 * sx}px`,
+                top: `${canvas.top - bounds.top + 91 * sy}px`,
+                width: `${(portrait ? 304 : 380) * sx}px`,
+              });
+            }
             if (this.stackPanel) {
               Object.assign(this.stackPanel.style, {
                 left: `${canvas.left - bounds.left + (W / 2 - (portrait ? 152 : 190)) * sx}px`,
