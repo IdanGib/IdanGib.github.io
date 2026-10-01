@@ -8,6 +8,7 @@
     "student",
     "timeZone",
     "days",
+    "dailyItems",
     "subjects",
     "items",
     "generalAudio"
@@ -79,6 +80,30 @@
               }
             }
           }
+        }
+      }
+    },
+    "dailyItems": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "itemIds"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Heading shown on items that must be packed every school day."
+        },
+        "itemIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Keys in items that are included in every day's packing list."
         }
       }
     },
