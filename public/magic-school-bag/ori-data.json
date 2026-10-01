@@ -331,7 +331,7 @@
       "label": "מחברת כישורי חיים",
       "icon": "📓",
       "imageUrl": "",
-      "audioUrl": "",
+      "audioUrl": "./assets/audio/life-skills-notebook.m4a",
       "color": "#524fa3"
     },
     "road_safety-book": {
