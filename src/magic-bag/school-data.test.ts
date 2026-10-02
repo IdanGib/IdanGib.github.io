@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { dayGroups, nextSchoolDay, packingListFor, validateSchoolData } from "./school-data.ts";
+import {
+  dayGroups,
+  imageUrlsFor,
+  nextSchoolDay,
+  packingListFor,
+  validateSchoolData,
+} from "./school-data.ts";
 
 const fixture = validateSchoolData({
   student: "אורי",
@@ -63,4 +69,16 @@ test("validation reports missing daily item references", () => {
   const broken = structuredClone(fixture) as unknown as Record<string, unknown>;
   (broken.dailyItems as { itemIds: string[] }).itemIds = ["missing"];
   assert.throws(() => validateSchoolData(broken), /dailyItems.*missing item/);
+});
+
+test("image URLs are resolved, deduplicated, and empty values are skipped", () => {
+  const data = structuredClone(fixture);
+  data.items.book!.imageUrl = "./assets/book.png";
+  data.items.case!.imageUrl = " ./assets/book.png ";
+  data.items.empty = { label: "ריק", icon: "❔", imageUrl: "", color: "#123456" };
+
+  assert.deepEqual(
+    imageUrlsFor(data, new URL("https://example.com/magic-school-bag/ori-data.json")),
+    ["https://example.com/magic-school-bag/assets/book.png"],
+  );
 });

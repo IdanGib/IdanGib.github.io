@@ -253,3 +253,12 @@ export function resolveMediaUrl(value: string | undefined, dataUrl: URL): string
   const trimmed = value?.trim();
   return trimmed ? new URL(trimmed, dataUrl).href : "";
 }
+
+/** Resolve every configured item image once so the UI can warm the browser cache. */
+export function imageUrlsFor(data: Pick<SchoolData, "items">, dataUrl: URL): string[] {
+  return [...new Set(
+    Object.values(data.items)
+      .map((item) => resolveMediaUrl(item.imageUrl, dataUrl))
+      .filter((url) => url.length > 0),
+  )];
+}
