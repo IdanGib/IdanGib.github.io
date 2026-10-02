@@ -308,6 +308,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           bagGraphics!: Phaser.GameObjects.Graphics;
           bagScale = 1;
           progressMeter: HTMLDivElement | null = null;
+          daySelectionPrompt: HTMLParagraphElement | null = null;
           progressText: HTMLSpanElement | null = null;
           progressBar: HTMLProgressElement | null = null;
           stackPanel: HTMLDivElement | null = null;
@@ -581,6 +582,11 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           }
 
           drawProgress() {
+            const daySelectionPrompt = document.createElement("p");
+            daySelectionPrompt.className = "day-selection-prompt";
+            daySelectionPrompt.textContent = "בחרו יום";
+            controls.append(daySelectionPrompt);
+
             const meter = document.createElement("div");
             meter.className = "magic-meter";
             meter.setAttribute("role", "group");
@@ -599,6 +605,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             progress.setAttribute("aria-label", "התקדמות אריזת התיק");
             meter.append(summary, progress);
             controls.append(meter);
+            this.daySelectionPrompt = daySelectionPrompt;
             this.progressMeter = meter;
             this.progressText = text;
             this.progressBar = progress;
@@ -608,6 +615,10 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           updateProgress() {
             const packed = this.packed;
             const total = ITEMS.length;
+            const waitingForDay = selectedDay < 0;
+            if (this.daySelectionPrompt)
+              this.daySelectionPrompt.hidden = !waitingForDay;
+            if (this.progressMeter) this.progressMeter.hidden = waitingForDay;
             if (this.progressText)
               this.progressText.textContent = `${packed} מתוך ${total} פריטים בתיק`;
             if (this.progressBar) {
@@ -803,6 +814,13 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             const sy = canvas.height / H;
             if (this.progressMeter) {
               Object.assign(this.progressMeter.style, {
+                left: `${canvas.left - bounds.left + W / 2 * sx}px`,
+                top: `${canvas.top - bounds.top + 91 * sy}px`,
+                width: `${(portrait ? 304 : 380) * sx}px`,
+              });
+            }
+            if (this.daySelectionPrompt) {
+              Object.assign(this.daySelectionPrompt.style, {
                 left: `${canvas.left - bounds.left + W / 2 * sx}px`,
                 top: `${canvas.top - bounds.top + 91 * sy}px`,
                 width: `${(portrait ? 304 : 380) * sx}px`,
