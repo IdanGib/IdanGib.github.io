@@ -754,7 +754,9 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                   { once: true },
                 );
                 const audioUrl = item.audioUrl?.trim();
-                if (audioUrl) this.speak(audioUrl);
+                // A card tap is an explicit request from the child. Do not drop
+                // it just because the longer welcome recording is still playing.
+                if (audioUrl) this.speak(audioUrl, true);
               });
               button.addEventListener("keydown", (event) => {
                 if (event.key !== "ArrowDown" || !this.canPack(card)) return;
@@ -1157,13 +1159,14 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             void startAppEntry(selectedDay);
           }
 
-          speak(audioUrl?: string): void {
+          speak(audioUrl?: string, interruptAppEntry = false): void {
             if (!hasInteracted) return;
-            // Item taps and scene restarts must not cut off the welcome message.
-            if (appEntryIsPlaying() || appEntryStarting) return;
+            // Automatic prompts wait for the welcome message, while direct card
+            // taps and the completion dialog take priority over it.
+            if (!interruptAppEntry && (appEntryIsPlaying() || appEntryStarting)) return;
             const url = audioUrl?.trim();
-            stopVoice();
             if (typeof url !== "string" || !url.trim()) return;
+            stopVoice(interruptAppEntry);
             const voice = new Audio(resolveMediaUrl(url, dataUrl));
             activeVoice = voice;
             voice.addEventListener(
@@ -1229,7 +1232,9 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             daySelect.disabled = false;
             const finalMessage = DATA.generalAudio.finalDialog;
             liveStatus.textContent = `${finalMessage.text} ${currentProfile().name}! התיק מוכן!`;
-            this.speak(finalMessage.humanAudioUrl);
+            // Completion must always announce "כל הכבוד", even when a welcome
+            // or item recording has not finished yet.
+            this.speak(finalMessage.humanAudioUrl, true);
             this.confetti();
 
             this.tweens.add({
