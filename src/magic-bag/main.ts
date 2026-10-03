@@ -78,6 +78,14 @@ function requiredElement<T extends HTMLElement>(id: string): T {
         const dayStartMessage = requiredElement<HTMLParagraphElement>("day-start-message");
         const dayStartButton = requiredElement<HTMLButtonElement>("day-start-button");
         let hasInteracted = false;
+        // Keep one media element for every spoken prompt. Mobile Safari grants
+        // playback permission to the element used during a user gesture, not
+        // necessarily to new Audio instances created later from a timer. The
+        // completion prompt runs after the final packing animation, so reusing
+        // this unlocked player lets it reliably play when the modal appears.
+        const voicePlayer = new Audio();
+        voicePlayer.preload = "auto";
+        let voicePlaybackId = 0;
         let activeVoice: HTMLAudioElement | null = null;
         let appEntryVoice: HTMLAudioElement | null = null;
         let appEntryVoiceDay: number | null = null;
@@ -93,6 +101,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           activeVoice.pause();
           activeVoice.currentTime = 0;
           activeVoice = null;
+          voicePlaybackId += 1;
         }
 
         async function startAppEntry(day: number): Promise<boolean> {
@@ -109,22 +118,28 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           if (!audioUrl) return false;
 
           appEntryStarting = true;
-          const voice = new Audio(resolveMediaUrl(audioUrl, dataUrl));
+          const playbackId = ++voicePlaybackId;
+          const voice = voicePlayer;
+          voice.src = resolveMediaUrl(audioUrl, dataUrl);
+          voice.currentTime = 0;
           appEntryVoice = voice;
           appEntryVoiceDay = day;
           activeVoice = voice;
-          voice.addEventListener("ended", () => {
+          voice.onended = () => {
+            if (playbackId !== voicePlaybackId) return;
             if (activeVoice === voice) activeVoice = null;
             if (appEntryVoice === voice) {
               appEntryVoice = null;
               appEntryVoiceDay = null;
             }
-          }, { once: true });
+          };
           try {
             await voice.play();
+            if (playbackId !== voicePlaybackId) return false;
             appEntryPlayedDay = day;
             return true;
           } catch (_) {
+            if (playbackId !== voicePlaybackId) return false;
             if (activeVoice === voice) activeVoice = null;
             if (appEntryVoice === voice) {
               appEntryVoice = null;
@@ -1167,16 +1182,17 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             const url = audioUrl?.trim();
             if (typeof url !== "string" || !url.trim()) return;
             stopVoice(interruptAppEntry);
-            const voice = new Audio(resolveMediaUrl(url, dataUrl));
+            const playbackId = ++voicePlaybackId;
+            const voice = voicePlayer;
+            voice.src = resolveMediaUrl(url, dataUrl);
+            voice.currentTime = 0;
             activeVoice = voice;
-            voice.addEventListener(
-              "ended",
-              () => {
-                if (activeVoice === voice) activeVoice = null;
-              },
-              { once: true },
-            );
+            voice.onended = () => {
+              if (playbackId !== voicePlaybackId) return;
+              if (activeVoice === voice) activeVoice = null;
+            };
             void voice.play().catch(() => {
+              if (playbackId !== voicePlaybackId) return;
               if (activeVoice === voice) activeVoice = null;
             });
           }
