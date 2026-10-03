@@ -1,4 +1,5 @@
 import {
+  imageUrlsFor,
   packingListFor,
   resolveMediaUrl,
   validateSchoolData,
@@ -67,6 +68,14 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           if (!response.ok)
             throw new Error(`School bag data could not be loaded (${response.status})`);
           return validateSchoolData(await response.json());
+        });
+        // Start every item image request as soon as the data is available. This
+        // includes images for the other school days, so changing days never has
+        // to wait for an image that the browser has not seen yet.
+        imageUrlsFor(DATA, dataUrl).forEach((url) => {
+          const image = new Image();
+          image.decoding = "async";
+          image.src = url;
         });
         const profileDialog = requiredElement<HTMLDialogElement>("profile-dialog");
         const profileForm = requiredElement<HTMLFormElement>("profile-form");
