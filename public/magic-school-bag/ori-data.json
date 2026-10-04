@@ -165,8 +165,7 @@
   "dailyItems": {
     "label": "ציוד לכל יום",
     "itemIds": [
-      "case",
-      "water"
+      "case"
     ]
   },
   "subjects": {
