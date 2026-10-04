@@ -9,11 +9,15 @@
     "build:pages": "cross-env VITE_BASE=/$npm_package_name/ vite build",
     "preview": "vite preview",
     "lint": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test --experimental-strip-types src/magic-bag/school-data.test.ts"
+    "test": "node --test --experimental-strip-types src/magic-bag/school-data.test.ts",
+    "dev:all": "bash scripts/dev-all.sh",
+    "pocketbase": "./pocketbase/pocketbase serve --dir pocketbase/pb_data --migrationsDir pocketbase/pb_migrations --hooksDir pocketbase/pb_hooks",
+    "test:integration": "node --test tests/pocketbase.integration.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "pocketbase": "0.28.1"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.0",
