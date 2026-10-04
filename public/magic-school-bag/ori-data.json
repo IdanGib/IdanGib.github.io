@@ -175,7 +175,9 @@
       "equipmentStatus": "specified",
       "itemIds": [
         "hebrew-notebook",
-        "hebrew-workbook"
+        "hebrew-workbook",
+        "hebrew-workbook-kesem-notebook",
+        "hebrew-workbook-kesem-time"
       ]
     },
     "math": {
