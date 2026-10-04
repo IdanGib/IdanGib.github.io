@@ -5,6 +5,7 @@ import {
   type PackingItem,
   type SchoolData,
 } from "./school-data";
+import { DEFAULT_REGISTRY, loadProfiles, saveProfiles, validateRegistry, type Child } from "./app-state";
 
 type Gender = "boy" | "girl";
 interface Profile { name: string; gender: Gender }
@@ -58,16 +59,26 @@ function requiredElement<T extends HTMLElement>(id: string): T {
 
       (async () => {
         const appLifetime = new AbortController();
-        const PROFILE_STORAGE_KEY = "magic-bag-kid-profile";
         // Load the recording metadata before profile setup. On a first visit,
         // submitting that form is the browser-approved gesture that lets the
         // welcome recording start as the bag screen is revealed.
-        const dataUrl = new URL("magic-school-bag/ori-data.json", new URL(import.meta.env.BASE_URL, location.href));
-        const DATA: SchoolData = await fetch(dataUrl).then(async (response) => {
-          if (!response.ok)
-            throw new Error(`School bag data could not be loaded (${response.status})`);
+        const registry = validateRegistry(DEFAULT_REGISTRY);
+        let hasSavedProfile = false;
+        try {
+          hasSavedProfile = !!localStorage.getItem("magic-bag-profiles-v1") ||
+            !!localStorage.getItem("magic-bag-kid-profile");
+        } catch { /* Storage may be unavailable; the form still works in memory. */ }
+        const storedProfiles = loadProfiles(localStorage, registry);
+        let children: Child[] = storedProfiles.children;
+        let activeChild = children.find(({ id }) => id === storedProfiles.selectedChildId) ?? children[0]!;
+        let activeBag = registry.bags.find(({ id }) => id === activeChild.bagId)!;
+        let dataUrl = new URL(activeBag.dataUrl, new URL(import.meta.env.BASE_URL, location.href));
+        const fetchBag = async (url: URL): Promise<SchoolData> => {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(`School bag data could not be loaded (${response.status})`);
           return validateSchoolData(await response.json());
-        });
+        };
+        let DATA: SchoolData = await fetchBag(dataUrl);
         const profileDialog = requiredElement<HTMLDialogElement>("profile-dialog");
         const profileForm = requiredElement<HTMLFormElement>("profile-form");
         const kidNameInput = requiredElement<HTMLInputElement>("kid-name");
@@ -88,8 +99,8 @@ function requiredElement<T extends HTMLElement>(id: string): T {
         let voicePlaybackId = 0;
         let activeVoice: HTMLAudioElement | null = null;
         let appEntryVoice: HTMLAudioElement | null = null;
-        let appEntryVoiceDay: number | null = null;
-        let appEntryPlayedDay: number | null = null;
+        let appEntryVoiceDay: string | null = null;
+        let appEntryPlayedDay: string | null = null;
         let appEntryStarting = false;
 
         function appEntryIsPlaying(): boolean {
@@ -105,15 +116,16 @@ function requiredElement<T extends HTMLElement>(id: string): T {
         }
 
         async function startAppEntry(day: number): Promise<boolean> {
-          if (appEntryVoice && appEntryVoiceDay !== day) {
+          const greetingKey = `${activeChild.id}/${activeBag.id}/${day}`;
+          if (appEntryVoice && appEntryVoiceDay !== greetingKey) {
             appEntryVoice.pause();
             appEntryVoice.currentTime = 0;
             if (activeVoice === appEntryVoice) activeVoice = null;
             appEntryVoice = null;
             appEntryVoiceDay = null;
           }
-          if (appEntryPlayedDay === day || appEntryStarting || appEntryIsPlaying())
-            return appEntryPlayedDay === day;
+          if (appEntryPlayedDay === greetingKey || appEntryStarting || appEntryIsPlaying())
+            return appEntryPlayedDay === greetingKey;
           const audioUrl = DATA.generalAudio.appEntry.humanAudioByWeekday[String(day)]?.trim();
           if (!audioUrl) return false;
 
@@ -123,7 +135,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           voice.src = resolveMediaUrl(audioUrl, dataUrl);
           voice.currentTime = 0;
           appEntryVoice = voice;
-          appEntryVoiceDay = day;
+          appEntryVoiceDay = greetingKey;
           activeVoice = voice;
           voice.onended = () => {
             if (playbackId !== voicePlaybackId) return;
@@ -136,7 +148,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           try {
             await voice.play();
             if (playbackId !== voicePlaybackId) return false;
-            appEntryPlayedDay = day;
+            appEntryPlayedDay = greetingKey;
             return true;
           } catch (_) {
             if (playbackId !== voicePlaybackId) return false;
@@ -155,25 +167,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           resolveInitialProfile = resolve;
         });
 
-        function loadProfile(): Profile | null {
-          try {
-            const stored = localStorage.getItem(PROFILE_STORAGE_KEY);
-            if (!stored) return null;
-            const profile: unknown = JSON.parse(stored);
-            if (
-              typeof profile === "object" && profile !== null &&
-              "name" in profile && typeof profile.name === "string" && profile.name.trim() &&
-              "gender" in profile && (profile.gender === "boy" || profile.gender === "girl")
-            ) {
-              return { name: profile.name.trim(), gender: profile.gender };
-            }
-          } catch (_) {
-            // Treat unavailable or malformed browser storage as a first visit.
-          }
-          return null;
-        }
-
-        let kidProfile = loadProfile();
+        let kidProfile: Profile | null = hasSavedProfile ? { name: activeChild.name, gender: activeChild.gender } : null;
 
         function applyProfileColors(profile: Profile): void {
           document.documentElement.dataset.gender = profile.gender;
@@ -200,11 +194,9 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           hasInteracted = true;
           kidProfile = { name, gender };
           applyProfileColors(kidProfile);
-          try {
-            localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(kidProfile));
-          } catch (_) {
-            // The current session can still be personalized without persistence.
-          }
+          activeChild = { ...activeChild, ...kidProfile };
+          children = children.map((child) => child.id === activeChild.id ? activeChild : child);
+          saveProfiles(localStorage, children, activeChild.id);
           document.title = `תיק הקסם ✨ | ${kidProfile.name}`;
           requiredElement("page-title").textContent =
             `משימת תיק הקסם עם ${kidProfile.name}`;
@@ -257,7 +249,16 @@ function requiredElement<T extends HTMLElement>(id: string): T {
         const liveStatus = requiredElement<HTMLParagraphElement>("game-status");
 
         // This JSON is the single source for lesson order, equipment, dismissal time and recorded voice.
-        const DAYS = DATA.days.map((day) => day.label);
+        let DAYS = DATA.days.map((day) => day.label);
+        let switchingChild = false;
+        type SessionSnapshot = { day: number; packedIds: string[] };
+        const sessions = new Map<string, SessionSnapshot>();
+        const sessionKey = (child = activeChild) => `${child.id}\0${child.bagId}`;
+        const childSelect = requiredElement<HTMLSelectElement>("school-child");
+        const childPicker = requiredElement<HTMLElement>("child-picker");
+        children.forEach((child) => childSelect.add(new Option(child.name, child.id)));
+        childSelect.value = activeChild.id;
+        childPicker.hidden = children.length < 2;
 
         const daySelect = requiredElement<HTMLSelectElement>("school-day");
         const endTime = requiredElement<HTMLOutputElement>("end-time");
@@ -788,6 +789,8 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           canPack(card: CardState): boolean {
             return (
               !this.finished &&
+              !switchingChild &&
+              !dayStartDialog.open &&
               !this.returningCard &&
               !this.activeDragCard &&
               card.phase === "ready" &&
@@ -1049,7 +1052,9 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               },
               options,
             );
-            window.addEventListener("pointercancel", cancelDrag, options);
+            window.addEventListener("pointercancel", (event) => {
+              if (event.pointerId === this.pendingDrag?.pointerId) cancelDrag();
+            }, options);
             window.addEventListener("blur", cancelDrag, options);
             controls.addEventListener(
               "lostpointercapture",
@@ -1167,7 +1172,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           }
 
           playAppEntry(): void {
-            if (selectedDay < 0 || appEntryPlayedDay === selectedDay || !hasInteracted) return;
+            if (selectedDay < 0 || appEntryPlayedDay === `${activeChild.id}/${activeBag.id}/${selectedDay}` || !hasInteracted) return;
             const message = DATA.generalAudio.appEntry;
             const text = message.textTemplate.replace("{day}", DAYS[selectedDay]);
             liveStatus.textContent = text;
@@ -1476,6 +1481,64 @@ function requiredElement<T extends HTMLElement>(id: string): T {
         });
         window.magicBagGame = game;
 
+        let switchGeneration = 0;
+        childSelect.addEventListener("change", async () => {
+          const requested = children.find(({ id }) => id === childSelect.value);
+          if (!requested || requested.id === activeChild.id) return;
+          const scene = game.scene.getScene("MagicBag") as MagicBagScene;
+          sessions.set(sessionKey(), {
+            day: selectedDay,
+            packedIds: scene?.scene.isActive()
+              ? scene.cards.filter(({ phase }) => phase === "packed").map(({ item }) => item.id)
+              : [],
+          });
+          const generation = ++switchGeneration;
+          switchingChild = true;
+          childSelect.disabled = true;
+          daySelect.disabled = true;
+          stopVoice(true);
+          try {
+            const requestedBag = registry.bags.find(({ id }) => id === requested.bagId)!;
+            const requestedUrl = new URL(requestedBag.dataUrl, new URL(import.meta.env.BASE_URL, location.href));
+            const requestedData = await fetchBag(requestedUrl);
+            if (generation !== switchGeneration || childSelect.value !== requested.id) return;
+            activeChild = requested;
+            activeBag = requestedBag;
+            dataUrl = requestedUrl;
+            DATA = requestedData;
+            DAYS = DATA.days.map(({ label }) => label);
+            kidProfile = { name: requested.name, gender: requested.gender };
+            applyProfileColors(kidProfile);
+            saveProfiles(localStorage, children, requested.id);
+            document.title = `תיק הקסם ✨ | ${requested.name}`;
+            requiredElement("page-title").textContent = `משימת תיק הקסם עם ${requested.name}`;
+            daySelect.replaceChildren();
+            const prompt = new Option("בחרו יום ✨", "");
+            prompt.disabled = true;
+            daySelect.add(prompt);
+            DAYS.forEach((day, index) => daySelect.add(new Option(`יום ${day}`, String(index))));
+            const saved = sessions.get(sessionKey());
+            selectedDay = saved?.day ?? -1;
+            ITEMS = selectedDay < 0 ? [] : packingListFor(DATA, selectedDay);
+            daySelect.value = selectedDay < 0 ? "" : String(selectedDay);
+            renderDayInfo();
+            scene.scene.restart({ packedIds: saved?.packedIds ?? [] });
+          } catch (error) {
+            console.error("School bag switch failed", error);
+            childSelect.value = activeChild.id;
+            liveStatus.textContent = "לא הצלחנו לטעון את התיק שבחרתם.";
+            scene.scene.restart({
+              packedIds: sessions.get(sessionKey())?.packedIds ?? [],
+            });
+          } finally {
+            if (generation === switchGeneration) {
+              switchingChild = false;
+              childSelect.disabled = false;
+              daySelect.disabled = false;
+            }
+          }
+        });
+
         // Browsers require a user gesture before recorded audio can start. Play
         // the one-time greeting on the first gesture, never on scene restarts.
         const playInitialGreeting = () => {
@@ -1540,12 +1603,20 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           });
         }, { signal: appLifetime.signal });
 
-        window.addEventListener("pagehide", () => {
-          appLifetime.abort();
+        window.addEventListener("pageshow", (event) => {
+          if (!(event as PageTransitionEvent).persisted) return;
+          const scene = game.scene.getScene("MagicBag") as MagicBagScene;
+          requestAnimationFrame(() => scene?.positionControls());
+        }, { signal: appLifetime.signal });
+
+        window.addEventListener("pagehide", (event) => {
           stopVoice(true);
+          // A back/forward-cache entry remains live and is restored by pageshow.
+          if ((event as PageTransitionEvent).persisted) return;
+          appLifetime.abort();
           game.destroy(true);
           if (window.magicBagGame === game) delete window.magicBagGame;
-        }, { once: true });
+        });
 
         // Use the same scene state for optional browser-agent access.
         const modelContext = document.modelContext;
@@ -1563,6 +1634,8 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           const readProgress = () => {
             const scene = getScene();
             return {
+              child: { id: activeChild.id, name: activeChild.name },
+              bag: { id: activeBag.id },
               day: DAYS[selectedDay],
               endsAt: DATA.days[selectedDay].endsAt,
               lessons: DATA.days[selectedDay].lessons.map(

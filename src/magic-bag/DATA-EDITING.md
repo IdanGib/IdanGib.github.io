@@ -1,6 +1,16 @@
 # Editing the Magic School Bag data
 
-The site reads `public/magic-school-bag/ori-data.json` when it opens. Edit this file and publish the Site again to make changes visible. The game does not save edits made in a visitor's browser.
+The default bag reads `public/magic-school-bag/ori-data.json`. That file remains the unchanged source of truth for Ori's timetable. The game does not save data edits made in a visitor's browser.
+
+## Add a child or another real school bag
+
+The small registry is `DEFAULT_REGISTRY` in `src/magic-bag/app-state.ts`. A child has a stable `id`, display `name`, `gender`, and `bagId`; a bag has a stable `id` and `dataUrl`. IDs—not names—own progress, so names can change and multiple children can share one bag.
+
+1. Add a complete, real data file beside `ori-data.json` (do not copy or invent missing timetable information).
+2. Add `{ id: "maya-2026", dataUrl: "magic-school-bag/maya-data.json" }` to `bags`.
+3. Add `{ id: "maya", name: "מאיה", gender: "girl", bagId: "maya-2026" }` to `children`.
+
+No gameplay code needs editing. Media paths in each JSON file resolve relative to that file, so separate bag folders also work. When two or more children are configured, the child picker appears automatically. Each child keeps an independent in-memory day and packing session; page reload intentionally clears progress. The selected child and personalized name/gender use versioned local storage. Existing `magic-bag-kid-profile` data is copied to the first child once without deleting the legacy entry.
 
 ## Change an item's name, book picture, and recording
 
@@ -73,5 +83,6 @@ The app validates the complete data structure and its relationships at startup. 
 - `unknown` means that equipment information was not supplied and its `itemIds` must also be empty. Do not use `unknown` to invent a default item.
 - `endsAt` is either the supplied local `HH:mm` time or `null`; never derive it from the number of lessons.
 - Every `dailyItems.itemIds` entry must reference an item defined under `items`; duplicate IDs are rejected.
+- A single day's final packing list may not contain the same item ID twice. Different bags may freely reuse IDs because sessions and media are bag-scoped.
 
 Run `npm test` for the focused timetable/date tests and `npm run lint` for TypeScript validation before publishing.

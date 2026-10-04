@@ -126,6 +126,7 @@
         cursor: pointer;
         transition: transform 160ms ease, box-shadow 160ms ease;
       }
+      #child-picker[hidden] { display: none; }
       .packing-toolbar select:hover {
         transform: translateY(-1px);
         box-shadow: 0 9px 22px var(--shadow);
@@ -633,6 +634,10 @@
     <main aria-label="תיק הקסם">
       <h1 id="page-title" class="sr-only">משימת תיק הקסם</h1>
       <div class="packing-toolbar">
+        <label id="child-picker" hidden>
+          <span class="sr-only">בחירת ילד או ילדה</span>
+          <select id="school-child" aria-label="ילד או ילדה"></select>
+        </label>
         <select id="school-day" aria-label="יום הלימודים"></select>
         <span class="end-time"
           >סיום הלימודים: <output id="end-time"></output

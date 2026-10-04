@@ -74,6 +74,8 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const nonEmpty = (value: unknown): value is string =>
   typeof value === "string" && value.trim().length > 0;
+const own = (record: object, key: PropertyKey): boolean =>
+  Object.prototype.hasOwnProperty.call(record, key);
 
 /** Validate both shape and cross-record relationships before the UI uses data. */
 export function validateSchoolData(value: unknown): SchoolData {
@@ -94,7 +96,7 @@ export function validateSchoolData(value: unknown): SchoolData {
     if (new Set(dailyItems.itemIds).size !== dailyItems.itemIds.length)
       errors.push("dailyItems.itemIds must be unique");
     dailyItems.itemIds.forEach((itemId) => {
-      if (isRecord(items) && !(itemId in items))
+      if (isRecord(items) && !own(items, itemId))
         errors.push(`dailyItems.itemIds references missing item ${itemId}`);
     });
   }
@@ -138,7 +140,7 @@ export function validateSchoolData(value: unknown): SchoolData {
         const lessonPath = `${path}.lessons[${lessonIndex}]`;
         if (!isRecord(lesson) || !nonEmpty(lesson.subjectId) || !nonEmpty(lesson.label)) {
           errors.push(`${lessonPath} must contain subjectId and label`);
-        } else if (isRecord(subjects) && !(lesson.subjectId in subjects)) {
+        } else if (isRecord(subjects) && !own(subjects, lesson.subjectId)) {
           errors.push(`${lessonPath}.subjectId references missing subject ${lesson.subjectId}`);
         }
       });
@@ -163,13 +165,14 @@ export function validateSchoolData(value: unknown): SchoolData {
       if (subject.equipmentStatus !== "specified" && subject.itemIds.length > 0)
         errors.push(`${path} may not list items unless equipment is specified`);
       subject.itemIds.forEach((itemId) => {
-        if (isRecord(items) && !(itemId in items))
+        if (isRecord(items) && !own(items, itemId))
           errors.push(`${path}.itemIds references missing item ${itemId}`);
       });
     });
   }
 
   if (isRecord(items)) {
+    if (!Object.keys(items).length) errors.push("items must not be empty");
     Object.entries(items).forEach(([id, item]) => {
       const path = `items.${id}`;
       if (!isRecord(item)) return errors.push(`${path} must be an object`);
@@ -181,6 +184,22 @@ export function validateSchoolData(value: unknown): SchoolData {
         if (item[field] !== undefined && typeof item[field] !== "string")
           errors.push(`${path}.${field} must be a string when present`);
       }
+    });
+  }
+  if (Array.isArray(days) && isRecord(subjects) && isRecord(items) && isRecord(dailyItems) &&
+      Array.isArray(dailyItems.itemIds)) {
+    days.forEach((day, dayIndex) => {
+      if (!isRecord(day) || !Array.isArray(day.lessons)) return;
+      const ids: unknown[] = [...(dailyItems.itemIds as unknown[])];
+      const seenSubjects = new Set<string>();
+      day.lessons.forEach((lesson) => {
+        if (!isRecord(lesson) || typeof lesson.subjectId !== "string" || seenSubjects.has(lesson.subjectId)) return;
+        seenSubjects.add(lesson.subjectId);
+        const subject = own(subjects, lesson.subjectId) ? subjects[lesson.subjectId] : undefined;
+        if (isRecord(subject) && Array.isArray(subject.itemIds)) ids.push(...subject.itemIds);
+      });
+      const duplicate = ids.find((id, index) => typeof id === "string" && ids.indexOf(id) !== index);
+      if (duplicate) errors.push(`days[${dayIndex}] produces ambiguous duplicate item ID ${duplicate}`);
     });
   }
   if (errors.length) throw new Error(`Invalid school bag data:\n- ${errors.join("\n- ")}`);

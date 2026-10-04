@@ -64,3 +64,15 @@ test("validation reports missing daily item references", () => {
   (broken.dailyItems as { itemIds: string[] }).itemIds = ["missing"];
   assert.throws(() => validateSchoolData(broken), /dailyItems.*missing item/);
 });
+
+test("validation rejects inherited references and ambiguous per-day IDs", () => {
+  const inherited = structuredClone(fixture) as unknown as Record<string, unknown>;
+  const subjects = inherited.subjects as Record<string, unknown>;
+  delete subjects.math;
+  Object.setPrototypeOf(subjects, { math: fixture.subjects.math });
+  assert.throws(() => validateSchoolData(inherited), /missing subject math/);
+
+  const duplicate = structuredClone(fixture);
+  duplicate.subjects.math!.itemIds = ["case"];
+  assert.throws(() => validateSchoolData(duplicate), /ambiguous duplicate item ID case/);
+});
