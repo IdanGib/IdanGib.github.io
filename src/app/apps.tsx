@@ -66,6 +66,32 @@ export const apps: AppDefinition[] = [
     ),
   },
   {
+    name: "Bag Editor",
+    href: "/magic-bag-editor.html",
+    iconClass: "bg-linear-145 from-[#38bdf8] to-[#2563eb]",
+    icon: (
+      <svg
+        viewBox="0 0 40 40"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-11 w-11"
+      >
+        <path
+          d="M14 14a6 6 0 0 1 12 0"
+          stroke="#ffffff"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        />
+        <rect x="7" y="13" width="26" height="22" rx="7" fill="#ffffff" />
+        <path
+          d="m15 27 1-4 9-9a2.1 2.1 0 0 1 3 3l-9 9-4 1Z"
+          fill="#2563eb"
+        />
+        <path d="m23.5 15.5 3 3" stroke="#ffffff" strokeWidth="1.5" />
+      </svg>
+    ),
+  },
+  {
     name: "Timetable",
     href: "/timetable-app.html",
     iconClass: "bg-linear-145 from-[#3e7bfa] to-[#7a5af8]",
