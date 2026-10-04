@@ -2,3 +2,8 @@
 .env
 node_modules/
 dist/
+
+# PocketBase runtime (download the pinned binary locally)
+pocketbase/pocketbase
+pocketbase/pb_data/
+pocketbase/pb_data_test/
