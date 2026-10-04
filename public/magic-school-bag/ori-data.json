@@ -267,14 +267,14 @@
       "color": "#ff7daf"
     },
     "hebrew-workbook-kesem-time": {
-      "label": "חוברת קסם וחברים",
+      "label": "חוברת זמן קסם",
       "icon": "📕",
       "imageUrl": "./assets/kesem-time.png",
       "audioUrl": "./assets/audio/kesem-time.m4a",
       "color": "#ff7daf"
     },    
     "hebrew-workbook-kesem-notebook": {
-      "label": "חוברת קסם וחברים",
+      "label": "מחברת אותיות הכתב",
       "icon": "📕",
       "imageUrl": "./assets/kesem-notebook.png",
       "audioUrl": "./assets/audio/kesem-notebook.m4a",
