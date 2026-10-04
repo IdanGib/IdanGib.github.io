@@ -264,6 +264,20 @@
       "audioUrl": "./assets/audio/kesem.m4a",
       "color": "#ff7daf"
     },
+    "hebrew-workbook-kesem-time": {
+      "label": "חוברת קסם וחברים",
+      "icon": "📕",
+      "imageUrl": "./assets/kesem-time.png",
+      "audioUrl": "./assets/audio/kesem-time.m4a",
+      "color": "#ff7daf"
+    },    
+    "hebrew-workbook-kesem-notebook": {
+      "label": "חוברת קסם וחברים",
+      "icon": "📕",
+      "imageUrl": "./assets/kesem-notebook.png",
+      "audioUrl": "./assets/audio/kesem-notebook.m4a",
+      "color": "#ff7daf"
+    },
     "math-notebook": {
       "label": "מחברת חשבון",
       "icon": "📘",
