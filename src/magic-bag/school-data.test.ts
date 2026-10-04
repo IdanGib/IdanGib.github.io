@@ -32,13 +32,14 @@ const fixture = validateSchoolData({
   },
 });
 
-test("repeated subjects produce equipment once and retain lesson metadata", () => {
+test("repeated subjects produce equipment once, retain lesson metadata, and precede daily items", () => {
   assert.deepEqual(dayGroups(fixture, 0)[0]?.lessons, [1, 2]);
   const list = packingListFor(fixture, 0);
   assert.equal(list.length, 2);
-  assert.equal(list[0]?.id, "case");
-  assert.equal(list[0]?.subject, "ציוד לכל יום");
-  assert.deepEqual(list[1]?.lessonNames, ["ראשון", "שני"]);
+  assert.equal(list[0]?.id, "book");
+  assert.deepEqual(list[0]?.lessonNames, ["ראשון", "שני"]);
+  assert.equal(list[1]?.id, "case");
+  assert.equal(list[1]?.subject, "ציוד לכל יום");
 });
 
 test("daily items are included on days whose lessons need no equipment", () => {

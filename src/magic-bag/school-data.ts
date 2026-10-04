@@ -220,7 +220,7 @@ export function packingListFor(data: SchoolData, dayIndex: number): PackingItem[
     lessons: [],
     lessonNames: [],
   };
-  return [dailyGroup, ...dayGroups(data, dayIndex)].flatMap((group) =>
+  return [...dayGroups(data, dayIndex), dailyGroup].flatMap((group) =>
     group.itemIds.map((id) => {
       const item = data.items[id];
       return {
