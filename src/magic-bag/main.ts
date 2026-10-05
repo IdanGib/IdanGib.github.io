@@ -23,6 +23,16 @@ interface CardState {
 interface PendingDrag { card: CardState; pointerId: number; x: number; y: number }
 interface SceneRestartData { packedIds?: string[] }
 interface Point { x: number; y: number }
+interface InstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
+let deferredInstallPrompt: InstallPromptEvent | null = null;
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event as InstallPromptEvent;
+});
 
 const GIRL_PALETTE = {
   page: "#fff8fd", pageNumber: 0xfff8fd, blobOne: 0xffd9eb,
@@ -77,6 +87,10 @@ function requiredElement<T extends HTMLElement>(id: string): T {
         const dayStartTitle = requiredElement<HTMLHeadingElement>("day-start-title");
         const dayStartMessage = requiredElement<HTMLParagraphElement>("day-start-message");
         const dayStartButton = requiredElement<HTMLButtonElement>("day-start-button");
+        const installDialog = requiredElement<HTMLDialogElement>("install-dialog");
+        const installMessage = requiredElement<HTMLParagraphElement>("install-message");
+        const installApp = requiredElement<HTMLButtonElement>("install-app");
+        const dismissInstall = requiredElement<HTMLButtonElement>("dismiss-install");
         let hasInteracted = false;
         // Keep one media element for every spoken prompt. Mobile Safari grants
         // playback permission to the element used during a user gesture, not
@@ -228,6 +242,69 @@ function requiredElement<T extends HTMLElement>(id: string): T {
         }
         if (!kidProfile) throw new Error("Profile setup ended without a valid profile");
         applyProfileColors(kidProfile);
+
+        const INSTALL_DISMISSED_KEY = "magic-bag-install-suggestion-dismissed";
+        const standalone = window.matchMedia("(display-mode: standalone)").matches ||
+          ("standalone" in navigator && navigator.standalone === true);
+        const mobileBrowser = window.matchMedia("(max-width: 760px), (pointer: coarse)").matches;
+        let installSuggestionDismissed = false;
+        try {
+          installSuggestionDismissed = localStorage.getItem(INSTALL_DISMISSED_KEY) === "true";
+        } catch (_) {
+          // Storage is optional; the suggestion can still be shown for this session.
+        }
+
+        const dismissInstallSuggestion = (): void => {
+          try {
+            localStorage.setItem(INSTALL_DISMISSED_KEY, "true");
+          } catch (_) {
+            // Closing the dialog still works when browser storage is unavailable.
+          }
+          installDialog.close();
+        };
+
+        const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+          (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+        const showInstallSuggestion = (): void => {
+          if (!deferredInstallPrompt) {
+            installMessage.textContent = isIos
+              ? "לחצו על כפתור השיתוף בדפדפן, ואז בחרו ״הוספה למסך הבית״ כדי לפתוח את תיק הקסם ישירות."
+              : "פתחו את תפריט הדפדפן ובחרו ״הוספה למסך הבית״ כדי לפתוח את תיק הקסם ישירות.";
+            installApp.textContent = "הבנתי";
+          }
+          installDialog.showModal();
+        };
+
+        installApp.addEventListener("click", async () => {
+          if (!deferredInstallPrompt) {
+            dismissInstallSuggestion();
+            return;
+          }
+          await deferredInstallPrompt.prompt();
+          await deferredInstallPrompt.userChoice;
+          deferredInstallPrompt = null;
+          dismissInstallSuggestion();
+        });
+        dismissInstall.addEventListener("click", dismissInstallSuggestion);
+        installDialog.addEventListener("cancel", dismissInstallSuggestion);
+
+        if (mobileBrowser && !standalone && !installSuggestionDismissed) {
+          window.setTimeout(() => {
+            if (!profileDialog.open && !dayStartDialog.open && !installDialog.open) {
+              showInstallSuggestion();
+            }
+          }, 900);
+        }
+
+        if ("serviceWorker" in navigator) {
+          const serviceWorkerUrl = new URL(
+            "magic-bag-sw.js",
+            new URL(import.meta.env.BASE_URL, location.href),
+          );
+          void navigator.serviceWorker.register(serviceWorkerUrl, {
+            scope: new URL(import.meta.env.BASE_URL, location.href).pathname,
+          });
+        }
         document.title = `תיק הקסם ✨ | ${kidProfile.name}`;
         requiredElement("page-title").textContent =
           `משימת תיק הקסם עם ${kidProfile.name}`;
