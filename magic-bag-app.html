@@ -674,25 +674,26 @@
         }
         body {
           padding: 8px;
-          height: 100svh;
-          height: 100dvh;
-          overflow: hidden;
+          min-height: 100svh;
+          min-height: 100dvh;
         }
         main {
           display: flex;
-          height: 100%;
-          min-height: 0;
+          min-height: calc(100dvh - 16px);
           flex-direction: column;
         }
         .packing-toolbar {
           flex: none;
         }
         #game {
-          flex: 1 1 auto;
+          flex: 0 0 auto;
           height: auto;
           min-height: 0;
         }
         canvas {
+          width: 100% !important;
+          height: auto !important;
+          max-height: none;
           border-radius: 24px;
         }
         .item-button {
