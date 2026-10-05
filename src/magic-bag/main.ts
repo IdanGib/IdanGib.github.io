@@ -317,8 +317,13 @@ function requiredElement<T extends HTMLElement>(id: string): T {
         const palette = () => currentProfile().gender === "boy" ? BOY_PALETTE : GIRL_PALETTE;
 
         const portraitQuery = window.matchMedia("(max-width: 760px)");
+        const gameContainer = requiredElement<HTMLDivElement>("game");
+        const desktopGameWidth = (): number => Math.max(
+          1100,
+          Math.round(800 * gameContainer.clientWidth / gameContainer.clientHeight),
+        );
         let portrait = portraitQuery.matches;
-        let W = portrait ? 420 : 1100;
+        let W = portrait ? 420 : desktopGameWidth();
         const H = 800;
         // Phaser 4 has no game-level resolution option. Render a larger surface
         // and zoom the camera so world coordinates and hit areas stay unchanged.
@@ -1603,12 +1608,14 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           requestAnimationFrame(() => {
             const scene = game.scene.getScene("MagicBag") as MagicBagScene;
             if (!scene?.scene.isActive()) return;
-            if (portrait !== portraitQuery.matches) {
+            const nextPortrait = portraitQuery.matches;
+            const nextWidth = nextPortrait ? 420 : desktopGameWidth();
+            if (portrait !== nextPortrait || W !== nextWidth) {
               const packedIds = scene.cards
                 .filter((card) => card.phase === "packed")
                 .map((card) => card.item.id);
-              portrait = portraitQuery.matches;
-              W = portrait ? 420 : 1100;
+              portrait = nextPortrait;
+              W = nextWidth;
               game.scale.setGameSize(W * renderScale, H * renderScale);
               scene.scene.restart({ packedIds });
             } else {
