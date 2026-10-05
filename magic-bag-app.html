@@ -12,6 +12,10 @@
       content="מכינים את תיק הקסם — גוררים את הציוד לתיק, אוספים כוכבים וחוגגים כשהכול מוכן."
     />
     <meta name="theme-color" content="#9d73df" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="תיק הקסם" />
+    <link rel="manifest" href="%BASE_URL%magic-school-bag/manifest.webmanifest" />
     <link
       rel="icon"
       type="image/svg+xml"
@@ -101,6 +105,7 @@
         display: none !important;
       }
       .packing-toolbar {
+        width: 100%;
         max-width: 1440px;
         margin: 0 auto 12px;
         display: flex;
@@ -184,6 +189,63 @@
       .day-start-dialog::backdrop {
         background: var(--backdrop);
         backdrop-filter: blur(7px);
+      }
+      .install-dialog {
+        width: min(440px, calc(100% - 32px));
+        padding: 0;
+        overflow: hidden;
+        color: var(--ink);
+        border: 4px solid var(--dialog-border);
+        border-radius: 36px;
+        background: #fff;
+        box-shadow: 0 28px 80px var(--shadow-strong);
+      }
+      .install-dialog::backdrop {
+        background: var(--backdrop);
+        backdrop-filter: blur(7px);
+      }
+      .install-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        padding: 30px;
+        text-align: center;
+      }
+      .install-content h2,
+      .install-content p {
+        margin: 0;
+      }
+      .install-content h2 {
+        color: var(--ink-strong);
+        font-size: 28px;
+      }
+      .install-content p {
+        color: var(--ink-soft);
+        font-size: 18px;
+        line-height: 1.5;
+      }
+      .install-actions {
+        display: flex;
+        width: 100%;
+        gap: 10px;
+      }
+      .install-actions button {
+        min-height: 50px;
+        flex: 1;
+        border: 0;
+        border-radius: 999px;
+        font: inherit;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      .install-confirm {
+        color: #fff;
+        background: var(--accent);
+      }
+      .install-dismiss {
+        color: var(--ink-strong);
+        background: var(--accent-pale);
       }
       .day-start-content {
         display: flex;
@@ -702,6 +764,19 @@
         <h2 id="day-start-title"></h2>
         <p id="day-start-message"></p>
         <button id="day-start-button" class="day-start-button" type="button">בואו נתחיל ✨</button>
+      </div>
+    </dialog>
+    <dialog id="install-dialog" class="install-dialog" aria-labelledby="install-title">
+      <div class="install-content">
+        <div class="day-start-icon" aria-hidden="true">📲</div>
+        <h2 id="install-title">רוצים להגיע ישר לתיק הקסם?</h2>
+        <p id="install-message">
+          הוסיפו את האפליקציה למסך הבית כדי לפתוח אותה בפעם הבאה בלי להיכנס לדפדפן.
+        </p>
+        <div class="install-actions">
+          <button id="install-app" class="install-confirm" type="button">הוספה למסך הבית</button>
+          <button id="dismiss-install" class="install-dismiss" type="button">לא עכשיו</button>
+        </div>
       </div>
     </dialog>
     <noscript><p>כדי לשחק בתיק הקסם, יש להפעיל JavaScript בדפדפן.</p></noscript>

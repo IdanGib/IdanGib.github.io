@@ -1,0 +1,20 @@
+{
+  "name": "תיק הקסם",
+  "short_name": "תיק הקסם",
+  "description": "מכינים את תיק הקסם לבית הספר",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "../magic-bag-app.html",
+  "scope": "../",
+  "display": "standalone",
+  "background_color": "#fff8fd",
+  "theme_color": "#9d73df",
+  "icons": [
+    {
+      "src": "app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
