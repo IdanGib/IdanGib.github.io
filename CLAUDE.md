@@ -6,13 +6,13 @@ This file describes the codebase structure, conventions, and development workflo
 
 **idangib.github.io** is the personal site of Idan Gibly (product designer & creative technologist), deployed to GitHub Pages at `idangib.github.io`.
 
-The root page is **IG Apps** — an iOS-style home screen built with React 18, TypeScript, and Vite — that launches small self-contained web apps (the **Training Tracker**, the **Malawah** recipe calculator and the **Timetable** packing list). Every page is styled exclusively with **Tailwind CSS 4 + daisyUI 5**: there are no hand-written stylesheets and no inline styles anywhere in the project.
+The root page is **IG Apps** — an iOS-style home screen built with React 18, TypeScript, and Vite — that launches small self-contained web apps (the **Training Tracker**, the **Malawah** recipe calculator, the **Timetable** packing list, and **Magic Bag**). **Magic Bag Editor** is a separate React page that currently shows an unavailable notice. Every page is styled exclusively with **Tailwind CSS 4 + daisyUI 5**: there are no hand-written stylesheets and no inline styles anywhere in the project.
 
 ## Tech Stack
 
 | Tool | Version | Purpose |
 |------|---------|---------|
-| React | 18.3.1 | Home screen UI |
+| React | 18.3.1 | Home screen and editor UI |
 | TypeScript | 5.5.4 | Type checking (strict mode) |
 | Vite | 5.4.x | Bundler + dev server (multi-page) |
 | Tailwind CSS | 4.x | Utility styling (via `@tailwindcss/vite`) |
@@ -20,7 +20,7 @@ The root page is **IG Apps** — an iOS-style home screen built with React 18, T
 | `@vitejs/plugin-react` | 4.3.1 | Fast refresh for JSX |
 | `cross-env` | 7.0.3 | Cross-platform env vars |
 
-No router, no state management library. Standalone app pages use vanilla TypeScript (no React).
+Use Node.js 22 or newer. No router, no state management library. Standalone app pages use vanilla TypeScript; Magic Bag Editor uses React.
 
 ## Directory Structure
 
@@ -38,6 +38,8 @@ No router, no state management library. Standalone app pages use vanilla TypeScr
 │   │   └── apps.tsx               # Typed registry of launchable apps (add new apps here)
 │   ├── tracker/main.ts            # Training Tracker logic (vanilla TS, typed)
 │   ├── malawah/main.ts            # Malawah recipe calculator logic (vanilla TS, typed)
+│   ├── magic-bag/                 # Packing app and school-data configuration
+│   ├── magic-bag-editor/          # React editor availability page
 │   └── timetable/
 │       ├── config.ts              # Timetable content: classes, items, subjects, schedule, labels
 │       └── main.ts                # Timetable logic (vanilla TS, typed)
@@ -45,6 +47,8 @@ No router, no state management library. Standalone app pages use vanilla TypeScr
 ├── training-tracker-app.html      # Tracker entry (theme igtracker)
 ├── malawah-app.html               # Malawah entry (theme igmalawah)
 ├── timetable-app.html             # Timetable entry (theme igtimetable, Hebrew RTL)
+├── magic-bag-app.html             # Magic Bag packing app entry
+├── magic-bag-editor.html          # React editor availability entry
 ├── 404.html                       # GitHub Pages 404 entry (theme igapps)
 ├── cv/index.html                  # CV download entry (theme igapps)
 ├── vite.config.ts                 # Base path logic + MPA rollup inputs + tailwindcss()
@@ -54,8 +58,8 @@ No router, no state management library. Standalone app pages use vanilla TypeScr
 
 ## Architecture: Home Screen + Standalone Page Entries
 
-- The React app is only the launcher. Each app on the grid is an entry in `src/app/apps.tsx` (`AppDefinition`: name, href, icon tile classes, 40×40 SVG icon).
-- Apps are **separate Vite page entries** (registered in `vite.config.ts` → `build.rollupOptions.input`). Build output paths mirror source paths, so public URLs never change. App logic is vanilla TypeScript under `src/<app>/main.ts` — do not introduce React into app pages.
+- The home React app is the launcher. Each app on the grid is an entry in `src/app/apps.tsx` (`AppDefinition`: name, href, icon tile classes, 40×40 SVG icon).
+- Apps are **separate Vite page entries** (registered in `vite.config.ts` → `build.rollupOptions.input`). Build output paths mirror source paths, so public URLs never change. Preserve the existing vanilla TypeScript app implementations; the editor is a separate React entry at `src/magic-bag-editor/main.tsx`.
 - Pages select their daisyUI theme with `data-theme` on `<html>` (`igapps`, `igtracker`, `igmalawah` or `igtimetable`).
 
 ### Training Tracker (`training-tracker-app.html` + `src/tracker/main.ts`)
@@ -93,6 +97,10 @@ A Hebrew, right-to-left school-bag packing list ("מה לוקחים היום"): 
 - Item tints are `Tone` values (daisyUI tokens), resolved through the `TILE` lookup of full literal classes — never a colour built by concatenation.
 - Theme `igtimetable` is **light on purpose** (ink on graph paper): it is a child's checklist read in daylight, not a night-time tool.
 
+### Magic Bag Editor (`magic-bag-editor.html` + `src/magic-bag-editor/`)
+
+A React/strict-TypeScript page showing that editing is currently unavailable. The page links to Magic Bag and the home screen; it has no authentication, database client, or backend services. See [README.magic-bag-editor.md](README.magic-bag-editor.md). Magic Bag's existing packing data and local progress remain separate from this page.
+
 ## Styling Policy (Tailwind + daisyUI only)
 
 1. **`src/styles.css` is the only CSS file.** It contains nothing but library configuration: `@import "tailwindcss"`, the daisyUI plugin, the three custom themes, and `@theme` tokens. Never add bespoke selectors/rules to it, and never create other CSS files.
@@ -112,19 +120,22 @@ A Hebrew, right-to-left school-bag packing list ("מה לוקחים היום"): 
 ## Development Workflow
 
 ```bash
-npm install       # Install dependencies
+npm ci            # Install locked dependencies (Node.js 22+)
 npm run dev       # Start Vite dev server at http://localhost:5173
-npm run build     # Production build → dist/ (all six page entries)
+npm run build     # Production build → dist/ (all eight page entries)
 npm run preview   # Preview the production build locally
 npm run lint      # TypeScript type check (tsc --noEmit, covers src/)
+npm test          # School-data tests
 ```
+
+All pages use the same Vite workflow; no backend services or environment variables are required.
 
 The `build:pages` script exists for project-site deployments but is not used in CI — the deploy workflow sets `VITE_BASE=/` directly.
 
 ## Deployment
 
 - **Trigger:** Push to `main` or `master` branch
-- **CI:** `.github/workflows/deploy.yml` — Node 20, `npm ci`, `npm run build`
+- **CI:** `.github/workflows/deploy.yml` — Node 24, `npm ci`, `npm run build`
 - **Output:** `dist/` uploaded as GitHub Pages artifact and deployed via `actions/deploy-pages@v4`
 - **Base path logic** (`vite.config.ts`): Reads `VITE_BASE` env var → falls back to auto-detecting user site vs. project site from `GITHUB_REPOSITORY`
 
@@ -169,6 +180,6 @@ The `build:pages` script exists for project-site deployments but is not used in 
 | `public/cv/idan-gibly-cv.pdf` | Binary asset — do not overwrite without a new PDF |
 | `training-tracker-app.html` / `src/tracker/main.ts` | Holds live user data via localStorage — never rename the page URL or its storage keys |
 | `timetable-app.html` / `src/timetable/*` | Same — never rename the page URL, the `timetable:done`/`timetable:class` keys, or a class `id`. Edit content in `config.ts`, not `main.ts` |
-| `src/styles.css` | Single source of truth for all four themes — changes affect every page |
+| `src/styles.css` | Single source of truth for all themes — changes affect every page |
 | `.github/workflows/deploy.yml` | Changes here affect live deployment pipeline |
 | `vite.config.ts` | Base path logic + MPA inputs; forgetting an input silently drops a page from the build |
