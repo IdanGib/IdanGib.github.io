@@ -1,3 +1,5 @@
+import { CanvasCard } from "./canvas-card";
+import { CanvasShell, measureToolbar } from "./canvas-shell";
 import {
   packingListFor,
   resolveMediaUrl,
@@ -13,6 +15,7 @@ interface CardState {
   item: PackingItem;
   container: Phaser.GameObjects.Container;
   button: HTMLButtonElement;
+  visual: CanvasCard;
   phase: CardPhase;
   prepared?: boolean;
   homeX: number;
@@ -78,19 +81,10 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             throw new Error(`School bag data could not be loaded (${response.status})`);
           return validateSchoolData(await response.json());
         });
-        const profileDialog = requiredElement<HTMLDialogElement>("profile-dialog");
-        const profileForm = requiredElement<HTMLFormElement>("profile-form");
-        const kidNameInput = requiredElement<HTMLInputElement>("kid-name");
-        const cancelSettings = requiredElement<HTMLButtonElement>("cancel-settings");
-        const openSettings = requiredElement<HTMLButtonElement>("open-settings");
-        const dayStartDialog = requiredElement<HTMLDialogElement>("day-start-dialog");
-        const dayStartTitle = requiredElement<HTMLHeadingElement>("day-start-title");
-        const dayStartMessage = requiredElement<HTMLParagraphElement>("day-start-message");
-        const dayStartButton = requiredElement<HTMLButtonElement>("day-start-button");
-        const installDialog = requiredElement<HTMLDialogElement>("install-dialog");
-        const installMessage = requiredElement<HTMLParagraphElement>("install-message");
-        const installApp = requiredElement<HTMLButtonElement>("install-app");
-        const dismissInstall = requiredElement<HTMLButtonElement>("dismiss-install");
+        const controls = requiredElement<HTMLDivElement>("keyboard-controls");
+        const liveStatus = requiredElement<HTMLParagraphElement>("game-status");
+        let shell: CanvasShell | undefined;
+        let uiScene: MagicBagUIScene | undefined;
         let hasInteracted = false;
         // Keep one media element for every spoken prompt. Mobile Safari grants
         // playback permission to the element used during a user gesture, not
@@ -164,11 +158,6 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             appEntryStarting = false;
           }
         }
-        let resolveInitialProfile: (() => void) | undefined;
-        const initialProfileReady = new Promise<void>((resolve) => {
-          resolveInitialProfile = resolve;
-        });
-
         function loadProfile(): Profile | null {
           try {
             const stored = localStorage.getItem(PROFILE_STORAGE_KEY);
@@ -196,52 +185,31 @@ function requiredElement<T extends HTMLElement>(id: string): T {
         }
 
         function editProfile(firstVisit = false): void {
-          kidNameInput.value = kidProfile?.name ?? "";
-          profileForm.querySelectorAll<HTMLInputElement>('[name="gender"]').forEach((input) => {
-            input.checked = input.value === kidProfile?.gender;
-          });
-          cancelSettings.hidden = firstVisit;
-          profileDialog.showModal();
-          requestAnimationFrame(() => kidNameInput.focus());
+          const scene = window.magicBagGame?.scene.getScene("MagicBag") as MagicBagScene | undefined;
+          scene?.cancelGesture();
+          shell?.openProfile(kidProfile?.name ?? "", kidProfile?.gender, firstVisit);
         }
 
-        profileForm.addEventListener("submit", (event) => {
-          event.preventDefault();
-          const formData = new FormData(profileForm);
-          const name = String(formData.get("kidName") ?? "").trim();
-          const gender = formData.get("gender");
+        function saveProfile(name: string, gender: Gender): void {
+          name = name.trim();
           if (!name || (gender !== "boy" && gender !== "girl")) return;
+          const firstVisit = !kidProfile;
           hasInteracted = true;
           kidProfile = { name, gender };
           applyProfileColors(kidProfile);
           try {
             localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(kidProfile));
-          } catch (_) {
-            // The current session can still be personalized without persistence.
-          }
-          document.title = `תיק הקסם ✨ | ${kidProfile.name}`;
-          requiredElement("page-title").textContent =
-            `משימת תיק הקסם עם ${kidProfile.name}`;
-          resolveInitialProfile?.();
-          resolveInitialProfile = undefined;
-          profileDialog.close();
+          } catch (_) { /* Personalization still works without browser storage. */ }
+          document.title = `תיק הקסם ✨ | ${name}`;
+          requiredElement("page-title").textContent = `משימת תיק הקסם עם ${name}`;
+          shell?.closeModal();
+          updateLayout();
+          uiScene?.refreshShell();
           const scene = window.magicBagGame?.scene.getScene("MagicBag") as MagicBagScene | undefined;
           if (scene?.scene.isActive()) scene.scene.restart({});
-        });
-        cancelSettings.addEventListener("click", () => profileDialog.close());
-        profileDialog.addEventListener("cancel", (event) => {
-          if (!kidProfile) event.preventDefault();
-        });
-        openSettings.addEventListener("click", () => editProfile(false));
-
-        if (!kidProfile) {
-          editProfile(true);
-          // Profile validity, rather than the dialog's UI lifecycle, controls
-          // when the game can safely start and read `kidProfile`.
-          await initialProfileReady;
+          if (firstVisit) scheduleInstallSuggestion();
         }
-        if (!kidProfile) throw new Error("Profile setup ended without a valid profile");
-        applyProfileColors(kidProfile);
+        if (kidProfile) applyProfileColors(kidProfile);
 
         const INSTALL_DISMISSED_KEY = "magic-bag-install-suggestion-dismissed";
         const standalone = window.matchMedia("(display-mode: standalone)").matches ||
@@ -260,41 +228,34 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           } catch (_) {
             // Closing the dialog still works when browser storage is unavailable.
           }
-          installDialog.close();
+          installSuggestionDismissed = true;
+          shell?.closeModal();
         };
 
         const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
           (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
         const showInstallSuggestion = (): void => {
-          if (!deferredInstallPrompt) {
-            installMessage.textContent = isIos
+          const message = deferredInstallPrompt
+            ? "הוסיפו את האפליקציה למסך הבית כדי לפתוח אותה בפעם הבאה בלי להיכנס לדפדפן."
+            : isIos
               ? "לחצו על כפתור השיתוף בדפדפן, ואז בחרו ״הוספה למסך הבית״ כדי לפתוח את תיק הקסם ישירות."
               : "פתחו את תפריט הדפדפן ובחרו ״הוספה למסך הבית״ כדי לפתוח את תיק הקסם ישירות.";
-            installApp.textContent = "הבנתי";
-          }
-          installDialog.showModal();
+          shell?.openInstall(message, deferredInstallPrompt ? "הוספה למסך הבית" : "הבנתי");
         };
-
-        installApp.addEventListener("click", async () => {
-          if (!deferredInstallPrompt) {
-            dismissInstallSuggestion();
-            return;
+        const installApp = async (): Promise<void> => {
+          if (deferredInstallPrompt) {
+            await deferredInstallPrompt.prompt();
+            await deferredInstallPrompt.userChoice;
+            deferredInstallPrompt = null;
           }
-          await deferredInstallPrompt.prompt();
-          await deferredInstallPrompt.userChoice;
-          deferredInstallPrompt = null;
           dismissInstallSuggestion();
-        });
-        dismissInstall.addEventListener("click", dismissInstallSuggestion);
-        installDialog.addEventListener("cancel", dismissInstallSuggestion);
-
-        if (mobileBrowser && !standalone && !installSuggestionDismissed) {
+        };
+        const scheduleInstallSuggestion = (): void => {
+          if (!mobileBrowser || standalone || installSuggestionDismissed) return;
           window.setTimeout(() => {
-            if (!profileDialog.open && !dayStartDialog.open && !installDialog.open) {
-              showInstallSuggestion();
-            }
+            if (kidProfile && !shell?.modalOpen) showInstallSuggestion();
           }, 900);
-        }
+        };
 
         if ("serviceWorker" in navigator) {
           const serviceWorkerUrl = new URL(
@@ -305,16 +266,17 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             scope: new URL(import.meta.env.BASE_URL, location.href).pathname,
           });
         }
-        document.title = `תיק הקסם ✨ | ${kidProfile.name}`;
-        requiredElement("page-title").textContent =
-          `משימת תיק הקסם עם ${kidProfile.name}`;
+        if (kidProfile) {
+          document.title = `תיק הקסם ✨ | ${kidProfile.name}`;
+          requiredElement("page-title").textContent = `משימת תיק הקסם עם ${kidProfile.name}`;
+        }
         const currentProfile = (): Profile => {
           if (!kidProfile) throw new Error("A profile is required before starting the game");
           return kidProfile;
         };
         const genderText = (girlText: string, boyText: string): string =>
           currentProfile().gender === "girl" ? girlText : boyText;
-        const palette = () => currentProfile().gender === "boy" ? BOY_PALETTE : GIRL_PALETTE;
+        const palette = () => kidProfile?.gender === "boy" ? BOY_PALETTE : GIRL_PALETTE;
 
         const portraitQuery = window.matchMedia("(max-width: 760px)");
         let portrait = portraitQuery.matches;
@@ -330,59 +292,56 @@ function requiredElement<T extends HTMLElement>(id: string): T {
         const reducedMotion = window.matchMedia(
           "(prefers-reduced-motion: reduce)",
         ).matches;
-        const controls = requiredElement<HTMLDivElement>("keyboard-controls");
-        const liveStatus = requiredElement<HTMLParagraphElement>("game-status");
-
         // This JSON is the single source for lesson order, equipment, dismissal time and recorded voice.
         const DAYS = DATA.days.map((day) => day.label);
 
-        const daySelect = requiredElement<HTMLSelectElement>("school-day");
-        const endTime = requiredElement<HTMLOutputElement>("end-time");
-        // Deliberately start without guessing a day for the child. A day only
-        // becomes active after an explicit choice in the selector.
+        // A day becomes active only after the child explicitly chooses it.
         let selectedDay = -1;
         let ITEMS: PackingItem[] = [];
-        const promptOption = document.createElement("option");
-        promptOption.value = "";
-        promptOption.textContent = "בחרו יום ✨";
-        promptOption.disabled = true;
-        promptOption.selected = true;
-        daySelect.append(promptOption);
-        DAYS.forEach((day, index) => {
-          const option = document.createElement("option");
-          option.value = String(index);
-          option.textContent = `יום ${day}`;
-          daySelect.append(option);
-        });
-
-        function renderDayInfo() {
-          if (selectedDay < 0) {
-            endTime.closest<HTMLElement>(".end-time")!.hidden = true;
-            return;
-          }
-          const day = DATA.days[selectedDay];
-          endTime.closest<HTMLElement>(".end-time")!.hidden = false;
-          endTime.textContent = day.endsAt ?? "לא נמסרה שעת סיום";
-          endTime.setAttribute(
-            "aria-label",
-            day.endsAt
-              ? `הלימודים מסתיימים בשעה ${day.endsAt}`
-              : "שעת הסיום עדיין לא נמסרה",
-          );
+        let dayBlocked = false;
+        let layout = calculateLayout();
+        function setDayBlocked(value: boolean): void {
+          dayBlocked = value;
+          shell?.setDayDisabled(value);
         }
-        renderDayInfo();
 
-        function showDayStart(): void {
-          const profile = currentProfile();
-          const message = DATA.generalAudio.appEntry;
-          daySelect.blur();
-          daySelect.disabled = true;
-          dayStartTitle.textContent = `מתכוננים ליום ${DAYS[selectedDay]}!`;
-          dayStartMessage.textContent = `${profile.name}, הגיע הזמן להכין יחד את תיק הקסם ליום ${DAYS[selectedDay]}.`;
-          liveStatus.textContent = message.textTemplate.replace("{day}", DAYS[selectedDay]);
-          if (!dayStartDialog.open) dayStartDialog.showModal();
-          void startAppEntry(selectedDay);
-          requestAnimationFrame(() => dayStartButton.focus());
+        function calculateLayout() {
+          const width = window.innerWidth;
+          const height = window.innerHeight;
+          const inset = portrait ? 8 : 16;
+          const toolbar = measureToolbar(width, inset, kidProfile ? DAYS : [], selectedDay, selectedDay < 0 ? undefined : DATA.days[selectedDay].endsAt ?? undefined);
+          const gameTop = inset + toolbar.height + 12;
+          const availableWidth = Math.min(width - inset * 2, 1440);
+          const availableHeight = Math.max(1, portrait ? height - gameTop - inset : height - 112);
+          const scale = Math.min(availableWidth / W, availableHeight / H);
+          return { width, height, inset, toolbarHeight: toolbar.height, scale,
+            x: (width - W * scale) / 2,
+            y: gameTop + (availableHeight - H * scale) / 2,
+            gameWidth: W * scale, gameHeight: H * scale };
+        }
+        function updateLayout(): void { layout = calculateLayout(); }
+
+        function chooseDay(index: number): void {
+          const scene = game.scene.getScene("MagicBag") as MagicBagScene;
+          if (!kidProfile || dayBlocked || shell?.modalOpen || !scene?.scene.isActive() || scene.activeDragCard || scene.pendingDrag || scene.returningCard || scene.cards.some((card) => card.phase === "packing")) return;
+          if (!Number.isInteger(index) || !DATA.days[index]) return;
+          hasInteracted = true;
+          selectedDay = index;
+          ITEMS = packingListFor(DATA, selectedDay);
+          setDayBlocked(true);
+          updateLayout();
+          scene.positionControls();
+          uiScene?.refreshShell();
+          shell?.openDayStart(`מתכוננים ליום ${DAYS[index]}!`, `${currentProfile().name}, הגיע הזמן להכין יחד את תיק הקסם ליום ${DAYS[index]}.`);
+          liveStatus.textContent = DATA.generalAudio.appEntry.textTemplate.replace("{day}", DAYS[index]);
+          void startAppEntry(index);
+        }
+        function startDay(): void {
+          hasInteracted = true;
+          setDayBlocked(false);
+          shell?.closeModal();
+          const scene = game.scene.getScene("MagicBag") as MagicBagScene;
+          scene.scene.restart({});
         }
 
         class MagicBagScene extends Phaser.Scene {
@@ -393,18 +352,20 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           pendingDrag: PendingDrag | null = null;
           returningCard: CardState | null = null;
           suppressClickUntil = 0;
-          dragPreview: HTMLButtonElement | null = null;
+
           mascot!: Phaser.GameObjects.Container;
           mascotScale = 1;
           bag!: Phaser.GameObjects.Container;
           bagGraphics!: Phaser.GameObjects.Graphics;
           bagScale = 1;
-          progressMeter: HTMLDivElement | null = null;
-          daySelectionPrompt: HTMLParagraphElement | null = null;
-          progressText: HTMLSpanElement | null = null;
-          progressBar: HTMLProgressElement | null = null;
+          progressMeter: Phaser.GameObjects.Container | null = null;
+          daySelectionPrompt: Phaser.GameObjects.Text | null = null;
+          progressText: Phaser.GameObjects.Text | null = null;
+          progressBar: Phaser.GameObjects.Graphics | null = null;
+          progressValue = { value: 0 };
           stackPanel: HTMLDivElement | null = null;
           replayButton: HTMLButtonElement | null = null;
+          cancelGesture: () => void = () => {};
           private pendingPackResolutions = new Set<(completed: boolean) => void>();
 
           get packed(): number {
@@ -412,7 +373,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           }
 
           constructor() {
-            super("MagicBag");
+            super({ key: "MagicBag", active: true });
           }
 
           crispText(x: number, y: number, text: string, style: Record<string, unknown> = {}): Phaser.GameObjects.Text {
@@ -434,13 +395,11 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             this.pendingDrag = null;
             this.returningCard = null;
             this.suppressClickUntil = 0;
-            this.dragPreview = null;
-            daySelect.disabled = false;
+            this.progressValue.value = 0;
+            setDayBlocked(false);
 
-            this.cameras.main
-              .setZoom(renderScale)
-              .centerOn(W / 2, H / 2)
-              .setBackgroundColor(palette().page);
+            this.positionControls();
+            if (!kidProfile) return;
 
             this.drawBackground();
             this.drawHeader();
@@ -451,9 +410,9 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             this.setupKeyboardControls();
             this.drawProgress();
             this.updateProgress();
-            this.scale.on("resize", this.positionControls, this);
+
             this.events.once("shutdown", () => {
-              this.scale.off("resize", this.positionControls, this);
+
               stopVoice();
               controls.replaceChildren();
               controls.removeAttribute("role");
@@ -476,6 +435,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             }
             requiredElement("loading").hidden = true;
             this.game.canvas.setAttribute("aria-hidden", "true");
+            uiScene?.refreshShell();
             requestAnimationFrame(() => this.positionControls());
 
             this.time.delayedCall(850, () => this.playAppEntry());
@@ -674,196 +634,114 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           }
 
           drawProgress() {
-            const daySelectionPrompt = document.createElement("p");
-            daySelectionPrompt.className = "day-selection-prompt";
-            daySelectionPrompt.textContent = "בחרו יום";
-            controls.append(daySelectionPrompt);
-
-            const meter = document.createElement("div");
-            meter.className = "magic-meter";
-            meter.setAttribute("role", "group");
-
-            const summary = document.createElement("div");
-            summary.className = "magic-meter-summary";
-            const star = document.createElement("span");
-            star.className = "magic-meter-star";
-            star.textContent = "★";
-            star.setAttribute("aria-hidden", "true");
-            const text = document.createElement("span");
-            summary.append(star, text);
-
-            const progress = document.createElement("progress");
-            progress.className = "magic-meter-bar";
-            progress.setAttribute("aria-label", "התקדמות אריזת התיק");
-            meter.append(summary, progress);
-            controls.append(meter);
-            this.daySelectionPrompt = daySelectionPrompt;
+            const scale = layout.scale;
+            const width = portrait ? 304 : 380;
+            this.daySelectionPrompt = this.crispText(W / 2, 91, "בחרו יום", {
+              fontFamily: "Arial", fontSize: Math.max(30, Math.min(44, layout.width * .07)) / scale,
+              fontStyle: "bold", color: palette().heading,
+            }).setOrigin(.5, 0);
+            const meter = this.add.container(W / 2, 91).setDepth(4);
+            const summary = this.crispText(-19 / scale, 14.5 / scale, "", {
+              fontFamily: "Arial", fontSize: 18 / scale, fontStyle: "bold", color: palette().heading,
+            }).setOrigin(.5);
+            const star = this.crispText(0, 14.5 / scale, "★", {
+              fontFamily: "Arial", fontSize: 29 / scale, color: "#f0b93e",
+            }).setOrigin(.5);
+            this.progressText = summary;
+            this.progressBar = this.add.graphics();
+            meter.add([summary, star, this.progressBar]);
             this.progressMeter = meter;
-            this.progressText = text;
-            this.progressBar = progress;
-            this.positionControls();
+            // Keep the golden star on the right in the original RTL summary.
+            const textWidth = summary.width;
+            star.x = (textWidth / 2) + 5 / scale;
+            this.progressBar.fillStyle(palette().accent === 0x9d73df ? 0xf1e7ff : 0xdff3ff)
+              .fillRoundedRect(-width / 2, 37 / scale, width, 12 / scale, 6 / scale);
           }
 
           updateProgress() {
-            const packed = this.packed;
             const total = ITEMS.length;
             const waitingForDay = selectedDay < 0;
-            if (this.daySelectionPrompt)
-              this.daySelectionPrompt.hidden = !waitingForDay;
-            if (this.progressMeter) this.progressMeter.hidden = waitingForDay;
-            if (this.progressText)
-              this.progressText.textContent = `${packed} מתוך ${total} פריטים בתיק`;
-            if (this.progressBar) {
-              // A max of one keeps an empty session determinate without dividing by zero.
-              this.progressBar.max = total || 1;
-              this.progressBar.value = packed;
-              this.progressBar.setAttribute(
-                "aria-valuetext",
-                `${packed} מתוך ${total} פריטים בתיק`,
-              );
+            this.daySelectionPrompt?.setVisible(waitingForDay);
+            this.progressMeter?.setVisible(!waitingForDay);
+            // Isolate the mixed Hebrew/numeric label without changing Phaser's canvas alignment.
+            this.progressText?.setText(`\u2067${this.packed} מתוך ${total} פריטים בתיק\u2069`);
+            const star = this.progressMeter?.list[1];
+            if (star && this.progressText) {
+              star.x = this.progressText.width / 2 + 5 / layout.scale;
+              this.progressText.x = -(star.width + 10 / layout.scale) / 2;
             }
-            liveStatus.textContent = selectedDay < 0
-              ? "בחרו יום"
-              : `יום ${DAYS[selectedDay]}: ${packed} מתוך ${total} פריטים בתיק`;
+            const progress = this.progressValue;
+            this.tweens.killTweensOf(progress);
+            this.tweens.add({ targets: progress, value: this.packed / (total || 1), duration: reducedMotion ? 0 : 420,
+              onUpdate: () => this.paintProgress(), onComplete: () => this.paintProgress() });
+            this.paintProgress();
+            liveStatus.textContent = waitingForDay ? "בחרו יום" : `יום ${DAYS[selectedDay]}: ${this.packed} מתוך ${total} פריטים בתיק`;
+          }
+          paintProgress(): void {
+            if (!this.progressBar) return;
+            const width = portrait ? 304 : 380;
+            const scale = layout.scale;
+            this.progressBar.clear().fillStyle(palette().accent === 0x9d73df ? 0xf1e7ff : 0xdff3ff)
+              .fillRoundedRect(-width / 2, 37 / scale, width, 12 / scale, 6 / scale);
+            const valueWidth = width * this.progressValue.value;
+            if (valueWidth > 0) this.progressBar.fillStyle(palette().accent)
+              .fillRoundedRect(width / 2 - valueWidth, 37 / scale, valueWidth, 12 / scale, Math.min(6 / scale, valueWidth / 2));
           }
 
           drawCards() {
             ITEMS.forEach((item) => {
-              this.cards.push({
-                item,
-                container: this.createCard(item),
-                button: document.createElement("button"),
-                phase: "ready",
-                homeX: 0,
-                homeY: 0,
-                dragOffsetX: 0,
-                dragOffsetY: 0,
-              });
+              const subject = [item.subject, this.lessonLabel(item)].filter(Boolean).join(" · ");
+              const visual = new CanvasCard(this, item, {
+                portrait, worldScale: layout.scale, resolution: renderScale,
+                ink: currentProfile().gender === "boy" ? "#24465f" : "#51425f",
+                softInk: currentProfile().gender === "boy" ? "#527087" : "#80698f",
+                subject, action: item.audioUrl?.trim()
+                  ? genderText("גררי לתיק או לחצי להשמעה", "גרור לתיק או לחץ להשמעה")
+                  : genderText("גררי לתיק", "גרור לתיק"),
+              }, item.imageUrl?.trim() ? resolveMediaUrl(item.imageUrl, dataUrl) : undefined);
+              this.cards.push({ item, visual, container: visual.container,
+                button: document.createElement("button"), phase: "ready",
+                homeX: W / 2, homeY: 345, dragOffsetX: 0, dragOffsetY: 0 });
             });
           }
-
-          createCard(_item: PackingItem): Phaser.GameObjects.Container {
-            // A hidden scene object carries drag coordinates and animation state.
-            // The same full-size DOM card is visible at rest, in flight, and returning.
-            return this.add.container(0, 0).setVisible(false);
-          }
-
           setupKeyboardControls() {
             controls.replaceChildren();
             this.replayButton = null;
             const panel = document.createElement("div");
             panel.className = "packing-panel";
             panel.setAttribute("role", "region");
-            panel.setAttribute(
-              "aria-label",
-              `ערימת הציוד ליום ${DAYS[selectedDay]}, לפי סדר השיעורים`,
-            );
+            panel.setAttribute("aria-label", `ערימת הציוד ליום ${DAYS[selectedDay]}, לפי סדר השיעורים`);
             this.stackPanel = panel;
             controls.append(panel);
-
             this.cards.forEach((card) => {
-              const item = card.item;
-              const button = document.createElement("button");
+              const button = card.button;
               button.type = "button";
               button.className = "item-button";
-              const color = `#${item.color.toString(16).padStart(6, "0")}`;
-              button.style.setProperty("--item-color", color);
-              button.style.setProperty("--item-border", `${color}88`);
-              button.style.setProperty("--item-tint", `${color}22`);
-              button.setAttribute(
-                "aria-label",
-                `${item.label}, ${item.subject}, ${this.lessonLabel(item)}. ${genderText("גררי", "גרור")} לתיק. חץ מטה אורז מהמקלדת${item.audioUrl?.trim() ? genderText("; לחצי להשמעה", "; לחץ להשמעה") : ""}`,
-              );
+              button.textContent = `${card.item.label}, ${card.item.subject}`;
+              button.setAttribute("aria-label", `${card.item.label}, ${card.item.subject}, ${this.lessonLabel(card.item)}. ${genderText("גררי", "גרור")} לתיק. חץ מטה אורז מהמקלדת${card.item.audioUrl?.trim() ? genderText("; לחצי להשמעה", "; לחץ להשמעה") : ""}`);
               button.setAttribute("aria-keyshortcuts", "ArrowDown");
-              const subject = document.createElement("span");
-              subject.className = "item-subject";
-              subject.textContent = [item.subject, this.lessonLabel(item)]
-                .filter(Boolean)
-                .join(" · ");
-              const icon = document.createElement("span");
-              icon.className = "item-icon";
-              icon.setAttribute("aria-hidden", "true");
-              const fallbackIcon = document.createElement("span");
-              fallbackIcon.textContent = item.icon;
-              icon.append(fallbackIcon);
-              if (item.imageUrl?.trim()) {
-                const image = document.createElement("img");
-                image.alt = "";
-                image.decoding = "async";
-                // Keep native image gestures from taking over the card drag.
-                image.draggable = false;
-                image.addEventListener("load", () => {
-                  fallbackIcon.hidden = true;
-                  icon.classList.add("has-image");
-                }, { once: true });
-                image.addEventListener("error", () => image.remove(), { once: true });
-                image.src = resolveMediaUrl(item.imageUrl, dataUrl);
-                icon.append(image);
-              }
-              const label = document.createElement("span");
-              label.className = "item-label";
-              label.textContent = item.label;
-              const action = document.createElement("span");
-              action.className = "item-action";
-              action.textContent = item.audioUrl?.trim()
-                ? genderText("גררי לתיק או לחצי להשמעה", "גרור לתיק או לחץ להשמעה")
-                : genderText("גררי לתיק", "גרור לתיק");
-              const copy = document.createElement("span");
-              copy.className = "item-copy";
-              copy.append(subject, label, action);
-              button.append(icon, copy);
-              button.addEventListener("pointerdown", (event) => {
-                if (
-                  !this.canPack(card) ||
-                  this.pendingDrag ||
-                  this.activeDragCard ||
-                  event.button !== 0
-                )
-                  return;
-                this.pendingDrag = {
-                  card,
-                  pointerId: event.pointerId,
-                  x: event.clientX,
-                  y: event.clientY,
-                };
-                button.setPointerCapture(event.pointerId);
-              });
-              button.addEventListener("click", () => {
-                if (
-                  !this.canPack(card) ||
-                  this.activeDragCard ||
-                  performance.now() < (this.suppressClickUntil || 0)
-                )
-                  return;
-                hasInteracted = true;
-                button.classList.remove("item-button-clicked");
-                // Restart the small acknowledgement animation on repeated clicks.
-                void button.offsetWidth;
-                button.classList.add("item-button-clicked");
-                button.addEventListener(
-                  "animationend",
-                  () => button.classList.remove("item-button-clicked"),
-                  { once: true },
-                );
-                const audioUrl = item.audioUrl?.trim();
-                // A card tap is an explicit request from the child. Do not drop
-                // it just because the longer welcome recording is still playing.
-                if (audioUrl) this.speak(audioUrl, true);
-              });
+              button.addEventListener("click", () => this.tapCard(card));
+              button.addEventListener("focus", () => card.visual.setFocused(true));
+              button.addEventListener("blur", () => card.visual.setFocused(false));
               button.addEventListener("keydown", (event) => {
                 if (event.key !== "ArrowDown" || !this.canPack(card)) return;
-                event.preventDefault();
-                hasInteracted = true;
-                void this.pack(card);
+                event.preventDefault(); hasInteracted = true; void this.pack(card);
               });
               panel.append(button);
-              card.button = button;
             });
             this.refreshDeck();
+          }
+          tapCard(card: CardState): void {
+            if (!this.canPack(card) || shell?.modalOpen || this.activeDragCard || performance.now() < this.suppressClickUntil) return;
+            hasInteracted = true;
+            this.tweens.add({ targets: card.container, scaleX: .96, scaleY: .96, duration: reducedMotion ? 1 : 90, yoyo: true });
+            if (card.item.audioUrl?.trim()) this.speak(card.item.audioUrl, true);
           }
 
           canPack(card: CardState): boolean {
             return (
+              !shell?.modalOpen &&
+              !dayBlocked &&
               !this.finished &&
               !this.returningCard &&
               !this.activeDragCard &&
@@ -883,119 +761,54 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               const depth = remaining.indexOf(card);
               const visible = depth >= 0 && depth < 3;
               const front = depth === 0;
+              const inMotion = card.phase === "dragging" || card.phase === "returning" || card.phase === "packing";
               card.button.hidden = !visible;
               card.button.disabled = !front || !this.canPack(card);
               card.button.tabIndex = front ? 0 : -1;
               card.button.setAttribute("aria-hidden", String(!front));
               card.button.setAttribute("data-deck-front", String(front));
               card.button.setAttribute("data-deck-depth", String(depth));
-              card.button.style.zIndex = String(3 - depth);
-              card.button.style.setProperty(
-                "--deck-y",
-                `${-18 * Math.max(0, depth)}px`,
-              );
-              card.button.style.setProperty(
-                "--deck-scale",
-                String(1 - 0.07 * Math.max(0, depth)),
-              );
+              card.visual.setContentVisible(depth < 2 || inMotion);
+              card.container.setVisible(inMotion || visible);
+              if (!inMotion) {
+                const deckScale = 1 - .07 * Math.max(0, depth);
+                card.container.setPosition(W / 2, 240 - 18 * Math.max(0, depth) / layout.scale + 105 * deckScale)
+                  .setScale(deckScale).setDepth(8 - depth);
+              } else card.container.setDepth(20);
             });
           }
-
           positionControls() {
-            const canvas = this.game.canvas.getBoundingClientRect();
-            const bounds = controls.getBoundingClientRect();
-            const sx = canvas.width / W;
-            const sy = canvas.height / H;
-            if (this.progressMeter) {
-              Object.assign(this.progressMeter.style, {
-                left: `${canvas.left - bounds.left + W / 2 * sx}px`,
-                top: `${canvas.top - bounds.top + 91 * sy}px`,
-                width: `${(portrait ? 304 : 380) * sx}px`,
-              });
-            }
-            if (this.daySelectionPrompt) {
-              Object.assign(this.daySelectionPrompt.style, {
-                left: `${canvas.left - bounds.left + W / 2 * sx}px`,
-                top: `${canvas.top - bounds.top + 91 * sy}px`,
-                width: `${(portrait ? 304 : 380) * sx}px`,
-              });
-            }
-            if (this.stackPanel) {
-              Object.assign(this.stackPanel.style, {
-                left: `${canvas.left - bounds.left + (W / 2 - (portrait ? 152 : 190)) * sx}px`,
-                top: `${canvas.top - bounds.top + 240 * sy}px`,
-                width: `${(portrait ? 304 : 380) * sx}px`,
-                height: `${210 * sy}px`,
-              });
-            }
-            if (this.replayButton) {
-              Object.assign(this.replayButton.style, {
-                left: `${canvas.left - bounds.left + (W / 2) * sx}px`,
-                top: `${canvas.top - bounds.top + (H / 2 + 141) * sy}px`,
-                width: `${190 * sx}px`,
-                height: `${58 * sy}px`,
-              });
-            }
+            this.cameras.main.setViewport(layout.x * renderScale, layout.y * renderScale,
+              layout.gameWidth * renderScale, layout.gameHeight * renderScale)
+              .setZoom(layout.scale * renderScale).centerOn(W / 2, H / 2)
+              .setBackgroundColor(palette().page);
           }
-
+          reflow(): void {
+            this.positionControls();
+            this.cards.forEach((card) => card.visual.resize(layout.scale, portrait));
+            this.refreshDeck();
+            this.progressText?.setFontSize(18 / layout.scale);
+            const star = this.progressMeter?.list[1] as Phaser.GameObjects.Text | undefined;
+            star?.setFontSize(29 / layout.scale);
+            this.daySelectionPrompt?.setFontSize(Math.max(30, Math.min(44, layout.width * .07)) / layout.scale);
+            if (star && this.progressText) {
+              star.x = this.progressText.width / 2 + 5 / layout.scale;
+              this.progressText.x = -(star.width + 10 / layout.scale) / 2;
+            }
+            this.paintProgress();
+          }
           pointerPosition(event: Pick<PointerEvent, "clientX" | "clientY">): Point {
-            const canvas = this.game.canvas.getBoundingClientRect();
-            return {
-              x: ((event.clientX - canvas.left) * W) / canvas.width,
-              y: ((event.clientY - canvas.top) * H) / canvas.height,
-            };
+            return { x: (event.clientX - layout.x) / layout.scale, y: (event.clientY - layout.y) / layout.scale };
           }
-
           prepareCard(card: CardState): void {
-            const bounds = card.button.getBoundingClientRect();
-            const position = this.pointerPosition({
-              clientX: bounds.left + bounds.width / 2,
-              clientY: bounds.top + bounds.height / 2,
-            });
-            card.homeX = position.x;
-            card.homeY = position.y;
+            card.homeX = W / 2;
+            card.homeY = 345;
             card.prepared = true;
-            card.container
-              .setPosition(position.x, position.y)
-              .setScale(1)
-              .setAngle(0)
-              .setAlpha(1)
-              .setVisible(false);
-            this.children.bringToTop(card.container);
-            card.button.style.visibility = "hidden";
+            card.container.setPosition(card.homeX, card.homeY).setScale(1).setAngle(0).setAlpha(1).setVisible(true).setDepth(20);
           }
-
-          showDragPreview(card: CardState): void {
-            const preview = card.button.cloneNode(true) as HTMLButtonElement;
-            preview.classList.add("drag-preview");
-            preview.style.visibility = "";
-            const bounds = card.button.getBoundingClientRect();
-            preview.style.width = `${bounds.width}px`;
-            preview.style.height = `${bounds.height}px`;
-            preview.hidden = false;
-            preview.setAttribute("aria-hidden", "true");
-            preview.tabIndex = -1;
-            preview.disabled = true;
-            controls.append(preview);
-            this.dragPreview = preview;
-            card.container.setVisible(false);
-            this.positionDragPreview(card);
-          }
-
-          positionDragPreview(card: CardState): void {
-            if (!this.dragPreview) return;
-            const canvas = this.game.canvas.getBoundingClientRect();
-            const bounds = controls.getBoundingClientRect();
-            this.dragPreview.style.left = `${canvas.left - bounds.left + (card.container.x * canvas.width) / W}px`;
-            this.dragPreview.style.top = `${canvas.top - bounds.top + (card.container.y * canvas.height) / H}px`;
-            this.dragPreview.style.transform = `translate(-50%, -50%) scale(${card.container.scaleX}, ${card.container.scaleY}) rotate(${card.container.angle}deg)`;
-            this.dragPreview.style.opacity = String(card.container.alpha);
-          }
-
-          clearDragPreview() {
-            this.dragPreview?.remove();
-            this.dragPreview = null;
-          }
+          showDragPreview(card: CardState): void { card.container.setVisible(true).setDepth(20); }
+          positionDragPreview(_card: CardState): void { /* Phaser owns the animated card image. */ }
+          clearDragPreview(): void { /* No visible DOM preview exists. */ }
 
           restartGame() {
             hasInteracted = true;
@@ -1047,9 +860,27 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             const lifetime = new AbortController();
             const options = { signal: lifetime.signal };
             this.events.once("shutdown", () => lifetime.abort());
+            // Phaser's mouse/touch events do not carry DOM pointer IDs. Listen
+            // on its sole canvas to keep one capture path for both input types.
+            this.game.canvas.addEventListener("pointerdown", (event) => {
+              const card = this.cards.find((entry) => entry.phase !== "packed");
+              if (!card || !this.canPack(card) || shell?.modalOpen || this.pendingDrag || this.activeDragCard || event.button !== 0) return;
+              // The day popup can cover the card. Respect the UI scene's top
+              // layer before beginning a native pointer capture underneath it.
+              if (shell && Object.values(shell.hitTargets).some((rect) =>
+                event.clientX >= rect.x && event.clientX <= rect.x + rect.width &&
+                event.clientY >= rect.y && event.clientY <= rect.y + rect.height)) return;
+              const pointer = this.pointerPosition(event);
+              const halfWidth = (portrait ? 152 : 190) * card.container.scaleX;
+              const halfHeight = 105 * card.container.scaleY;
+              if (Math.abs(pointer.x - card.container.x) > halfWidth || Math.abs(pointer.y - card.container.y) > halfHeight) return;
+              this.pendingDrag = { card, pointerId: event.pointerId, x: event.clientX, y: event.clientY };
+              shell?.setDayDisabled(true);
+              this.game.canvas.setPointerCapture(event.pointerId);
+            }, options);
             const releaseCapture = (pending: PendingDrag | null) => {
-              if (pending?.card.button.hasPointerCapture(pending.pointerId))
-                pending.card.button.releasePointerCapture(pending.pointerId);
+              if (pending && this.game.canvas.hasPointerCapture(pending.pointerId))
+                this.game.canvas.releasePointerCapture(pending.pointerId);
             };
             const cancelDrag = () => {
               const pending = this.pendingDrag;
@@ -1058,12 +889,13 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               this.activeDragCard = null;
               this.activeDragPointerId = null;
               releaseCapture(pending);
-              if (!card) return;
+              if (!card) { shell?.setDayDisabled(dayBlocked); return; }
               this.suppressClickUntil = performance.now() + 400;
               this.redrawBag(false);
               this.bag.setScale(this.bagScale);
               this.returnHome(card);
             };
+            this.cancelGesture = cancelDrag;
             window.addEventListener(
               "pointermove",
               (event) => {
@@ -1095,7 +927,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                   });
                   pending.card.dragOffsetX = start.x - pending.card.homeX;
                   pending.card.dragOffsetY = start.y - pending.card.homeY;
-                  daySelect.disabled = true;
+                  setDayBlocked(true);
                 }
                 const card = this.activeDragCard;
                 this.updateDraggedCard(card, pointer);
@@ -1115,7 +947,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                 this.activeDragCard = null;
                 this.activeDragPointerId = null;
                 releaseCapture(pending);
-                if (!card) return;
+                if (!card) { shell?.setDayDisabled(dayBlocked); this.tapCard(pending.card); return; }
                 this.suppressClickUntil = performance.now() + 400;
                 this.redrawBag(false);
                 this.bag.setScale(this.bagScale);
@@ -1128,7 +960,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             );
             window.addEventListener("pointercancel", cancelDrag, options);
             window.addEventListener("blur", cancelDrag, options);
-            controls.addEventListener(
+            this.game.canvas.addEventListener(
               "lostpointercapture",
               (event) => {
                 if (event.pointerId === this.pendingDrag?.pointerId)
@@ -1145,10 +977,10 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             this.pendingPackResolutions.add(settle);
             this.tweens.killTweensOf(card.container);
             if (!card.prepared) this.prepareCard(card);
-            if (!this.dragPreview) this.showDragPreview(card);
+            this.showDragPreview(card);
             card.button.hidden = true;
             card.phase = "packing";
-            daySelect.disabled = true;
+            setDayBlocked(true);
             this.refreshDeck();
             this.sparkles(card.container.x, card.container.y, card.item.color);
 
@@ -1166,10 +998,8 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                 this.clearDragPreview();
                 card.container.setVisible(false);
                 card.phase = "packed";
+                setDayBlocked(!!this.activeDragCard || this.packed === ITEMS.length);
                 this.refreshDeck();
-                daySelect.disabled =
-                  !!this.activeDragCard ||
-                  this.packed === ITEMS.length;
                 this.updateProgress();
                 this.starPop();
 
@@ -1215,12 +1045,10 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                 this.clearDragPreview();
                 this.returningCard = null;
                 card.phase = "ready";
-                card.container.setVisible(false);
-                card.button.style.visibility = "";
+                card.container.setVisible(true);
                 card.prepared = false;
+                setDayBlocked(!!this.activeDragCard);
                 this.refreshDeck();
-                daySelect.disabled =
-                  !!this.activeDragCard;
               },
             });
 
@@ -1244,7 +1072,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           }
 
           playAppEntry(): void {
-            if (selectedDay < 0 || appEntryPlayedDay === selectedDay || !hasInteracted) return;
+            if (!kidProfile || selectedDay < 0 || appEntryPlayedDay === selectedDay || !hasInteracted) return;
             const message = DATA.generalAudio.appEntry;
             const text = message.textTemplate.replace("{day}", DAYS[selectedDay]);
             liveStatus.textContent = text;
@@ -1300,29 +1128,18 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           }
 
           starPop() {
-            const canvas = this.game.canvas.getBoundingClientRect();
-            const bounds = controls.getBoundingClientRect();
-            const sx = canvas.width / W;
-            const sy = canvas.height / H;
-            const star = document.createElement("span");
-            star.className = "jumping-star";
-            star.textContent = "⭐";
-            star.setAttribute("aria-hidden", "true");
-            star.style.left = `${canvas.left - bounds.left + this.bag.x * sx}px`;
-            star.style.top = `${canvas.top - bounds.top + (this.bag.y - 155) * sy}px`;
-            star.style.setProperty("--star-size", `${54 * sy}px`);
-            star.style.setProperty("--star-mid", `${48 * sy}px`);
-            star.style.setProperty("--star-rise", `${72 * sy}px`);
-            star.addEventListener("animationend", () => star.remove(), {
-              once: true,
-            });
-            controls.append(star);
+            const star = this.crispText(this.bag.x, this.bag.y - 155, "⭐", { fontFamily: "Arial", fontSize: 54 })
+              .setOrigin(.5).setScale(0).setDepth(30);
+            this.tweens.add({ targets: star, y: star.y - 48, scaleX: 1.4, scaleY: 1.4, angle: 18,
+              duration: reducedMotion ? 90 : 327, ease: "Quad.easeOut",
+              onComplete: () => this.tweens.add({ targets: star, y: star.y - 24, alpha: 0,
+                duration: reducedMotion ? 110 : 383, onComplete: () => star.destroy() }) });
           }
 
           finish() {
             this.finished = true;
             if (this.stackPanel) this.stackPanel.hidden = true;
-            daySelect.disabled = false;
+            setDayBlocked(false);
             const finalMessage = DATA.generalAudio.finalDialog;
             liveStatus.textContent = `${finalMessage.text} ${currentProfile().name}! התיק מוכן!`;
             // Completion must always announce "כל הכבוד", even when a welcome
@@ -1455,7 +1272,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               });
             });
 
-            btnBg.on("pointerdown", () => this.restartGame());
+            btnBg.on("pointerdown", () => { if (!shell?.modalOpen) this.restartGame(); });
             controls.setAttribute("role", "dialog");
             controls.setAttribute("aria-modal", "true");
             controls.setAttribute(
@@ -1538,18 +1355,80 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           }
         }
 
+        class MagicBagUIScene extends Phaser.Scene {
+          private frame: Phaser.GameObjects.Image | undefined;
+          get canvasUi(): CanvasShell | undefined { return shell; }
+          get viewportLayout() { return layout; }
+          constructor() { super({ key: "MagicBagUI", active: true }); }
+          create(): void {
+            uiScene = this;
+            this.cameras.main.setZoom(renderScale).centerOn(layout.width / 2, layout.height / 2);
+            shell = new CanvasShell(this, renderScale, {
+              onChooseDay: chooseDay, onEditProfile: () => editProfile(false), onSaveProfile: saveProfile,
+              onStartDay: startDay, onInstall: () => { void installApp(); }, onDismissInstall: dismissInstallSuggestion,
+            });
+            requiredElement("loading").hidden = true;
+            this.refreshShell();
+            if (!kidProfile) editProfile(true);
+            if (kidProfile) scheduleInstallSuggestion();
+            this.events.once("shutdown", () => shell?.destroy());
+          }
+          refreshShell(): void {
+            this.cameras.main.setViewport(0, 0, layout.width * renderScale, layout.height * renderScale)
+              .setZoom(renderScale).centerOn(layout.width / 2, layout.height / 2);
+            this.drawFrame();
+            shell?.onResize(layout.width, layout.height);
+            shell?.drawToolbar(layout.width, layout.inset, layout.inset, kidProfile ? DAYS : [], selectedDay,
+              selectedDay < 0 ? undefined : DATA.days[selectedDay].endsAt ?? undefined, kidProfile?.gender ?? "girl");
+            shell?.setDayDisabled(dayBlocked);
+          }
+          private drawFrame(): void {
+            this.frame?.destroy();
+            this.textures.remove("magic-page-frame");
+            const texture = this.textures.createCanvas("magic-page-frame", Math.ceil(layout.width * renderScale), Math.ceil(layout.height * renderScale));
+            const ctx = texture.context;
+            ctx.scale(renderScale, renderScale);
+            const boy = kidProfile?.gender === "boy";
+            ctx.fillStyle = boy ? "#f4fbff" : "#fff8fd";
+            ctx.fillRect(0, 0, layout.width, layout.height);
+            [[.16, .16, .35, boy ? "#d9f3ff" : "#ffe3f1"], [.84, .84, .36, boy ? "#dceaff" : "#e7e0ff"]].forEach(([x, y, stop, color]) => {
+              const cx = Number(x) * layout.width; const cy = Number(y) * layout.height;
+              const radius = Math.hypot(Math.max(cx, layout.width - cx), Math.max(cy, layout.height - cy)) * Number(stop);
+              const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+              glow.addColorStop(0, String(color)); glow.addColorStop(1, `${String(color)}00`);
+              ctx.fillStyle = glow; ctx.fillRect(0, 0, layout.width, layout.height);
+            });
+            if (kidProfile) {
+              const radius = portrait ? 24 : 28;
+              ctx.save(); ctx.shadowColor = boy ? "rgba(27,83,112,.18)" : "rgba(83,52,103,.18)";
+              ctx.shadowBlur = 80 * renderScale; ctx.shadowOffsetY = 28 * renderScale; ctx.fillStyle = palette().page;
+              ctx.beginPath(); ctx.roundRect(layout.x, layout.y, layout.gameWidth, layout.gameHeight, radius); ctx.fill(); ctx.restore();
+              ctx.save(); ctx.globalCompositeOperation = "destination-out";
+              ctx.fillStyle = "#000";
+              ctx.beginPath(); ctx.roundRect(layout.x, layout.y, layout.gameWidth, layout.gameHeight, radius); ctx.fill(); ctx.restore();
+            } else {
+              ctx.fillStyle = "#5f4976";
+              ctx.font = "18px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+              ctx.fillText("תיק הקסם נפתח… ✨", layout.width / 2, layout.y + layout.gameHeight * .45);
+            }
+            texture.refresh();
+            this.frame = this.add.image(layout.width / 2, layout.height / 2, "magic-page-frame")
+              .setDisplaySize(layout.width, layout.height).setDepth(-100);
+          }
+        }
+
         const game = new Phaser.Game({
           type: Phaser.AUTO,
           parent: "game",
-          width: W * renderScale,
-          height: H * renderScale,
+          width: layout.width * renderScale,
+          height: layout.height * renderScale,
           backgroundColor: "#fff8fd",
-          scene: MagicBagScene,
+          scene: [MagicBagScene, MagicBagUIScene],
           scale: {
             mode: Phaser.Scale.FIT,
             autoCenter: Phaser.Scale.NO_CENTER,
           },
-          render: { antialias: true },
+          render: { antialias: true, preserveDrawingBuffer: true },
         });
         window.magicBagGame = game;
 
@@ -1571,48 +1450,27 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           signal: appLifetime.signal,
         });
 
-        daySelect.addEventListener("change", () => {
-          const scene = game.scene.getScene("MagicBag") as MagicBagScene;
-          if (
-            !scene?.scene.isActive() ||
-            scene.activeDragCard ||
-            scene.pendingDrag ||
-            scene.returningCard
-          ) {
-            daySelect.value = String(selectedDay);
-            return;
-          }
-          selectedDay = Number(daySelect.value);
-          if (!Number.isInteger(selectedDay) || !DATA.days[selectedDay]) return;
-          ITEMS = packingListFor(DATA, selectedDay);
-          renderDayInfo();
-          showDayStart();
-        });
-
-        // The day switch stays blocked until the child explicitly starts.
-        dayStartDialog.addEventListener("cancel", (event) => event.preventDefault());
-        dayStartButton.addEventListener("click", () => {
-          hasInteracted = true;
-          daySelect.blur();
-          dayStartDialog.close();
-          const scene = game.scene.getScene("MagicBag") as MagicBagScene;
-          scene.scene.restart({});
-        });
-
+        let resizePending = false;
         window.addEventListener("resize", () => {
+          if (resizePending) return;
+          resizePending = true;
           requestAnimationFrame(() => {
+            resizePending = false;
             const scene = game.scene.getScene("MagicBag") as MagicBagScene;
             if (!scene?.scene.isActive()) return;
-            if (portrait !== portraitQuery.matches) {
-              const packedIds = scene.cards
-                .filter((card) => card.phase === "packed")
-                .map((card) => card.item.id);
-              portrait = portraitQuery.matches;
-              W = portrait ? 420 : 1100;
-              game.scale.setGameSize(W * renderScale, H * renderScale);
+            const packedIds = scene.cards.filter((card) => card.phase === "packed").map((card) => card.item.id);
+            const blocked = dayBlocked;
+            const changedOrientation = portrait !== portraitQuery.matches;
+            portrait = portraitQuery.matches;
+            W = portrait ? 420 : 1100;
+            updateLayout();
+            game.scale.setGameSize(layout.width * renderScale, layout.height * renderScale);
+            uiScene?.refreshShell();
+            if (changedOrientation) {
               scene.scene.restart({ packedIds });
+              setDayBlocked(blocked && !!shell?.modalOpen);
             } else {
-              scene.positionControls();
+              scene.reflow();
             }
           });
         }, { signal: appLifetime.signal });
