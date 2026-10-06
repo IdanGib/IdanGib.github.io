@@ -1,0 +1,71 @@
+# Supabase CLI 2.119.0. Hosted Auth settings must match these local settings.
+project_id = "magic-bag-editor"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 17
+
+[db.migrations]
+enabled = true
+schema_paths = []
+
+[db.seed]
+enabled = false
+sql_paths = []
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://127.0.0.1"
+
+# CLI 2.119 uses local_smtp, rather than the older inbucket section.
+[local_smtp]
+enabled = true
+port = 54324
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173/magic-bag-editor.html?setup=1", "http://127.0.0.1:5173/magic-bag-editor.html?setup=1"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+enable_signup = false
+enable_anonymous_sign_ins = false
+enable_manual_linking = false
+minimum_password_length = 12
+
+[auth.email]
+# Keep the email/password provider enabled. auth.enable_signup=false above
+# disables public account creation without disabling existing-user login.
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+secure_password_change = false
+max_frequency = "1s"
+otp_expiry = 1800
+
+[auth.sms]
+enable_signup = false
+enable_confirmations = false
+
+[edge_runtime]
+enabled = true
+policy = "per_worker"
+deno_version = 2
+
+[functions.editor-admin]
+enabled = true
+# The function verifies the caller against Auth and live membership itself.
+# This also supports hosted publishable keys and rotating Auth signing keys.
+verify_jwt = false
+# npm scripts bundle the SDK installed from package-lock.json before start/deploy.
+entrypoint = "./functions/editor-admin/index.bundle.js"

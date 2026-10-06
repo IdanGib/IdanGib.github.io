@@ -10,14 +10,21 @@
     "preview": "vite preview",
     "lint": "tsc -p tsconfig.json --noEmit",
     "test": "node --test --experimental-strip-types src/magic-bag/school-data.test.ts",
-    "dev:all": "bash scripts/dev-all.sh",
-    "pocketbase": "./pocketbase/pocketbase serve --dir pocketbase/pb_data --migrationsDir pocketbase/pb_migrations --hooksDir pocketbase/pb_hooks",
-    "test:integration": "node --test tests/pocketbase.integration.mjs"
+    "dev:all": "node scripts/dev-all.mjs",
+    "test:integration": "node --test tests/supabase.integration.mjs",
+    "supabase": "node scripts/supabase.mjs",
+    "supabase:start": "node scripts/supabase.mjs start",
+    "supabase:stop": "node scripts/supabase.mjs stop",
+    "supabase:status": "node scripts/supabase.mjs status",
+    "supabase:reset": "node scripts/supabase.mjs db reset",
+    "supabase:functions": "node scripts/supabase.mjs functions serve",
+    "test:integration:local": "node scripts/test-supabase-local.mjs",
+    "supabase:build": "node scripts/build-supabase-functions.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.117.2",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "pocketbase": "0.28.1"
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.0",
@@ -26,8 +33,13 @@
     "@vitejs/plugin-react": "^4.3.1",
     "cross-env": "^7.0.3",
     "daisyui": "^5.5.23",
+    "esbuild": "0.21.5",
+    "supabase": "2.119.0",
     "tailwindcss": "^4.3.0",
     "typescript": "^5.5.4",
     "vite": "^5.4.2"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

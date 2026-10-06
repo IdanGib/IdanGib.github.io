@@ -6,21 +6,23 @@ This file describes the codebase structure, conventions, and development workflo
 
 **idangib.github.io** is the personal site of Idan Gibly (product designer & creative technologist), deployed to GitHub Pages at `idangib.github.io`.
 
-The root page is **IG Apps** — an iOS-style home screen built with React 18, TypeScript, and Vite — that launches small self-contained web apps (the **Training Tracker**, the **Malawah** recipe calculator and the **Timetable** packing list). Every page is styled exclusively with **Tailwind CSS 4 + daisyUI 5**: there are no hand-written stylesheets and no inline styles anywhere in the project.
+The root page is **IG Apps** — an iOS-style home screen built with React 18, TypeScript, and Vite — that launches small self-contained web apps (the **Training Tracker**, the **Malawah** recipe calculator, the **Timetable** packing list, and **Magic Bag**). **Magic Bag Editor** is a separate React page backed by Supabase. Every page is styled exclusively with **Tailwind CSS 4 + daisyUI 5**: there are no hand-written stylesheets and no inline styles anywhere in the project.
 
 ## Tech Stack
 
 | Tool | Version | Purpose |
 |------|---------|---------|
-| React | 18.3.1 | Home screen UI |
+| React | 18.3.1 | Home screen and editor UI |
 | TypeScript | 5.5.4 | Type checking (strict mode) |
 | Vite | 5.4.x | Bundler + dev server (multi-page) |
 | Tailwind CSS | 4.x | Utility styling (via `@tailwindcss/vite`) |
 | daisyUI | 5.x | Component classes + theming |
 | `@vitejs/plugin-react` | 4.3.1 | Fast refresh for JSX |
 | `cross-env` | 7.0.3 | Cross-platform env vars |
+| `@supabase/supabase-js` | 2.117.2 | Editor Auth, database, and Edge Function client |
+| Supabase CLI | 2.119.0 | Local backend and backend deployments |
 
-No router, no state management library. Standalone app pages use vanilla TypeScript (no React).
+Use Node.js 22 or newer. No router, no state management library. Standalone app pages use vanilla TypeScript; Magic Bag Editor uses React.
 
 ## Directory Structure
 
@@ -38,6 +40,8 @@ No router, no state management library. Standalone app pages use vanilla TypeScr
 │   │   └── apps.tsx               # Typed registry of launchable apps (add new apps here)
 │   ├── tracker/main.ts            # Training Tracker logic (vanilla TS, typed)
 │   ├── malawah/main.ts            # Malawah recipe calculator logic (vanilla TS, typed)
+│   ├── magic-bag/                 # Packing app and school-data configuration
+│   ├── magic-bag-editor/          # React editor and Supabase client adapter
 │   └── timetable/
 │       ├── config.ts              # Timetable content: classes, items, subjects, schedule, labels
 │       └── main.ts                # Timetable logic (vanilla TS, typed)
@@ -45,6 +49,9 @@ No router, no state management library. Standalone app pages use vanilla TypeScr
 ├── training-tracker-app.html      # Tracker entry (theme igtracker)
 ├── malawah-app.html               # Malawah entry (theme igmalawah)
 ├── timetable-app.html             # Timetable entry (theme igtimetable, Hebrew RTL)
+├── magic-bag-app.html             # Magic Bag packing app entry
+├── magic-bag-editor.html          # Supabase-backed React editor entry
+├── supabase/                      # Local config, migrations, and editor-admin Edge Function
 ├── 404.html                       # GitHub Pages 404 entry (theme igapps)
 ├── cv/index.html                  # CV download entry (theme igapps)
 ├── vite.config.ts                 # Base path logic + MPA rollup inputs + tailwindcss()
@@ -54,8 +61,8 @@ No router, no state management library. Standalone app pages use vanilla TypeScr
 
 ## Architecture: Home Screen + Standalone Page Entries
 
-- The React app is only the launcher. Each app on the grid is an entry in `src/app/apps.tsx` (`AppDefinition`: name, href, icon tile classes, 40×40 SVG icon).
-- Apps are **separate Vite page entries** (registered in `vite.config.ts` → `build.rollupOptions.input`). Build output paths mirror source paths, so public URLs never change. App logic is vanilla TypeScript under `src/<app>/main.ts` — do not introduce React into app pages.
+- The home React app is the launcher. Each app on the grid is an entry in `src/app/apps.tsx` (`AppDefinition`: name, href, icon tile classes, 40×40 SVG icon).
+- Apps are **separate Vite page entries** (registered in `vite.config.ts` → `build.rollupOptions.input`). Build output paths mirror source paths, so public URLs never change. Preserve the existing vanilla TypeScript app implementations; the editor is a separate React entry at `src/magic-bag-editor/main.tsx`.
 - Pages select their daisyUI theme with `data-theme` on `<html>` (`igapps`, `igtracker`, `igmalawah` or `igtimetable`).
 
 ### Training Tracker (`training-tracker-app.html` + `src/tracker/main.ts`)
@@ -93,6 +100,16 @@ A Hebrew, right-to-left school-bag packing list ("מה לוקחים היום"): 
 - Item tints are `Tone` values (daisyUI tokens), resolved through the `TILE` lookup of full literal classes — never a colour built by concatenation.
 - Theme `igtimetable` is **light on purpose** (ink on graph paper): it is a child's checklist read in daylight, not a night-time tool.
 
+### Magic Bag Editor (`magic-bag-editor.html` + `src/magic-bag-editor/`)
+
+A React/strict-TypeScript editor for schools and draft class-pack metadata. Supabase Auth handles sessions and invitation links; Postgres holds `editor_users`, `schools`, and `class_packs`. See [README.magic-bag-editor.md](README.magic-bag-editor.md) for local and hosted setup.
+
+- Browser configuration is `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` (`VITE_SUPABASE_ANON_KEY` is a supported fallback). Only public project keys belong in Vite variables. Admin keys stay in the Edge Function runtime.
+- `editor_users` is the membership whitelist. Row-level security checks current enabled membership and the approved email on each database operation. The `current_editor` RPC supplies the validated member; `list_editor_users` and the `editor-admin` Edge Function require an owner.
+- Invitations, resend, and revocation run through `supabase/functions/editor-admin/`. Password setup uses Supabase's native email link followed by `complete_editor_setup`; a pending member cannot edit until setup completes.
+- Keep migrations under `supabase/migrations/`, preserve the database's unique class identity, and keep child names out of shared packs. Parent onboarding, packing contents, media/timetable editing, and publishing are outside this milestone.
+- Test against the local stack, where captured invitation mail and temporary test users are isolated from real users. Never point the local integration suite at a production project.
+
 ## Styling Policy (Tailwind + daisyUI only)
 
 1. **`src/styles.css` is the only CSS file.** It contains nothing but library configuration: `@import "tailwindcss"`, the daisyUI plugin, the three custom themes, and `@theme` tokens. Never add bespoke selectors/rules to it, and never create other CSS files.
@@ -112,21 +129,25 @@ A Hebrew, right-to-left school-bag packing list ("מה לוקחים היום"): 
 ## Development Workflow
 
 ```bash
-npm install       # Install dependencies
+npm ci            # Install locked dependencies (Node.js 22+)
 npm run dev       # Start Vite dev server at http://localhost:5173
-npm run build     # Production build → dist/ (all six page entries)
+npm run build     # Production build → dist/ (all eight page entries)
 npm run preview   # Preview the production build locally
 npm run lint      # TypeScript type check (tsc --noEmit, covers src/)
+npm test          # School-data tests
 ```
+
+For the editor, start Docker and run `npm run supabase:start`, then `npm run dev:all`. See the editor guide for first-owner setup, captured mail, integration tests, and standalone service commands.
 
 The `build:pages` script exists for project-site deployments but is not used in CI — the deploy workflow sets `VITE_BASE=/` directly.
 
 ## Deployment
 
 - **Trigger:** Push to `main` or `master` branch
-- **CI:** `.github/workflows/deploy.yml` — Node 20, `npm ci`, `npm run build`
+- **CI:** `.github/workflows/deploy.yml` — Node 24, `npm ci`, `npm run build`; hosted editor URL and public key supplied through repository variables
 - **Output:** `dist/` uploaded as GitHub Pages artifact and deployed via `actions/deploy-pages@v4`
 - **Base path logic** (`vite.config.ts`): Reads `VITE_BASE` env var → falls back to auto-detecting user site vs. project site from `GITHUB_REPOSITORY`
+- **Editor backend:** Deploy Supabase migrations and the `editor-admin` Edge Function separately; configure allowed setup redirects and server-side `EDITOR_SITE_URL` before sending invitations.
 
 **Do not push to `main` directly for feature work** — use the `claude/feature-name-{id}` branch convention.
 
@@ -169,6 +190,7 @@ The `build:pages` script exists for project-site deployments but is not used in 
 | `public/cv/idan-gibly-cv.pdf` | Binary asset — do not overwrite without a new PDF |
 | `training-tracker-app.html` / `src/tracker/main.ts` | Holds live user data via localStorage — never rename the page URL or its storage keys |
 | `timetable-app.html` / `src/timetable/*` | Same — never rename the page URL, the `timetable:done`/`timetable:class` keys, or a class `id`. Edit content in `config.ts`, not `main.ts` |
-| `src/styles.css` | Single source of truth for all four themes — changes affect every page |
+| `src/styles.css` | Single source of truth for all themes — changes affect every page |
+| `supabase/migrations/` / `supabase/functions/editor-admin/` | Membership, invitation, and revocation security — preserve owner-only administration and database access rules |
 | `.github/workflows/deploy.yml` | Changes here affect live deployment pipeline |
 | `vite.config.ts` | Base path logic + MPA inputs; forgetting an input silently drops a page from the build |

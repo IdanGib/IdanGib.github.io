@@ -1,8 +1,12 @@
-import { api, pb } from "./pocketbase";
-import type { EditorUser } from "./types";
-export const validMember = (user:EditorUser|null): user is EditorUser => Boolean(user && user.collectionName === "editor_users" && user.enabled && user.verified && user.email.toLowerCase() === user.approvedEmail.toLowerCase());
-export const restoreAuth = async ():Promise<EditorUser|null> => {
-  if (!pb.authStore.isValid) { api.logout(); return null; }
-  try { await api.refresh(); const user=api.current(); if (!validMember(user)) throw new Error("membership disabled"); return user; }
-  catch { api.logout(); return null; }
-};
+import { api } from "./supabase";
+import { validMember, type EditorUser } from "./types";
+
+export { validMember };
+export async function restoreAuth():Promise<EditorUser|null> {
+  try {
+    const user = await api.current();
+    if (validMember(user)) return user;
+  } catch { /* Invalid, revoked, or expired sessions cannot open the editor. */ }
+  await api.logout().catch(() => {});
+  return null;
+}
