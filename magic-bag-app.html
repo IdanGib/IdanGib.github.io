@@ -119,6 +119,8 @@
         font-size: 18px;
       }
       .packing-toolbar select {
+        min-width: 0;
+        min-height: 44px;
         font: inherit;
         font-size: 18px;
         font-weight: bold;
@@ -139,11 +141,96 @@
         outline: 3px solid var(--accent-dark);
         outline-offset: 3px;
       }
+      .timetable-button {
+        display: inline-flex;
+        flex: none;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-height: 44px;
+        padding: 8px 12px;
+        border: 2px solid var(--surface-border);
+        border-radius: 18px;
+        color: var(--ink-strong);
+        background: #fff;
+        font: inherit;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      .timetable-button:hover:not(:disabled),
+      .timetable-button[aria-expanded="true"] {
+        border-color: var(--accent-border);
+        background: var(--accent-pale);
+      }
+      .timetable-button:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      .timetable-button svg {
+        flex: none;
+      }
+      .timetable-chevron {
+        transition: transform 180ms ease;
+      }
+      .timetable-button[aria-expanded="true"] .timetable-chevron {
+        transform: rotate(180deg);
+      }
+      .timetable-panel {
+        display: grid;
+        grid-template-rows: 0fr;
+        width: 100%;
+        max-width: 1440px;
+        margin: 0 auto;
+        opacity: 0;
+        transition: grid-template-rows 180ms ease, opacity 180ms ease;
+      }
+      .timetable-panel[data-open="true"] {
+        grid-template-rows: 1fr;
+        opacity: 1;
+      }
+      .timetable-inner {
+        min-height: 0;
+        overflow: hidden;
+      }
+      .timetable-content {
+        margin-bottom: 12px;
+        padding: 16px;
+        border: 2px solid var(--surface-border);
+        border-radius: 18px;
+        color: var(--ink);
+        background: #fff;
+        text-align: start;
+      }
+      .timetable-content h2 {
+        margin: 0 0 12px;
+        color: var(--ink-strong);
+        font-size: 18px;
+        line-height: 1.4;
+      }
+      .timetable-lessons {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .timetable-lessons li {
+        display: grid;
+        grid-template-columns: 72px minmax(0, 1fr);
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--surface-border);
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+      }
+      .lesson-number {
+        color: var(--ink-soft);
+        font-weight: bold;
+      }
       .settings-button {
+        flex: none;
         display: inline-grid;
         place-items: center;
-        width: 42px;
-        height: 42px;
+        width: 44px;
+        height: 44px;
         padding: 0;
         border: 0;
         border-radius: 14px;
@@ -156,6 +243,7 @@
         background: var(--accent-hover);
       }
       .settings-button:focus-visible,
+      .timetable-button:focus-visible,
       .profile-dialog button:focus-visible,
       .profile-dialog input:focus-visible,
       .day-start-dialog button:focus-visible {
@@ -377,10 +465,8 @@
         cursor: pointer;
       }
       .end-time {
-        background: #fff;
-        border: 2px solid var(--surface-border);
-        padding: 7px 12px;
-        border-radius: 14px;
+        margin: 12px 0 0;
+        color: var(--ink-strong);
       }
       .end-time output {
         font-weight: bold;
@@ -514,16 +600,6 @@
       .item-button[data-deck-depth="2"] > * {
         visibility: hidden;
       }
-      .item-subject {
-        align-self: center;
-        padding: 4px 10px;
-        border-radius: 999px;
-        background: var(--item-tint);
-        font-size: 13px;
-        font-weight: bold;
-        line-height: 1.4;
-        color: var(--ink-soft);
-      }
       .item-copy {
         display: flex;
         min-width: 0;
@@ -615,7 +691,9 @@
         }
       }
       @media (prefers-reduced-motion: reduce) {
-        .item-button {
+        .item-button,
+        .timetable-panel,
+        .timetable-chevron {
           transition: none;
         }
         .item-button.item-button-clicked {
@@ -674,23 +752,33 @@
         }
         body {
           padding: 8px;
-          height: 100svh;
-          height: 100dvh;
-          overflow: hidden;
+          height: auto;
+          min-height: 100svh;
+          min-height: 100dvh;
+          overflow-y: auto;
         }
         main {
           display: flex;
-          height: 100%;
-          min-height: 0;
+          min-height: 100%;
           flex-direction: column;
         }
-        .packing-toolbar {
+        .packing-toolbar,
+        .timetable-panel {
           flex: none;
         }
+        .packing-toolbar select {
+          flex: 1;
+          padding: 8px;
+          font-size: 16px;
+        }
+        .timetable-button {
+          padding: 8px;
+        }
         #game {
-          flex: 1 1 auto;
-          height: auto;
-          min-height: 0;
+          flex: none;
+          height: calc(100svh - 80px);
+          height: calc(100dvh - 80px);
+          min-height: 580px;
         }
         canvas {
           border-radius: 24px;
@@ -707,6 +795,17 @@
           font-size: 19px;
         }
       }
+      @media (max-width: 360px) {
+        .packing-toolbar {
+          flex-wrap: wrap;
+        }
+        .packing-toolbar select {
+          flex-basis: 100%;
+        }
+        .timetable-button {
+          flex: 1;
+        }
+      }
     </style>
   </head>
   <body>
@@ -714,9 +813,16 @@
       <h1 id="page-title" class="sr-only">משימת תיק הקסם</h1>
       <div class="packing-toolbar">
         <select id="school-day" aria-label="יום הלימודים"></select>
-        <span class="end-time"
-          >סיום הלימודים: <output id="end-time"></output
-        ></span>
+        <button id="toggle-timetable" class="timetable-button" type="button" aria-expanded="false" aria-controls="timetable-panel" disabled>
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M8 2v4M16 2v4M3 10h18" />
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+          </svg>
+          <span>מה לומדים?</span>
+          <svg class="timetable-chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </button>
         <button id="open-settings" class="settings-button" type="button" aria-label="הגדרות ילד או ילדה">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -735,6 +841,15 @@
           </svg>
         </button>
       </div>
+      <section id="timetable-panel" class="timetable-panel" aria-labelledby="timetable-heading" aria-hidden="true" inert>
+        <div class="timetable-inner">
+          <div class="timetable-content">
+            <h2 id="timetable-heading"></h2>
+            <ol id="timetable-lessons" class="timetable-lessons" role="list"></ol>
+            <p class="end-time"><output id="end-time"></output></p>
+          </div>
+        </div>
+      </section>
       <div id="game">
         <p id="loading" role="status">תיק הקסם נפתח… ✨</p>
         <div id="keyboard-controls"></div>
