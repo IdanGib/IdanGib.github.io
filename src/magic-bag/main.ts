@@ -339,6 +339,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
         const daySelect = requiredElement<HTMLSelectElement>("school-day");
         const endTime = requiredElement<HTMLOutputElement>("end-time");
         const timetableButton = requiredElement<HTMLButtonElement>("toggle-timetable");
+        const closeTimetableButton = requiredElement<HTMLButtonElement>("close-timetable");
         const timetablePanel = requiredElement<HTMLElement>("timetable-panel");
         const timetableHeading = requiredElement<HTMLHeadingElement>("timetable-heading");
         const timetableLessons = requiredElement<HTMLOListElement>("timetable-lessons");
@@ -369,6 +370,10 @@ function requiredElement<T extends HTMLElement>(id: string): T {
 
         timetableButton.addEventListener("click", () => {
           setTimetableOpen(timetableButton.getAttribute("aria-expanded") !== "true");
+        }, { signal: appLifetime.signal });
+        closeTimetableButton.addEventListener("click", () => {
+          setTimetableOpen(false);
+          timetableButton.focus({ preventScroll: true });
         }, { signal: appLifetime.signal });
         document.addEventListener("keydown", (event) => {
           if (
