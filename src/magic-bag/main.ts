@@ -5,6 +5,7 @@ import {
   type PackingItem,
   type SchoolData,
 } from "./school-data";
+import { monsterAppetite, monsterDropBounds, monsterMouth } from "./monster-ui";
 
 type Gender = "boy" | "girl";
 interface Profile { name: string; gender: Gender }
@@ -446,6 +447,12 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           bag!: Phaser.GameObjects.Container;
           bagGraphics!: Phaser.GameObjects.Graphics;
           bagScale = 1;
+          mouth = { openness: 0 };
+          mouthTarget = 0;
+          chewing = false;
+          bagReaction = { x: 1, y: 1 };
+          bagHovered = false;
+          gaze = { x: 0, y: 0 };
           progressMeter: HTMLDivElement | null = null;
           daySelectionPrompt: HTMLParagraphElement | null = null;
           progressText: HTMLSpanElement | null = null;
@@ -482,6 +489,12 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             this.returningCard = null;
             this.suppressClickUntil = 0;
             this.dragPreview = null;
+            this.mouth = { openness: 0 };
+            this.mouthTarget = 0;
+            this.chewing = false;
+            this.bagReaction = { x: 1, y: 1 };
+            this.bagHovered = false;
+            this.gaze = { x: 0, y: 0 };
             daySelect.disabled = false;
 
             this.cameras.main
@@ -666,9 +679,9 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             shadow.fillStyle(palette().shadow, 0.12);
             shadow.fillEllipse(0, 146, 260, 48);
 
-            const star = this.crispText(0, -5, "★", {
+            const star = this.crispText(0, 82, "★", {
               fontFamily: "Arial",
-              fontSize: 56,
+              fontSize: 30,
               color: "#fff1a5",
             }).setOrigin(0.5);
 
@@ -704,20 +717,110 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             g.arc(64, 12, 83, -1.4, 1.4);
             g.strokePath();
 
+            // Rounded horns sit behind the body so their bases stay hidden.
+            g.fillStyle(palette().bagPocket);
+            g.fillEllipse(-65, -121, 39, 58);
+            g.fillEllipse(65, -121, 39, 58);
             g.fillStyle(hovered ? palette().bagHover : palette().bag);
             g.fillRoundedRect(-108, -120, 216, 250, 48);
 
             g.fillStyle(hovered ? palette().bagPanelHover : palette().bagPanel);
             g.fillRoundedRect(-92, -101, 184, 211, 40);
 
+            const open = this.mouth.openness;
+            for (const x of [-40, 40]) {
+              g.fillStyle(0xffffff);
+              g.fillEllipse(x, -76, 54, 59);
+              if (this.chewing) {
+                // Happy closed eyes; no floating catchlights above the lids.
+                g.lineStyle(5, palette().mascotInk);
+                g.beginPath();
+                g.arc(x, -70, 12, Math.PI, Math.PI * 2);
+                g.strokePath();
+              } else {
+                g.fillStyle(palette().mascotInk);
+                g.fillEllipse(x + this.gaze.x, -72 + this.gaze.y, 23, 29);
+                g.fillStyle(0xffffff);
+                g.fillCircle(x - 5 + this.gaze.x, -79 + this.gaze.y, 5);
+              }
+              g.fillStyle(palette().mascotCheek, 0.7);
+              g.fillEllipse(x * 1.75, -25, 25, 15);
+            }
+            const mouthHeight = 14 + 72 * open;
             g.fillStyle(palette().bagTop);
-            g.fillRoundedRect(-78, -98, 156, 52, 25);
-
-            g.fillStyle(palette().bagPocket);
-            g.fillRoundedRect(-66, 38, 132, 58, 22);
-
+            g.fillRoundedRect(-65, -24, 130, mouthHeight, Math.min(30, mouthHeight / 2));
+            g.fillStyle(palette().mascotInk);
+            g.fillRoundedRect(-58, -20, 116, mouthHeight - 6, Math.min(26, (mouthHeight - 6) / 2));
+            if (open > 0.15) {
+              g.fillStyle(palette().bagPocket);
+              g.fillEllipse(0, -24 + mouthHeight - 13, 65, Math.min(22, mouthHeight - 12));
+              g.fillStyle(0xfff9eb);
+              g.fillRoundedRect(-37, -20, 19, 10 + open * 5, 5);
+              g.fillRoundedRect(18, -20, 19, 10 + open * 5, 5);
+            }
             g.lineStyle(3, palette().bagPocketLine);
-            g.strokeRoundedRect(-66, 38, 132, 58, 22);
+            g.strokeRoundedRect(-55, 65, 110, 39, 17);
+          }
+
+          setBagHovered(hovered: boolean): void {
+            if (this.chewing || this.bagHovered === hovered) return;
+            this.bagHovered = hovered;
+            this.tweens.killTweensOf(this.bagReaction);
+            this.tweens.add({
+              targets: this.bagReaction,
+              x: hovered && !reducedMotion ? 1.04 : 1,
+              y: hovered && !reducedMotion ? 1.04 : 1,
+              duration: reducedMotion ? 0 : 180,
+              ease: "Sine.easeOut",
+              onUpdate: () => this.bag.setScale(
+                this.bagScale * this.bagReaction.x,
+                this.bagScale * this.bagReaction.y,
+              ),
+            });
+          }
+
+          setMouth(openness: number): void {
+            if (this.chewing || Math.abs(this.mouthTarget - openness) < 0.03) return;
+            this.mouthTarget = openness;
+            this.tweens.killTweensOf(this.mouth);
+            this.tweens.add({
+              targets: this.mouth, openness,
+              duration: reducedMotion ? 0 : 140,
+              ease: "Sine.easeOut",
+              onUpdate: () => this.redrawBag(openness > 0.1),
+              onComplete: () => this.redrawBag(openness > 0.1),
+            });
+          }
+
+          chew(onComplete: () => void): void {
+            this.chewing = true;
+            this.tweens.killTweensOf(this.mouth);
+            this.tweens.killTweensOf(this.bagReaction);
+            this.bagHovered = false;
+            this.bagReaction = { x: 1, y: 1 };
+            this.bag.setScale(this.bagScale);
+            this.mouth.openness = reducedMotion ? 0 : 0.35;
+            this.redrawBag(false);
+            this.tweens.add({
+              targets: this.mouth, openness: 0.08,
+              duration: reducedMotion ? 100 : 150,
+              yoyo: !reducedMotion, repeat: reducedMotion ? 0 : 2,
+              ease: "Sine.easeInOut",
+              onUpdate: () => this.redrawBag(false),
+              onComplete: () => {
+                this.chewing = false;
+                this.gaze = { x: 0, y: 0 };
+                this.mouthTarget = 1;
+                this.setMouth(0);
+                this.redrawBag(false);
+                onComplete();
+              },
+            });
+            if (!reducedMotion) this.tweens.add({
+              targets: this.bag,
+              scaleX: this.bagScale * 1.06, scaleY: this.bagScale * 0.95,
+              duration: 150, yoyo: true, repeat: 2, ease: "Sine.easeInOut",
+            });
           }
 
           drawProgress() {
@@ -907,6 +1010,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           canPack(card: CardState): boolean {
             return (
               !this.finished &&
+              !this.chewing &&
               !this.returningCard &&
               !this.activeDragCard &&
               card.phase === "ready" &&
@@ -1048,14 +1152,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           }
 
           bagBounds(): { left: number; right: number; top: number; bottom: number } {
-            // The backpack itself is animated, so derive the drop area from its
-            // CURRENT x/y rather than from a fixed rectangle created earlier.
-            return {
-              left: this.bag.x - 118 * this.bagScale,
-              right: this.bag.x + 118 * this.bagScale,
-              top: this.bag.y - 150 * this.bagScale,
-              bottom: this.bag.y + 145 * this.bagScale,
-            };
+            return monsterDropBounds(this.bag);
           }
 
           isInsideBag(x: number, y: number): boolean {
@@ -1102,8 +1199,9 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               releaseCapture(pending);
               if (!card) return;
               this.suppressClickUntil = performance.now() + 400;
-              this.redrawBag(false);
-              this.bag.setScale(this.bagScale);
+              this.gaze = { x: 0, y: 0 };
+              this.setMouth(0);
+              this.setBagHovered(false);
               this.returnHome(card);
             };
             window.addEventListener(
@@ -1142,8 +1240,12 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                 const card = this.activeDragCard;
                 this.updateDraggedCard(card, pointer);
                 const over = this.isInsideBag(pointer.x, pointer.y);
-                this.redrawBag(over);
-                this.bag.setScale(this.bagScale * (over ? 1.06 : 1));
+                const mouth = monsterMouth(this.bag);
+                this.gaze.x = Math.max(-8, Math.min(8, (card.container.x - mouth.x) / 20));
+                this.gaze.y = Math.max(-6, Math.min(6, (card.container.y - mouth.y) / 30));
+                this.setMouth(monsterAppetite(this.bag, card.container));
+                this.setBagHovered(over);
+                this.redrawBag(this.mouthTarget > 0.1);
               },
               options,
             );
@@ -1159,12 +1261,15 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                 releaseCapture(pending);
                 if (!card) return;
                 this.suppressClickUntil = performance.now() + 400;
-                this.redrawBag(false);
-                this.bag.setScale(this.bagScale);
                 const pointer = this.pointerPosition(event);
                 this.updateDraggedCard(card, pointer);
                 if (this.isInsideBag(pointer.x, pointer.y)) this.pack(card);
-                else this.returnHome(card);
+                else {
+                  this.gaze = { x: 0, y: 0 };
+                  this.setMouth(0);
+                  this.setBagHovered(false);
+                  this.returnHome(card);
+                }
               },
               options,
             );
@@ -1192,49 +1297,53 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             card.phase = "packing";
             daySelect.disabled = true;
             this.refreshDeck();
+            this.setMouth(1);
             this.sparkles(card.container.x, card.container.y, card.item.color);
 
+            const start = { x: card.container.x, y: card.container.y, scale: card.container.scaleX };
+            const swallow = { progress: 0 };
+            const tilt = reducedMotion ? 0 : Phaser.Math.Between(-12, 12);
             this.tweens.add({
-              targets: card.container,
-              x: this.bag.x,
-              y: this.bag.y,
-              scale: 0.12,
-              alpha: 0,
-              angle: Phaser.Math.Between(-20, 20),
-              duration: 480,
+              targets: swallow,
+              progress: 1,
+              duration: reducedMotion ? 100 : 560,
               ease: "Cubic.easeIn",
-              onUpdate: () => this.positionDragPreview(card),
+              onUpdate: () => {
+                // Follow the live mouth while it bobs; fade only as the card enters.
+                const mouth = monsterMouth(this.bag);
+                const t = swallow.progress;
+                card.container.setPosition(
+                  start.x + (mouth.x - start.x) * t,
+                  start.y + (mouth.y - start.y) * t,
+                ).setScale(start.scale + (0.08 - start.scale) * t)
+                  .setAngle(tilt * t)
+                  .setAlpha(Math.min(1, (1 - t) / 0.15));
+                this.positionDragPreview(card);
+              },
               onComplete: () => {
                 this.clearDragPreview();
                 card.container.setVisible(false);
-                card.phase = "packed";
-                this.refreshDeck();
-                daySelect.disabled =
-                  !!this.activeDragCard ||
-                  this.packed === ITEMS.length;
-                this.updateProgress();
-                this.starPop();
+                this.chew(() => {
+                  card.phase = "packed";
+                  this.refreshDeck();
+                  daySelect.disabled =
+                    !!this.activeDragCard ||
+                    this.packed === ITEMS.length;
+                  this.updateProgress();
+                  this.starPop();
 
-                this.tweens.add({
-                  targets: this.bag,
-                  scaleX: this.bagScale * 1.09,
-                  scaleY: this.bagScale * 0.93,
-                  duration: 90,
-                  yoyo: true,
-                  repeat: 1,
-                });
-
-                if (this.packed === ITEMS.length) {
-                  this.time.delayedCall(750, () => {
-                    this.finish();
+                  if (this.packed === ITEMS.length) {
+                    this.time.delayedCall(750, () => {
+                      this.finish();
+                      this.pendingPackResolutions.delete(settle);
+                      settle(true);
+                    });
+                  } else {
+                    this.time.delayedCall(250, () => this.speakCurrent());
                     this.pendingPackResolutions.delete(settle);
                     settle(true);
-                  });
-                } else {
-                  this.time.delayedCall(250, () => this.speakCurrent());
-                  this.pendingPackResolutions.delete(settle);
-                  settle(true);
-                }
+                  }
+                });
               },
             });
             return result;

@@ -9,7 +9,7 @@
     "build:pages": "cross-env VITE_BASE=/$npm_package_name/ vite build",
     "preview": "vite preview",
     "lint": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test --experimental-strip-types src/magic-bag/school-data.test.ts"
+    "test": "node --test --experimental-strip-types src/magic-bag/*.test.ts"
   },
   "dependencies": {
     "react": "^18.3.1",
