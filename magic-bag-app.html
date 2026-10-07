@@ -844,7 +844,14 @@
       <section id="timetable-panel" class="timetable-panel" aria-labelledby="timetable-heading" aria-hidden="true" inert>
         <div class="timetable-inner">
           <div class="timetable-content">
-            <h2 id="timetable-heading"></h2>
+            <header class="packing-toolbar">
+              <h2 id="timetable-heading"></h2>
+              <button id="close-timetable" class="settings-button" type="button" aria-label="סגירת מערכת השעות" aria-controls="timetable-panel">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                  <path d="m6 6 12 12M18 6 6 18" />
+                </svg>
+              </button>
+            </header>
             <ol id="timetable-lessons" class="timetable-lessons" role="list"></ol>
             <p class="end-time"><output id="end-time"></output></p>
           </div>
