@@ -338,6 +338,10 @@ function requiredElement<T extends HTMLElement>(id: string): T {
 
         const daySelect = requiredElement<HTMLSelectElement>("school-day");
         const endTime = requiredElement<HTMLOutputElement>("end-time");
+        const timetableButton = requiredElement<HTMLButtonElement>("toggle-timetable");
+        const timetablePanel = requiredElement<HTMLElement>("timetable-panel");
+        const timetableHeading = requiredElement<HTMLHeadingElement>("timetable-heading");
+        const timetableLessons = requiredElement<HTMLOListElement>("timetable-lessons");
         // Deliberately start without guessing a day for the child. A day only
         // becomes active after an explicit choice in the selector.
         let selectedDay = -1;
@@ -355,14 +359,52 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           daySelect.append(option);
         });
 
-        function renderDayInfo() {
-          if (selectedDay < 0) {
-            endTime.closest<HTMLElement>(".end-time")!.hidden = true;
+        function setTimetableOpen(open: boolean): void {
+          const expanded = open && !!DATA.days[selectedDay];
+          timetableButton.setAttribute("aria-expanded", String(expanded));
+          timetablePanel.dataset.open = String(expanded);
+          timetablePanel.setAttribute("aria-hidden", String(!expanded));
+          timetablePanel.inert = !expanded;
+        }
+
+        timetableButton.addEventListener("click", () => {
+          setTimetableOpen(timetableButton.getAttribute("aria-expanded") !== "true");
+        }, { signal: appLifetime.signal });
+        document.addEventListener("keydown", (event) => {
+          if (
+            event.key !== "Escape" || event.defaultPrevented ||
+            timetableButton.getAttribute("aria-expanded") !== "true" ||
+            document.querySelector("dialog[open]")
+          ) return;
+          event.preventDefault();
+          setTimetableOpen(false);
+          timetableButton.focus();
+        }, { signal: appLifetime.signal });
+
+        function renderDayInfo(): void {
+          const day = DATA.days[selectedDay];
+          timetableButton.disabled = !day;
+          if (!day) {
+            setTimetableOpen(false);
+            timetableHeading.textContent = "";
+            timetableLessons.replaceChildren();
+            endTime.textContent = "";
             return;
           }
-          const day = DATA.days[selectedDay];
-          endTime.closest<HTMLElement>(".end-time")!.hidden = false;
-          endTime.textContent = day.endsAt ?? "לא נמסרה שעת סיום";
+          timetableHeading.textContent = `המערכת ליום ${day.label}`;
+          timetableLessons.replaceChildren(...day.lessons.map((lesson, index) => {
+            const row = document.createElement("li");
+            const number = document.createElement("span");
+            number.className = "lesson-number";
+            number.textContent = `שיעור ${index + 1}`;
+            const label = document.createElement("span");
+            label.textContent = lesson.label;
+            row.append(number, label);
+            return row;
+          }));
+          endTime.textContent = day.endsAt
+            ? `סיום הלימודים: ${day.endsAt}`
+            : "לא נמסרה שעת סיום";
           endTime.setAttribute(
             "aria-label",
             day.endsAt
@@ -775,11 +817,6 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                 `${item.label}, ${item.subject}, ${this.lessonLabel(item)}. ${genderText("גררי", "גרור")} לתיק. חץ מטה אורז מהמקלדת${item.audioUrl?.trim() ? genderText("; לחצי להשמעה", "; לחץ להשמעה") : ""}`,
               );
               button.setAttribute("aria-keyshortcuts", "ArrowDown");
-              const subject = document.createElement("span");
-              subject.className = "item-subject";
-              subject.textContent = [item.subject, this.lessonLabel(item)]
-                .filter(Boolean)
-                .join(" · ");
               const icon = document.createElement("span");
               icon.className = "item-icon";
               icon.setAttribute("aria-hidden", "true");
@@ -810,7 +847,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                 : genderText("גררי לתיק", "גרור לתיק");
               const copy = document.createElement("span");
               copy.className = "item-copy";
-              copy.append(subject, label, action);
+              copy.append(label, action);
               button.append(icon, copy);
               button.addEventListener("pointerdown", (event) => {
                 if (
@@ -1582,8 +1619,12 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             daySelect.value = String(selectedDay);
             return;
           }
-          selectedDay = Number(daySelect.value);
-          if (!Number.isInteger(selectedDay) || !DATA.days[selectedDay]) return;
+          const nextDay = Number(daySelect.value);
+          if (!daySelect.value || !Number.isInteger(nextDay) || !DATA.days[nextDay]) {
+            daySelect.value = selectedDay < 0 ? "" : String(selectedDay);
+            return;
+          }
+          selectedDay = nextDay;
           ITEMS = packingListFor(DATA, selectedDay);
           renderDayInfo();
           showDayStart();
