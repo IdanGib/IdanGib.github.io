@@ -34,6 +34,7 @@ declare namespace Phaser {
       fillEllipse(x: number, y: number, width: number, height: number): this; fillRoundedRect(x: number, y: number, width: number, height: number, radius: number): this;
       strokeRoundedRect(x: number, y: number, width: number, height: number, radius: number): this;
       beginPath(): this; arc(x: number, y: number, radius: number, start: number, end: number): this; strokePath(): this;
+      moveTo(x: number, y: number): this; lineTo(x: number, y: number): this;
     }
   }
   interface AddManager {

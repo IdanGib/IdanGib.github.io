@@ -11,13 +11,22 @@ export const MONSTER = {
     boy: {
       body: "monster-bag-boy-body.png", bodyBounds: [6, 6, 1012, 1080] as Rect,
       eyes: "monster-bag-boy-eyes.png", eyeBounds: [157, 209, 1213, 660] as Rect,
+      eyeSplitY: 383, lids: [[390, 213], [1138, 213]], lidColor: 0x07516b,
       eyeWidth: 490, eyeY: -151, mouthX: 0, mouthY: 5,
     },
     girl: {
       body: "monster-bag-girl-body.png", bodyBounds: [119, 85, 1015, 1081] as Rect,
       eyes: "monster-bag-girl-eyes.png", eyeBounds: [89, 221, 724, 405] as Rect,
+      eyeSplitY: 318, lids: [[243, 128], [660, 128]], lidColor: 0x421535,
       eyeWidth: 506, eyeY: -151, mouthX: 0, mouthY: 5,
     },
+  },
+  eyes: {
+    trackingX: 12, trackingY: 8, // Body-space pixels; about 3 × 2 screen pixels.
+    trackingDistance: 600, responseMs: 110,
+    lidCurve: 8, lidStroke: 6,
+    blink: { minDelayMs: 3000, maxDelayMs: 6000, closeMs: 70, holdMs: 40,
+      openMs: 110, doubleChance: 0.18, doubleGapMs: 140 },
   },
   mouth: {
     idle: { file: "mouth.png", frames: [[145, 328, 579, 285] as Rect] },
@@ -69,7 +78,17 @@ export class MonsterBag {
   readonly container: Phaser.GameObjects.Container;
   readonly foodLayer: Phaser.GameObjects.Container;
   readonly mouth: Phaser.GameObjects.Image;
+  private readonly eyeRig: Phaser.GameObjects.Container;
   private readonly eyes: Phaser.GameObjects.Image;
+  private readonly eyelids: Phaser.GameObjects.Graphics;
+  private readonly eyeScale: number;
+  private readonly eyeCenterY: number;
+  private readonly random: () => number;
+  private eyeTarget: Point | null = null;
+  private gaze = { x: 0, y: 0 };
+  private eyeOpening = 0;
+  private blinkTime: number; // Negative while waiting, then elapsed blink time.
+  private blinkFollowup = false;
   state: MonsterState = "idle";
   private variant: typeof MONSTER.variants[keyof typeof MONSTER.variants];
   private opening = 0; // 0 = resting image; 1..5 = opening strip poses.
@@ -81,26 +100,52 @@ export class MonsterBag {
   private disposed = false;
   private reducedMotion: boolean;
 
-  constructor(scene: Phaser.Scene, gender: "boy" | "girl", x: number, reducedMotion: boolean) {
+  constructor(scene: Phaser.Scene, gender: "boy" | "girl", x: number, reducedMotion: boolean, random = Math.random) {
     // Match the existing palette's girl fallback. Profile validation still runs first.
     const selected = gender === "boy" ? "boy" : "girl";
     this.variant = MONSTER.variants[selected];
     this.reducedMotion = reducedMotion;
+    this.random = random;
+    this.blinkTime = -this.nextBlinkDelay();
     addFrame(scene, bodyKey(selected), "body", this.variant.bodyBounds);
-    addFrame(scene, eyesKey(selected), "eyes", this.variant.eyeBounds);
+    const [eyeX, eyeY, eyeWidth, eyeHeight] = this.variant.eyeBounds;
+    const browHeight = this.variant.eyeSplitY - eyeY;
+    // Slice in the transparent gap, preserving the original assembled placement.
+    addFrame(scene, eyesKey(selected), "brows", [eyeX, eyeY, eyeWidth, browHeight]);
+    addFrame(scene, eyesKey(selected), "eyes", [eyeX, this.variant.eyeSplitY, eyeWidth, eyeHeight - browHeight]);
     for (const pose of ["idle", "open", "chew"] as const)
       MONSTER.mouth[pose].frames.forEach((rect, i) => addFrame(scene, mouthKey(pose), String(i), rect));
 
     this.container = scene.add.container(x, MONSTER.centerY).setScale(MONSTER.height / 1080);
     const body = scene.add.image(0, 0, bodyKey(selected), "body")
       .setScale(1080 / this.variant.bodyBounds[3]);
-    this.eyes = scene.add.image(0, this.variant.eyeY, eyesKey(selected), "eyes")
-      .setScale(this.variant.eyeWidth / this.variant.eyeBounds[2]);
+    this.eyeScale = this.variant.eyeWidth / eyeWidth;
+    this.eyeCenterY = browHeight / 2 * this.eyeScale;
+    this.eyeRig = scene.add.container(0, this.variant.eyeY);
+    const brows = scene.add.image(0, (browHeight - eyeHeight) / 2 * this.eyeScale, eyesKey(selected), "brows")
+      .setScale(this.eyeScale);
+    this.eyes = scene.add.image(0, this.eyeCenterY, eyesKey(selected), "eyes").setScale(this.eyeScale);
+    // The supplied pupils are baked into the eyes. Move the eye artwork gently;
+    // blink only this lower region so the eyebrows never flatten with it.
+    this.eyelids = scene.add.graphics().lineStyle(MONSTER.eyes.lidStroke, this.variant.lidColor);
+    for (const [center, halfWidth] of this.variant.lids) {
+      this.eyelids.beginPath();
+      for (let i = 0; i <= 16; i++) {
+        const t = i / 8 - 1;
+        const x = (center - eyeX - eyeWidth / 2 + halfWidth * t) * this.eyeScale;
+        const y = MONSTER.eyes.lidCurve * (1 - t * t);
+        if (i === 0) this.eyelids.moveTo(x, y);
+        else this.eyelids.lineTo(x, y);
+      }
+      this.eyelids.strokePath();
+    }
+    this.eyeRig.add([brows, this.eyes, this.eyelids]);
     this.foodLayer = scene.add.container(0, 0);
     this.mouth = scene.add.image(this.variant.mouthX, this.variant.mouthY, mouthKey("idle"), "0");
     // Food passes over the body, but behind the mouth/lips as it disappears.
-    this.container.add([body, this.eyes, this.foodLayer, this.mouth]);
+    this.container.add([body, this.eyeRig, this.foodLayer, this.mouth]);
     this.showPose("idle", 0);
+    this.updateEyes(0);
   }
 
   get busy(): boolean { return this.state === "eating" || this.state === "chewing"; }
@@ -138,6 +183,11 @@ export class MonsterBag {
 
   canInsert(point: Point): boolean { return this.distance(point) <= 1; }
 
+  /** A world-space card center, or null to ease the gaze back to neutral. */
+  trackTarget(point: Point | null): void {
+    if (!this.disposed) this.eyeTarget = point ? this.toLocal(point) : null;
+  }
+
   anticipate(dragging: boolean): void {
     if (this.disposed || this.busy) return;
     const next = dragging ? "anticipating" : this.opening > 0 ? "returning" : "idle";
@@ -162,6 +212,11 @@ export class MonsterBag {
 
   update(delta: number): void {
     if (this.disposed) return;
+    this.updateMouth(delta);
+    if (!this.disposed) this.updateEyes(delta);
+  }
+
+  private updateMouth(delta: number): void {
     if (this.state === "chewing") {
       this.chewElapsed += delta;
       const frameMs = 1000 / MONSTER.mouth.chewFps;
@@ -219,14 +274,68 @@ export class MonsterBag {
     this.mouth.setTexture(mouthKey(pose), String(index)).setScale(scale);
     // Keep the upper lip anchored as the enlarged opening grows downward.
     this.mouth.y = pose === "open" ? this.mouthTop + rect[3] * scale / 2 : this.variant.mouthY;
-    const eyeBottom = this.variant.eyeY + this.variant.eyeBounds[3] * this.variant.eyeWidth / this.variant.eyeBounds[2] / 2;
-    const eyeLift = Math.max(0, eyeBottom + MONSTER.mouth.eyeGap - this.mouthTop);
-    this.eyes.y = this.variant.eyeY - eyeLift * opening;
+    this.eyeOpening = opening;
+  }
+
+  private nextBlinkDelay(): number {
+    const blink = MONSTER.eyes.blink;
+    return blink.minDelayMs + this.random() * (blink.maxDelayMs - blink.minDelayMs);
+  }
+
+  private blinkOpenness(delta: number): number {
+    if (this.reducedMotion) return 1;
+    // Let an active blink finish, but don't start one during swallowing/chewing.
+    if (this.blinkTime < 0 && this.busy) return 1;
+    this.blinkTime += delta;
+    if (this.blinkTime < 0) return 1;
+    const blink = MONSTER.eyes.blink;
+    const smooth = (t: number) => t * t * (3 - 2 * t);
+    if (this.blinkTime < blink.closeMs) return 1 - smooth(this.blinkTime / blink.closeMs);
+    const opening = this.blinkTime - blink.closeMs - blink.holdMs;
+    if (opening < 0) return 0;
+    if (opening < blink.openMs) return smooth(opening / blink.openMs);
+    if (!this.blinkFollowup && this.random() < blink.doubleChance) {
+      this.blinkFollowup = true;
+      this.blinkTime = -blink.doubleGapMs;
+    } else {
+      this.blinkFollowup = false;
+      this.blinkTime = -this.nextBlinkDelay();
+    }
+    return 1;
+  }
+
+  private updateEyes(delta: number): void {
+    // Avoid a jump after a suspended tab; no independent timers or tweens to leak.
+    const elapsed = Math.min(delta, 64);
+    let x = 0, y = 0;
+    if (this.eyeTarget && !this.reducedMotion) {
+      const dx = this.eyeTarget.x;
+      const dy = this.eyeTarget.y - this.variant.eyeY - this.eyeCenterY;
+      const distance = Math.max(MONSTER.eyes.trackingDistance, Math.hypot(dx, dy));
+      x = dx / distance * MONSTER.eyes.trackingX;
+      y = dy / distance * MONSTER.eyes.trackingY;
+    }
+    const follow = 1 - Math.exp(-elapsed / MONSTER.eyes.responseMs);
+    this.gaze.x += (x - this.gaze.x) * follow;
+    this.gaze.y += (y - this.gaze.y) * follow;
+    const openness = this.blinkOpenness(elapsed);
+    this.eyes.setPosition(this.gaze.x, this.eyeCenterY + this.gaze.y)
+      .setScale(this.eyeScale, this.eyeScale * Math.max(0.02, openness))
+      .setAlpha(Math.min(1, openness / 0.15));
+    this.eyelids.setPosition(this.eyes.x, this.eyes.y)
+      .setAlpha(Math.max(0, Math.min(1, (0.3 - openness) / 0.2)));
+    const eyeBottom = this.variant.eyeY + this.variant.eyeBounds[3] * this.eyeScale / 2;
+    // Reserve room for downward tracking even at full eye height, so blinking
+    // never changes the lift or lets the enlarged mouth cover the eyes.
+    const gazeRoom = this.reducedMotion ? 0 : MONSTER.eyes.trackingY;
+    const lift = Math.max(0, eyeBottom + gazeRoom + MONSTER.mouth.eyeGap - this.mouthTop);
+    this.eyeRig.y = this.variant.eyeY - lift * this.eyeOpening;
   }
 
   destroy(): void {
     this.disposed = true;
     this.onOpen = undefined;
     this.onChewed = undefined;
+    this.eyeTarget = null;
   }
 }

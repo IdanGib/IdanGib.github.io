@@ -3,27 +3,36 @@ import { test } from "node:test";
 import { MONSTER, MonsterBag } from "./monster-bag.ts";
 
 class ObjectStub {
-  x = 0; y = 0; scaleX = 1; scaleY = 1; key = ""; frame = "";
+  x = 0; y = 0; scaleX = 1; scaleY = 1; alpha = 1; key = ""; frame = "";
   children: ObjectStub[] = [];
   setScale(x: number, y = x) { this.scaleX = x; this.scaleY = y; return this; }
   setTexture(key: string, frame: string) { this.key = key; this.frame = frame; return this; }
+  setPosition(x: number, y: number) { this.x = x; this.y = y; return this; }
+  setAlpha(alpha: number) { this.alpha = alpha; return this; }
+  lineStyle() { return this; }
+  beginPath() { return this; }
+  moveTo() { return this; }
+  lineTo() { return this; }
+  strokePath() { return this; }
   add(children: ObjectStub | ObjectStub[]) { this.children.push(...[children].flat()); return this; }
 }
-function fixture(gender: "boy" | "girl" = "boy", reducedMotion = false) {
+function fixture(gender: "boy" | "girl" = "boy", reducedMotion = false, random = () => 0.5) {
   const object = (x: number, y: number, key = "", frame = "") =>
     Object.assign(new ObjectStub(), { x, y, key, frame });
   const scene = {
-    add: { container: object, image: object },
+    add: { container: object, image: object, graphics: () => object(0, 0) },
     textures: { get: () => ({ has: () => false, add: () => {} }) },
   };
-  const monster = new MonsterBag(scene as never, gender, 210, reducedMotion);
+  const monster = new MonsterBag(scene as never, gender, 210, reducedMotion, random);
   const mouth = monster.mouth as unknown as ObjectStub;
+  const eyeRig = (monster.container as unknown as ObjectStub).children[1];
+  const [brows, eyes, eyelids] = eyeRig.children;
   const tick = (ms: number) => { for (let elapsed = 0; elapsed < ms; elapsed += 10) monster.update(10); };
   const pointAt = (distance: number) => ({
     x: monster.target.x + distance * MONSTER.proximity.radiusX * monster.container.scaleX,
     y: monster.target.y,
   });
-  return { monster, mouth, tick, pointAt };
+  return { monster, mouth, eyeRig, brows, eyes, eyelids, tick, pointAt };
 }
 
 test("drag anticipation holds open anywhere without moving or enlarging the insertion area", () => {
@@ -67,7 +76,7 @@ test("canceling and starting another drag reverse from the current frame", () =>
 
 for (const gender of ["boy", "girl"] as const) {
   test(`${gender}: tap opening precedes eating; chewing holds the closed middle frame and a stable body`, () => {
-    const { monster, mouth, tick } = fixture(gender);
+    const { monster, mouth, eyeRig, eyes, tick } = fixture(gender);
     let opened = 0, chewed = 0;
     const idleWidth = mouth.scaleX * MONSTER.mouth.idle.frames[0][2];
     monster.eat(() => opened++);
@@ -79,8 +88,8 @@ for (const gender of ["boy", "girl"] as const) {
     const openFrame = MONSTER.mouth.open.frames.at(-1)!;
     assert.ok(Math.abs(mouth.scaleX * openFrame[2] - idleWidth * 2) < 0.001);
     const variant = MONSTER.variants[gender];
-    const eyes = (monster.container as unknown as ObjectStub).children[1];
-    const eyeBottom = eyes.y + variant.eyeBounds[3] * eyes.scaleY / 2;
+    const eyeHeight = variant.eyeBounds[1] + variant.eyeBounds[3] - variant.eyeSplitY;
+    const eyeBottom = eyeRig.y + eyes.y + eyeHeight * eyes.scaleY / 2;
     const mouthTop = mouth.y - openFrame[3] * mouth.scaleY / 2;
     assert.ok(eyeBottom <= mouthTop - MONSTER.mouth.eyeGap + 0.001);
     assert.ok(Math.abs(monster.target.y - (monster.container.y + mouth.y * monster.container.scaleY)) < 0.001);
@@ -107,7 +116,72 @@ for (const gender of ["boy", "girl"] as const) {
     assert.equal(chewed, 1);
     assert.equal(opened, 1);
   });
+
+  test(`${gender}: bounded gaze tracks a scaled card, preserves mouth clearance and returns to neutral`, () => {
+    const { monster, mouth, eyeRig, brows, eyes, tick } = fixture(gender);
+    const variant = MONSTER.variants[gender];
+    const neutral = { x: eyes.x, y: eyes.y, browX: brows.x, browY: brows.y };
+    monster.container.setScale(0.43);
+    monster.container.setPosition(310, 470);
+    monster.anticipate(true);
+    monster.trackTarget({ x: 950, y: 1200 });
+    tick(600);
+    assert.ok(eyes.x > 0 && eyes.x <= MONSTER.eyes.trackingX);
+    assert.ok(eyes.y > neutral.y && eyes.y - neutral.y <= MONSTER.eyes.trackingY);
+    assert.equal(brows.x, neutral.browX);
+    assert.equal(brows.y, neutral.browY);
+    const eyeHeight = variant.eyeBounds[1] + variant.eyeBounds[3] - variant.eyeSplitY;
+    const eyeBottom = eyeRig.y + eyes.y + eyeHeight * eyes.scaleY / 2;
+    const mouthTop = mouth.y - MONSTER.mouth.open.frames[4][3] * mouth.scaleY / 2;
+    assert.ok(eyeBottom <= mouthTop - MONSTER.mouth.eyeGap + 0.001);
+    const liftedY = eyeRig.y;
+    monster.trackTarget({ x: -950, y: 0 }); tick(600);
+    assert.ok(eyes.x < 0 && eyes.y < neutral.y);
+    assert.equal(eyeRig.y, liftedY); // Brows don't move as the gaze changes.
+    monster.trackTarget(null); monster.anticipate(false); tick(1600);
+    assert.ok(Math.abs(eyes.x) < 0.001);
+    assert.ok(Math.abs(eyes.y - neutral.y) < 0.001);
+    assert.equal(eyeRig.y, variant.eyeY);
+    assert.equal(monster.state, "idle");
+  });
+
+  test(`${gender}: a blink closes only the eyes, follows with at most one double blink, then rests`, () => {
+    const { monster, brows, eyes, eyelids, tick } = fixture(gender, false, () => 0);
+    const browScale = brows.scaleY, eyeScale = eyes.scaleY;
+    tick(MONSTER.eyes.blink.minDelayMs);
+    tick(MONSTER.eyes.blink.closeMs);
+    assert.equal(eyes.alpha, 0);
+    assert.equal(eyelids.alpha, 1);
+    assert.equal(brows.scaleY, browScale);
+    assert.equal(monster.state, "idle");
+    tick(MONSTER.eyes.blink.holdMs + MONSTER.eyes.blink.openMs);
+    assert.equal(eyes.alpha, 1);
+    assert.equal(eyes.scaleY, eyeScale);
+    assert.equal(eyelids.alpha, 0);
+    tick(MONSTER.eyes.blink.doubleGapMs + MONSTER.eyes.blink.closeMs);
+    assert.equal(eyes.alpha, 0);
+    tick(MONSTER.eyes.blink.holdMs + MONSTER.eyes.blink.openMs);
+    for (let i = 0; i < 200; i++) {
+      tick(10);
+      assert.equal(eyes.scaleY, eyeScale);
+      assert.equal(eyes.alpha, 1);
+    }
+  });
 }
+
+test("eating defers new blinks, and destruction stops gaze and blink updates", () => {
+  const { monster, eyes, tick } = fixture("boy", false, () => 0);
+  const scale = eyes.scaleY;
+  monster.eat(() => {});
+  tick(7000);
+  assert.equal(eyes.scaleY, scale);
+  assert.equal(eyes.alpha, 1);
+  monster.trackTarget({ x: 1000, y: 300 }); tick(100);
+  const snapshot = { x: eyes.x, y: eyes.y, scaleY: eyes.scaleY, alpha: eyes.alpha };
+  monster.destroy();
+  monster.trackTarget({ x: -1000, y: 300 }); tick(7000);
+  assert.deepEqual({ x: eyes.x, y: eyes.y, scaleY: eyes.scaleY, alpha: eyes.alpha }, snapshot);
+});
 
 test("shutdown discards pending animation callbacks", () => {
   for (const duringChew of [false, true]) {
@@ -122,7 +196,14 @@ test("shutdown discards pending animation callbacks", () => {
 });
 
 test("reduced motion still opens, consumes, and completes without a bob", () => {
-  const { monster, mouth, tick } = fixture("girl", true);
+  const { monster, mouth, eyes, eyelids, tick } = fixture("girl", true);
+  const neutral = { x: eyes.x, y: eyes.y, scale: eyes.scaleY };
+  monster.trackTarget({ x: 1000, y: 0 }); tick(7000);
+  assert.equal(eyes.x, neutral.x);
+  assert.equal(eyes.y, neutral.y);
+  assert.equal(eyes.scaleY, neutral.scale);
+  assert.equal(eyes.alpha, 1);
+  assert.equal(eyelids.alpha, 0);
   let opened = false, complete = false;
   monster.eat(() => { opened = true; }); tick(10);
   assert.equal(opened, true);

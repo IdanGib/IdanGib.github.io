@@ -455,6 +455,8 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           }
 
           update(_time: number, delta: number): void {
+            const card = this.activeDragCard ?? (this.packingCard?.phase === "packing" ? this.packingCard : null);
+            this.monster?.trackTarget(card?.container ?? null);
             this.monster?.update(delta);
           }
 
