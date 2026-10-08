@@ -12,13 +12,13 @@ export const MONSTER = {
       body: "monster-bag-boy-body.png", bodyBounds: [6, 6, 1012, 1080] as Rect,
       eyes: "monster-bag-boy-eyes.png", eyeBounds: [157, 209, 1213, 660] as Rect,
       eyeSplitY: 383, lids: [[390, 213], [1138, 213]], lidColor: 0x07516b,
-      eyeWidth: 490, eyeY: -151, mouthX: 0, mouthY: 5,
+      eyeWidth: 490, eyeY: -151, mouthX: 0, mouthY: 70,
     },
     girl: {
       body: "monster-bag-girl-body.png", bodyBounds: [119, 85, 1015, 1081] as Rect,
       eyes: "monster-bag-girl-eyes.png", eyeBounds: [89, 221, 724, 405] as Rect,
       eyeSplitY: 318, lids: [[243, 128], [660, 128]], lidColor: 0x421535,
-      eyeWidth: 506, eyeY: -151, mouthX: 0, mouthY: 5,
+      eyeWidth: 506, eyeY: -151, mouthX: 0, mouthY: 70,
     },
   },
   eyes: {

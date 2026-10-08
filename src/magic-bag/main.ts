@@ -610,9 +610,6 @@ function requiredElement<T extends HTMLElement>(id: string): T {
 
           drawMonster(): void {
             this.monster = new MonsterBag(this, currentProfile().gender, W / 2, reducedMotion);
-            this.crispText(W / 2, 778, `תיק הקסם של ${currentProfile().name}`, {
-              fontFamily: "Arial", fontSize: 21, fontStyle: "bold", color: palette().copy,
-            }).setOrigin(0.5);
           }
 
           drawProgress() {
