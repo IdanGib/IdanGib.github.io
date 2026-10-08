@@ -13,6 +13,7 @@ declare namespace Phaser {
     off(event: string, callback: (...args: never[]) => void, context?: object): void;
   }
   namespace GameObjects {
+    class Image extends GameObject { setTexture(key: string, frame?: string): this; }
     class GameObject {
       x: number; y: number; alpha: number; angle: number; scaleX: number; scaleY: number;
       setOrigin(x: number, y?: number): this; setAlpha(value: number): this;
@@ -36,6 +37,7 @@ declare namespace Phaser {
     }
   }
   interface AddManager {
+    image(x: number, y: number, key: string, frame?: string): GameObjects.Image;
     text(x: number, y: number, value: string, style?: object): GameObjects.Text;
     graphics(): GameObjects.Graphics; container(x: number, y: number): GameObjects.Container;
     rectangle(x: number, y: number, width: number, height: number, color?: number, alpha?: number): GameObjects.GameObject;
@@ -47,6 +49,12 @@ declare namespace Phaser {
   class Scene {
     constructor(key: string);
     add: AddManager; tweens: TweenManager; time: TimeManager; events: EventEmitter;
+    load: { image(key: string, url: string): void };
+    textures: {
+      exists(key: string): boolean;
+      addImage(key: string, source: HTMLImageElement): void;
+      get(key: string): { has(frame: string): boolean; add(name: string, sourceIndex: number, x: number, y: number, width: number, height: number): void };
+    };
     scale: EventEmitter; scene: SceneController; game: Game;
     cameras: { main: { setZoom(value: number): this["cameras"]["main"]; centerOn(x: number, y: number): this["cameras"]["main"]; setBackgroundColor(color: string): void } };
     children: { bringToTop(value: GameObjects.GameObject): void };

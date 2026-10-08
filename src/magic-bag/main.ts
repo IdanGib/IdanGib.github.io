@@ -1,3 +1,4 @@
+import { MONSTER, MonsterBag, preloadMonster } from "./monster-bag";
 import {
   packingListFor,
   resolveMediaUrl,
@@ -38,11 +39,6 @@ const GIRL_PALETTE = {
   page: "#fff8fd", pageNumber: 0xfff8fd, blobOne: 0xffd9eb,
   blobTwo: 0xded7ff, sparkleOne: "#e5b6d1", sparkleTwo: "#bfb4ee",
   heading: "#5f4976", copy: "#7f6d92", label: "#745c87",
-  shadow: 0x684c73, mascot: 0xffb8d7, mascotEar: 0xffcde3,
-  mascotInk: 0x4f405e, mascotCheek: 0xff80ae, bagStrap: 0xa17be7,
-  bagStrapHover: 0xb689ff, bag: 0x9d73df, bagHover: 0xb688ff,
-  bagPanel: 0xcaa9f6, bagPanelHover: 0xddc3ff, bagTop: 0x8259c2,
-  bagPocket: 0xff8ebe, bagPocketLine: 0xffbad7, progress: "#a889c5",
   overlay: 0x4a3557, dialogBorder: 0xffadd2, dialogTitle: "#72548b",
   dialogCopy: "#927ba1", accent: 0x9d73df,
 };
@@ -51,11 +47,6 @@ const BOY_PALETTE: typeof GIRL_PALETTE = {
   page: "#f4fbff", pageNumber: 0xf4fbff, blobOne: 0xcdefff,
   blobTwo: 0xd5e6ff, sparkleOne: "#79c9e6", sparkleTwo: "#8faee5",
   heading: "#24516f", copy: "#527087", label: "#31647f",
-  shadow: 0x24506a, mascot: 0x58c7df, mascotEar: 0x92e0ee,
-  mascotInk: 0x203f55, mascotCheek: 0x43a9d1, bagStrap: 0x287fb5,
-  bagStrapHover: 0x43a9d1, bag: 0x2789c7, bagHover: 0x36a4d8,
-  bagPanel: 0x72c5e8, bagPanelHover: 0x91d8ef, bagTop: 0x176b9c,
-  bagPocket: 0x50c6af, bagPocketLine: 0x92e1d1, progress: "#6598b6",
   overlay: 0x163c50, dialogBorder: 0x60c8dd, dialogTitle: "#24516f",
   dialogCopy: "#527087", accent: 0x2789c7,
 };
@@ -441,11 +432,8 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           returningCard: CardState | null = null;
           suppressClickUntil = 0;
           dragPreview: HTMLButtonElement | null = null;
-          mascot!: Phaser.GameObjects.Container;
-          mascotScale = 1;
-          bag!: Phaser.GameObjects.Container;
-          bagGraphics!: Phaser.GameObjects.Graphics;
-          bagScale = 1;
+          monster!: MonsterBag;
+          packingCard: CardState | null = null;
           progressMeter: HTMLDivElement | null = null;
           daySelectionPrompt: HTMLParagraphElement | null = null;
           progressText: HTMLSpanElement | null = null;
@@ -460,6 +448,14 @@ function requiredElement<T extends HTMLElement>(id: string): T {
 
           constructor() {
             super("MagicBag");
+          }
+
+          preload(): void {
+            preloadMonster(this, new URL("assets/monster/", dataUrl));
+          }
+
+          update(_time: number, delta: number): void {
+            this.monster?.update(delta);
           }
 
           crispText(x: number, y: number, text: string, style: Record<string, unknown> = {}): Phaser.GameObjects.Text {
@@ -480,6 +476,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             this.activeDragPointerId = null;
             this.pendingDrag = null;
             this.returningCard = null;
+            this.packingCard = null;
             this.suppressClickUntil = 0;
             this.dragPreview = null;
             daySelect.disabled = false;
@@ -491,17 +488,20 @@ function requiredElement<T extends HTMLElement>(id: string): T {
 
             this.drawBackground();
             this.drawHeader();
-            this.drawMascot();
-            this.drawBag();
+            this.drawMonster();
             this.drawCards();
             this.setupDrag();
             this.setupKeyboardControls();
             this.drawProgress();
             this.updateProgress();
             this.scale.on("resize", this.positionControls, this);
-            this.events.once("shutdown", () => {
+            const cleanup = () => {
+              this.events.off("shutdown", cleanup);
+              this.events.off("destroy", cleanup);
               this.scale.off("resize", this.positionControls, this);
               stopVoice();
+              this.monster.destroy();
+              this.cards.forEach((card) => this.tweens.killTweensOf(card.container));
               controls.replaceChildren();
               controls.removeAttribute("role");
               controls.removeAttribute("aria-modal");
@@ -509,7 +509,9 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               this.clearDragPreview();
               this.pendingPackResolutions.forEach((resolve) => resolve(false));
               this.pendingPackResolutions.clear();
-            });
+            };
+            this.events.once("shutdown", cleanup);
+            this.events.once("destroy", cleanup);
             if (data.packedIds?.length) {
               for (const card of this.cards) {
                 if (!data.packedIds.includes(card.item.id)) continue;
@@ -604,120 +606,11 @@ function requiredElement<T extends HTMLElement>(id: string): T {
 
           }
 
-          drawMascot() {
-            const mascotX = portrait ? 50 : W / 2 - 235;
-            const mascotY = 650;
-            this.mascotScale = portrait ? 0.42 : 0.8;
-            this.mascot = this.add
-              .container(mascotX, mascotY)
-              .setScale(this.mascotScale);
-
-            const g = this.add.graphics();
-            g.fillStyle(palette().shadow, 0.12);
-            g.fillEllipse(0, 79, 135, 28);
-
-            g.fillStyle(palette().mascot);
-            g.fillCircle(0, 0, 64);
-            g.fillStyle(palette().mascotEar);
-            g.fillCircle(-30, -51, 25);
-            g.fillCircle(30, -51, 25);
-
-            g.fillStyle(palette().mascotInk);
-            g.fillCircle(-20, -6, 6);
-            g.fillCircle(20, -6, 6);
-
-            g.lineStyle(4, palette().mascotInk);
-            g.beginPath();
-            g.arc(0, 8, 22, 0.15, Math.PI - 0.15);
-            g.strokePath();
-
-            g.fillStyle(palette().mascotCheek, 0.45);
-            g.fillCircle(-40, 17, 11);
-            g.fillCircle(40, 17, 11);
-
-            this.mascot.add(g);
-
-            this.tweens.add({
-              targets: this.mascot,
-              y: reducedMotion ? mascotY : mascotY - 10,
-              angle: reducedMotion ? 0 : 2.5,
-              duration: 1250,
-              yoyo: true,
-              repeat: -1,
-              ease: "Sine.easeInOut",
-            });
-
-            this.crispText(mascotX, portrait ? 712 : 745, currentProfile().name, {
-              fontFamily: "Arial",
-              fontSize: 20,
-              fontStyle: "bold",
-              color: palette().label,
+          drawMonster(): void {
+            this.monster = new MonsterBag(this, currentProfile().gender, W / 2, reducedMotion);
+            this.crispText(W / 2, 778, `תיק הקסם של ${currentProfile().name}`, {
+              fontFamily: "Arial", fontSize: 21, fontStyle: "bold", color: palette().copy,
             }).setOrigin(0.5);
-          }
-
-          drawBag() {
-            const bagX = W / 2;
-            const bagY = 640;
-            this.bagScale = 0.82;
-            this.bag = this.add.container(bagX, bagY).setScale(this.bagScale);
-            this.bagGraphics = this.add.graphics();
-
-            const shadow = this.add.graphics();
-            shadow.fillStyle(palette().shadow, 0.12);
-            shadow.fillEllipse(0, 146, 260, 48);
-
-            const star = this.crispText(0, -5, "★", {
-              fontFamily: "Arial",
-              fontSize: 56,
-              color: "#fff1a5",
-            }).setOrigin(0.5);
-
-            this.bag.add([shadow, this.bagGraphics, star]);
-            this.redrawBag(false);
-
-            this.crispText(bagX, 772, "תיק הקסם 🎒", {
-              fontFamily: "Arial",
-              fontSize: 21,
-              fontStyle: "bold",
-              color: palette().copy,
-            }).setOrigin(0.5);
-
-            this.tweens.add({
-              targets: this.bag,
-              y: reducedMotion ? bagY : bagY - 10,
-              duration: 1700,
-              yoyo: true,
-              repeat: -1,
-              ease: "Sine.easeInOut",
-            });
-          }
-
-          redrawBag(hovered: boolean): void {
-            const g = this.bagGraphics;
-            g.clear();
-
-            g.lineStyle(18, hovered ? palette().bagStrapHover : palette().bagStrap, 1);
-            g.beginPath();
-            g.arc(-64, 12, 83, 1.65, 4.55);
-            g.strokePath();
-            g.beginPath();
-            g.arc(64, 12, 83, -1.4, 1.4);
-            g.strokePath();
-
-            g.fillStyle(hovered ? palette().bagHover : palette().bag);
-            g.fillRoundedRect(-108, -120, 216, 250, 48);
-
-            g.fillStyle(hovered ? palette().bagPanelHover : palette().bagPanel);
-            g.fillRoundedRect(-92, -101, 184, 211, 40);
-
-            g.fillStyle(palette().bagTop);
-            g.fillRoundedRect(-78, -98, 156, 52, 25);
-
-            g.fillStyle(palette().bagPocket);
-            g.fillRoundedRect(-66, 38, 132, 58, 22);
-
-            g.lineStyle(3, palette().bagPocketLine);
-            g.strokeRoundedRect(-66, 38, 132, 58, 22);
           }
 
           drawProgress() {
@@ -819,7 +712,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               button.style.setProperty("--item-tint", `${color}22`);
               button.setAttribute(
                 "aria-label",
-                `${item.label}, ${item.subject}, ${this.lessonLabel(item)}. ${genderText("גררי", "גרור")} לתיק. חץ מטה אורז מהמקלדת${item.audioUrl?.trim() ? genderText("; לחצי להשמעה", "; לחץ להשמעה") : ""}`,
+                `${item.label}, ${item.subject}, ${this.lessonLabel(item)}. ${genderText("גררי", "גרור")} לתיק או לחצו לאריזה. חץ מטה אורז מהמקלדת`,
               );
               button.setAttribute("aria-keyshortcuts", "ArrowDown");
               const icon = document.createElement("span");
@@ -847,9 +740,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               label.textContent = item.label;
               const action = document.createElement("span");
               action.className = "item-action";
-              action.textContent = item.audioUrl?.trim()
-                ? genderText("גררי לתיק או לחצי להשמעה", "גרור לתיק או לחץ להשמעה")
-                : genderText("גררי לתיק", "גרור לתיק");
+              action.textContent = genderText("גררי לתיק או לחצי לאריזה", "גרור לתיק או לחץ לאריזה");
               const copy = document.createElement("span");
               copy.className = "item-copy";
               copy.append(label, action);
@@ -878,19 +769,11 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                 )
                   return;
                 hasInteracted = true;
-                button.classList.remove("item-button-clicked");
-                // Restart the small acknowledgement animation on repeated clicks.
-                void button.offsetWidth;
-                button.classList.add("item-button-clicked");
-                button.addEventListener(
-                  "animationend",
-                  () => button.classList.remove("item-button-clicked"),
-                  { once: true },
-                );
                 const audioUrl = item.audioUrl?.trim();
                 // A card tap is an explicit request from the child. Do not drop
                 // it just because the longer welcome recording is still playing.
                 if (audioUrl) this.speak(audioUrl, true);
+                void this.pack(card);
               });
               button.addEventListener("keydown", (event) => {
                 if (event.key !== "ArrowDown" || !this.canPack(card)) return;
@@ -908,6 +791,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             return (
               !this.finished &&
               !this.returningCard &&
+              !this.packingCard &&
               !this.activeDragCard &&
               card.phase === "ready" &&
               card === this.cards.find((entry) => entry.phase !== "packed")
@@ -931,6 +815,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               card.button.setAttribute("aria-hidden", String(!front));
               card.button.setAttribute("data-deck-front", String(front));
               card.button.setAttribute("data-deck-depth", String(depth));
+              if (card.phase === "packing" || card.phase === "packed") card.button.hidden = true;
               card.button.style.zIndex = String(3 - depth);
               card.button.style.setProperty(
                 "--deck-y",
@@ -1047,27 +932,11 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             );
           }
 
-          bagBounds(): { left: number; right: number; top: number; bottom: number } {
-            // The backpack itself is animated, so derive the drop area from its
-            // CURRENT x/y rather than from a fixed rectangle created earlier.
-            return {
-              left: this.bag.x - 118 * this.bagScale,
-              right: this.bag.x + 118 * this.bagScale,
-              top: this.bag.y - 150 * this.bagScale,
-              bottom: this.bag.y + 145 * this.bagScale,
-            };
-          }
-
-          isInsideBag(x: number, y: number): boolean {
-            const { left, right, top, bottom } = this.bagBounds();
-            return x >= left && x <= right && y >= top && y <= bottom;
-          }
-
           dragScaleAt(x: number, y: number): number {
-            const { left, right, top, bottom } = this.bagBounds();
-            const dx = Math.max(left - x, 0, x - right);
-            const dy = Math.max(top - y, 0, y - bottom);
-            const proximity = Math.max(0, 1 - Math.hypot(dx, dy) / 180);
+            const distance = this.monster.distance({ x, y });
+            const proximity = Math.max(0, Math.min(1,
+              (MONSTER.proximity.shrinkDistance - distance) / (MONSTER.proximity.shrinkDistance - 1),
+            ));
             const eased = proximity * proximity * (3 - 2 * proximity);
             return 1 - 0.55 * eased;
           }
@@ -1088,7 +957,13 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           setupDrag() {
             const lifetime = new AbortController();
             const options = { signal: lifetime.signal };
-            this.events.once("shutdown", () => lifetime.abort());
+            const abort = () => {
+              lifetime.abort();
+              this.events.off("shutdown", abort);
+              this.events.off("destroy", abort);
+            };
+            this.events.once("shutdown", abort);
+            this.events.once("destroy", abort);
             const releaseCapture = (pending: PendingDrag | null) => {
               if (pending?.card.button.hasPointerCapture(pending.pointerId))
                 pending.card.button.releasePointerCapture(pending.pointerId);
@@ -1102,8 +977,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               releaseCapture(pending);
               if (!card) return;
               this.suppressClickUntil = performance.now() + 400;
-              this.redrawBag(false);
-              this.bag.setScale(this.bagScale);
+              this.monster.anticipate(false);
               this.returnHome(card);
             };
             window.addEventListener(
@@ -1141,9 +1015,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                 }
                 const card = this.activeDragCard;
                 this.updateDraggedCard(card, pointer);
-                const over = this.isInsideBag(pointer.x, pointer.y);
-                this.redrawBag(over);
-                this.bag.setScale(this.bagScale * (over ? 1.06 : 1));
+                this.monster.approach(card.container);
               },
               options,
             );
@@ -1159,16 +1031,16 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                 releaseCapture(pending);
                 if (!card) return;
                 this.suppressClickUntil = performance.now() + 400;
-                this.redrawBag(false);
-                this.bag.setScale(this.bagScale);
                 const pointer = this.pointerPosition(event);
                 this.updateDraggedCard(card, pointer);
-                if (this.isInsideBag(pointer.x, pointer.y)) this.pack(card);
+                if (this.monster.canInsert(card.container)) void this.pack(card);
                 else this.returnHome(card);
               },
               options,
             );
-            window.addEventListener("pointercancel", cancelDrag, options);
+            window.addEventListener("pointercancel", (event) => {
+              if (event.pointerId === this.pendingDrag?.pointerId) cancelDrag();
+            }, options);
             window.addEventListener("blur", cancelDrag, options);
             controls.addEventListener(
               "lostpointercapture",
@@ -1180,67 +1052,116 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             );
           }
 
+          eatingCard(card: CardState): Phaser.GameObjects.Container {
+            // Dragging keeps the accessible DOM card. Accepted items enter the
+            // Phaser character's food layer so its mouth can actually occlude them.
+            const food = this.add.container(0, 0);
+            const width = portrait ? 304 : 380;
+            const background = this.add.graphics();
+            background.fillStyle(0xffffff);
+            background.fillRoundedRect(-width / 2, -105, width, 210, 28);
+            background.lineStyle(2, card.item.color);
+            background.strokeRoundedRect(-width / 2, -105, width, 210, 28);
+            food.add(background);
+            const image = card.button.querySelector("img");
+            const imageKey = `packing-image:${image?.src ?? ""}`;
+            if (image?.complete && image.naturalWidth && new URL(image.src).origin === location.origin) {
+              if (!this.textures.exists(imageKey)) this.textures.addImage(imageKey, image);
+              const picture = this.add.image(width / 2 - 76, 0, imageKey);
+              picture.setScale(Math.min(112 / image.naturalWidth, 166 / image.naturalHeight));
+              food.add(picture);
+            } else {
+              food.add(this.crispText(width / 2 - 76, 0, card.item.icon, {
+                fontFamily: "Arial", fontSize: 64,
+              }).setOrigin(0.5));
+            }
+            food.add(this.crispText(-62, 0, card.item.label, {
+              fontFamily: "Arial", fontSize: 22, fontStyle: "bold", color: palette().heading,
+              align: "center", rtl: true, wordWrap: { width: width - 170 },
+            }).setOrigin(0.5));
+            this.monster.foodLayer.add(food);
+            return food;
+          }
+
           pack(card: CardState): Promise<boolean> {
-            if (!this.canPack(card) && card.phase !== "dragging") return Promise.resolve(false);
+            const acceptedDrag = card.phase === "dragging" &&
+              card === this.cards.find((entry) => entry.phase !== "packed") &&
+              !this.finished && !this.packingCard && !this.returningCard;
+            if (!this.canPack(card) && !acceptedDrag) return Promise.resolve(false);
+            // Arrow Down can arrive while a pointer is still held on the card.
+            // Release that pending gesture before it can start a second flight.
+            const pending = this.pendingDrag;
+            this.pendingDrag = null;
+            this.activeDragCard = null;
+            this.activeDragPointerId = null;
+            if (pending?.card.button.hasPointerCapture(pending.pointerId))
+              pending.card.button.releasePointerCapture(pending.pointerId);
             let settle!: (completed: boolean) => void;
             const result = new Promise<boolean>((resolve) => { settle = resolve; });
             this.pendingPackResolutions.add(settle);
+            this.packingCard = card;
             this.tweens.killTweensOf(card.container);
             if (!card.prepared) this.prepareCard(card);
             if (!this.dragPreview) this.showDragPreview(card);
-            card.button.hidden = true;
             card.phase = "packing";
             daySelect.disabled = true;
             this.refreshDeck();
-            this.sparkles(card.container.x, card.container.y, card.item.color);
 
-            this.tweens.add({
-              targets: card.container,
-              x: this.bag.x,
-              y: this.bag.y,
-              scale: 0.12,
-              alpha: 0,
-              angle: Phaser.Math.Between(-20, 20),
-              duration: 480,
-              ease: "Cubic.easeIn",
-              onUpdate: () => this.positionDragPreview(card),
-              onComplete: () => {
-                this.clearDragPreview();
-                card.container.setVisible(false);
-                card.phase = "packed";
-                this.refreshDeck();
-                daySelect.disabled =
-                  !!this.activeDragCard ||
-                  this.packed === ITEMS.length;
-                this.updateProgress();
-                this.starPop();
-
-                this.tweens.add({
-                  targets: this.bag,
-                  scaleX: this.bagScale * 1.09,
-                  scaleY: this.bagScale * 0.93,
-                  duration: 90,
-                  yoyo: true,
-                  repeat: 1,
-                });
-
-                if (this.packed === ITEMS.length) {
-                  this.time.delayedCall(750, () => {
-                    this.finish();
-                    this.pendingPackResolutions.delete(settle);
-                    settle(true);
+            this.monster.eat(() => {
+              this.clearDragPreview();
+              const food = this.eatingCard(card);
+              const positionFood = () => {
+                const point = this.monster.toLocal(card.container);
+                food.setPosition(point.x, point.y)
+                  .setScale(card.container.scaleX / this.monster.container.scaleX)
+                  .setAngle(card.container.angle).setAlpha(card.container.alpha);
+              };
+              positionFood();
+              this.sparkles(card.container.x, card.container.y, card.item.color);
+              const target = this.monster.target;
+              this.tweens.add({
+                targets: card.container,
+                x: target.x, y: target.y,
+                scale: 0.015, alpha: 0,
+                angle: reducedMotion ? 0 : Phaser.Math.Between(-12, 12),
+                duration: reducedMotion ? 100 : MONSTER.eatingMs,
+                ease: "Cubic.easeIn",
+                onUpdate: positionFood,
+                onComplete: () => {
+                  food.destroy();
+                  card.container.setVisible(false);
+                  // This remains the only place an insertion advances gameplay.
+                  card.phase = "packed";
+                  this.refreshDeck();
+                  this.updateProgress();
+                  this.starPop();
+                  this.monster.chew(() => {
+                    if (this.packed === ITEMS.length) {
+                      this.time.delayedCall(MONSTER.completionPauseMs, () => {
+                        this.packingCard = null;
+                        this.finish();
+                        this.pendingPackResolutions.delete(settle);
+                        settle(true);
+                      });
+                    } else {
+                      this.packingCard = null;
+                      this.refreshDeck();
+                      daySelect.disabled = false;
+                      this.time.delayedCall(250, () => {
+                        if (!this.packingCard) this.speakCurrent();
+                      });
+                      this.pendingPackResolutions.delete(settle);
+                      settle(true);
+                    }
                   });
-                } else {
-                  this.time.delayedCall(250, () => this.speakCurrent());
-                  this.pendingPackResolutions.delete(settle);
-                  settle(true);
-                }
-              },
+                },
+              });
             });
             return result;
           }
 
           returnHome(card: CardState): void {
+            this.monster.anticipate(false);
             this.tweens.killTweensOf(card.container);
             this.returningCard = card;
             card.phase = "returning";
@@ -1350,8 +1271,8 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             star.className = "jumping-star";
             star.textContent = "⭐";
             star.setAttribute("aria-hidden", "true");
-            star.style.left = `${canvas.left - bounds.left + this.bag.x * sx}px`;
-            star.style.top = `${canvas.top - bounds.top + (this.bag.y - 155) * sy}px`;
+            star.style.left = `${canvas.left - bounds.left + this.monster.target.x * sx}px`;
+            star.style.top = `${canvas.top - bounds.top + (this.monster.container.y - MONSTER.height / 2) * sy}px`;
             star.style.setProperty("--star-size", `${54 * sy}px`);
             star.style.setProperty("--star-mid", `${48 * sy}px`);
             star.style.setProperty("--star-rise", `${72 * sy}px`);
@@ -1362,6 +1283,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           }
 
           finish() {
+            if (this.finished) return;
             this.finished = true;
             if (this.stackPanel) this.stackPanel.hidden = true;
             daySelect.disabled = false;
@@ -1371,15 +1293,6 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             // or item recording has not finished yet.
             this.speak(finalMessage.humanAudioUrl, true);
             this.confetti();
-
-            this.tweens.add({
-              targets: this.mascot,
-              scale: this.mascotScale * (reducedMotion ? 1 : 1.22),
-              angle: { from: -7, to: 7 },
-              duration: 170,
-              yoyo: true,
-              repeat: 5,
-            });
 
             // Modal is built with top-level objects. In Phaser this is much more
             // reliable for pointer input than putting an interactive hit area on
@@ -1619,7 +1532,8 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             !scene?.scene.isActive() ||
             scene.activeDragCard ||
             scene.pendingDrag ||
-            scene.returningCard
+            scene.returningCard ||
+            scene.packingCard
           ) {
             daySelect.value = String(selectedDay);
             return;
@@ -1763,6 +1677,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                 scene.activeDragCard ||
                 scene.pendingDrag ||
                 scene.returningCard ||
+                scene.packingCard ||
                 scene.cards.some((card) => card.phase === "packing")
               )
                 throw new Error("Wait for the current action to finish.");
