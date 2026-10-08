@@ -31,6 +31,8 @@ export const MONSTER = {
       [1818, 277, 328, 167],
     ] as Rect[] },
     width: 242,
+    openScale: 2,
+    eyeGap: 18,
     closedFrame: 3,
     openFps: 18,
     chewFps: 20,
@@ -38,7 +40,7 @@ export const MONSTER = {
     chewCycleMs: 200,
     chewAmplitude: 8, // Body-space pixels: about 2 screen pixels at normal size.
   },
-  proximity: { radiusX: 285, radiusY: 210, enter: 1.4, exit: 1.7, shrinkDistance: 2.8 },
+  proximity: { radiusX: 285, radiusY: 210, shrinkDistance: 2.8 },
   eatingMs: 480,
   completionPauseMs: 180,
 } as const;
@@ -67,6 +69,7 @@ export class MonsterBag {
   readonly container: Phaser.GameObjects.Container;
   readonly foodLayer: Phaser.GameObjects.Container;
   readonly mouth: Phaser.GameObjects.Image;
+  private readonly eyes: Phaser.GameObjects.Image;
   state: MonsterState = "idle";
   private variant: typeof MONSTER.variants[keyof typeof MONSTER.variants];
   private opening = 0; // 0 = resting image; 1..5 = opening strip poses.
@@ -91,12 +94,12 @@ export class MonsterBag {
     this.container = scene.add.container(x, MONSTER.centerY).setScale(MONSTER.height / 1080);
     const body = scene.add.image(0, 0, bodyKey(selected), "body")
       .setScale(1080 / this.variant.bodyBounds[3]);
-    const eyes = scene.add.image(0, this.variant.eyeY, eyesKey(selected), "eyes")
+    this.eyes = scene.add.image(0, this.variant.eyeY, eyesKey(selected), "eyes")
       .setScale(this.variant.eyeWidth / this.variant.eyeBounds[2]);
     this.foodLayer = scene.add.container(0, 0);
     this.mouth = scene.add.image(this.variant.mouthX, this.variant.mouthY, mouthKey("idle"), "0");
     // Food passes over the body, but behind the mouth/lips as it disappears.
-    this.container.add([body, eyes, this.foodLayer, this.mouth]);
+    this.container.add([body, this.eyes, this.foodLayer, this.mouth]);
     this.showPose("idle", 0);
   }
 
@@ -110,30 +113,34 @@ export class MonsterBag {
   }
 
   get target(): Point {
+    // A fixed fully-open target avoids moving the drop area during the animation.
+    const open = MONSTER.mouth.open.frames[MONSTER.mouth.open.frames.length - 1];
+    const y = this.mouthTop + open[3] * MONSTER.mouth.width * MONSTER.mouth.openScale / open[2] / 2;
     return {
       x: this.container.x + this.variant.mouthX * this.container.scaleX,
-      y: this.container.y + this.variant.mouthY * this.container.scaleY,
+      y: this.container.y + y * this.container.scaleY,
     };
+  }
+
+  private get mouthTop(): number {
+    const idle = MONSTER.mouth.idle.frames[0];
+    return this.variant.mouthY - idle[3] * MONSTER.mouth.width / idle[2] / 2;
   }
 
   distance(point: Point): number {
     const local = this.toLocal(point);
+    const target = this.toLocal(this.target);
     return Math.hypot(
-      (local.x - this.variant.mouthX) / MONSTER.proximity.radiusX,
-      (local.y - this.variant.mouthY) / MONSTER.proximity.radiusY,
+      (local.x - target.x) / MONSTER.proximity.radiusX,
+      (local.y - target.y) / MONSTER.proximity.radiusY,
     );
   }
 
   canInsert(point: Point): boolean { return this.distance(point) <= 1; }
 
-  approach(point: Point): void {
-    const threshold = this.state === "anticipating" ? MONSTER.proximity.exit : MONSTER.proximity.enter;
-    this.anticipate(this.distance(point) <= threshold);
-  }
-
-  anticipate(nearby: boolean): void {
+  anticipate(dragging: boolean): void {
     if (this.disposed || this.busy) return;
-    const next = nearby ? "anticipating" : this.opening > 0 ? "returning" : "idle";
+    const next = dragging ? "anticipating" : this.opening > 0 ? "returning" : "idle";
     if (this.state === next) return;
     this.state = next;
     this.frameElapsed = 0;
@@ -201,11 +208,20 @@ export class MonsterBag {
   }
 
   private showPose(pose: "idle" | "open" | "chew", index: number): void {
-    this.mouth.y = this.variant.mouthY;
-    if (this.pose === `${pose}:${index}`) return;
+    if (this.pose === `${pose}:${index}`) {
+      if (pose === "chew") this.mouth.y = this.variant.mouthY;
+      return;
+    }
     this.pose = `${pose}:${index}`;
     const rect = MONSTER.mouth[pose].frames[index];
-    this.mouth.setTexture(mouthKey(pose), String(index)).setScale(MONSTER.mouth.width / rect[2]);
+    const opening = pose === "open" ? (index + 1) / MONSTER.mouth.open.frames.length : 0;
+    const scale = MONSTER.mouth.width * (1 + opening * (MONSTER.mouth.openScale - 1)) / rect[2];
+    this.mouth.setTexture(mouthKey(pose), String(index)).setScale(scale);
+    // Keep the upper lip anchored as the enlarged opening grows downward.
+    this.mouth.y = pose === "open" ? this.mouthTop + rect[3] * scale / 2 : this.variant.mouthY;
+    const eyeBottom = this.variant.eyeY + this.variant.eyeBounds[3] * this.variant.eyeWidth / this.variant.eyeBounds[2] / 2;
+    const eyeLift = Math.max(0, eyeBottom + MONSTER.mouth.eyeGap - this.mouthTop);
+    this.eyes.y = this.variant.eyeY - eyeLift * opening;
   }
 
   destroy(): void {

@@ -26,20 +26,26 @@ function fixture(gender: "boy" | "girl" = "boy", reducedMotion = false) {
   return { monster, mouth, tick, pointAt };
 }
 
-test("proximity uses the scaled mouth, holds open across boundary jitter, and never eats", () => {
+test("drag anticipation holds open anywhere without moving or enlarging the insertion area", () => {
   const { monster, mouth, tick, pointAt } = fixture();
   monster.container.setScale(0.5);
   monster.container.x = 100; monster.container.y = 200;
   assert.equal(monster.canInsert(pointAt(0.99)), true);
   assert.equal(monster.canInsert(pointAt(1.1)), false);
-  monster.approach(pointAt(1.3));
+  const target = monster.target;
+  assert.equal(monster.canInsert(pointAt(4)), false);
+  monster.anticipate(true);
   tick(120);
   const intermediateFrame = mouth.frame;
-  for (let i = 0; i < 8; i++) { monster.approach(pointAt(1.5)); tick(30); }
+  for (let i = 0; i < 8; i++) { monster.anticipate(true); tick(30); }
   assert.equal(monster.state, "anticipating");
   assert.equal(mouth.frame, "4");
   assert.notEqual(mouth.frame, intermediateFrame);
-  monster.approach(pointAt(1.71));
+  assert.deepEqual(monster.target, target);
+  assert.equal(monster.canInsert(pointAt(1.1)), false);
+  tick(1000);
+  assert.equal(monster.state, "anticipating");
+  monster.anticipate(false);
   tick(60);
   assert.equal(monster.state, "returning");
   assert.equal(mouth.frame, "3");
@@ -48,7 +54,7 @@ test("proximity uses the scaled mouth, holds open across boundary jitter, and ne
   assert.equal(mouth.key, "monster-mouth-idle");
 });
 
-test("retreat and reapproach reverse from the current frame; cancellation returns to idle", () => {
+test("canceling and starting another drag reverse from the current frame", () => {
   const { monster, mouth, tick } = fixture();
   monster.anticipate(true); tick(180);
   monster.anticipate(false); tick(60);
@@ -63,12 +69,21 @@ for (const gender of ["boy", "girl"] as const) {
   test(`${gender}: tap opening precedes eating; chewing holds the closed middle frame and a stable body`, () => {
     const { monster, mouth, tick } = fixture(gender);
     let opened = 0, chewed = 0;
+    const idleWidth = mouth.scaleX * MONSTER.mouth.idle.frames[0][2];
     monster.eat(() => opened++);
     monster.anticipate(false); // Pointer cancellation cannot interrupt an accepted item.
     tick(100);
     assert.equal(opened, 0);
     tick(250);
     assert.equal(opened, 1);
+    const openFrame = MONSTER.mouth.open.frames.at(-1)!;
+    assert.ok(Math.abs(mouth.scaleX * openFrame[2] - idleWidth * 2) < 0.001);
+    const variant = MONSTER.variants[gender];
+    const eyes = (monster.container as unknown as ObjectStub).children[1];
+    const eyeBottom = eyes.y + variant.eyeBounds[3] * eyes.scaleY / 2;
+    const mouthTop = mouth.y - openFrame[3] * mouth.scaleY / 2;
+    assert.ok(eyeBottom <= mouthTop - MONSTER.mouth.eyeGap + 0.001);
+    assert.ok(Math.abs(monster.target.y - (monster.container.y + mouth.y * monster.container.scaleY)) < 0.001);
     tick(500);
     assert.equal(opened, 1);
     monster.eat(() => opened++); // Reentrant input is ignored.

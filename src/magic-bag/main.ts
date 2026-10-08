@@ -1004,6 +1004,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                   this.showDragPreview(pending.card);
                   this.activeDragCard = pending.card;
                   pending.card.phase = "dragging";
+                  this.monster.anticipate(true);
                   this.activeDragPointerId = event.pointerId;
                   const start = this.pointerPosition({
                     clientX: pending.x,
@@ -1015,7 +1016,6 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                 }
                 const card = this.activeDragCard;
                 this.updateDraggedCard(card, pointer);
-                this.monster.approach(card.container);
               },
               options,
             );
