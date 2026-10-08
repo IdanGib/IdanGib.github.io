@@ -60,13 +60,16 @@ Adjust the exported `MONSTER` configuration in `monster-bag.ts`:
   and double-blink chance/gap.
 - `mouth`: exact frame rectangles, resting width, `openScale` (2× fully open),
   `eyeGap`, frame rates, closed frame, chewing amplitude, cycles, and cycle duration.
-- `proximity`: insertion ellipse in character coordinates and the drag shrink
-  range. Its dimensions stay fixed and its center matches the fully open mouth.
+- `variants.*.bodyBounds`: the full figure's drop area, normalized with the same
+  scale as its body artwork. Partial overlap with the visible card accepts a drop.
+- `proximity`: mouth-centered distance and range for the visual drag shrink only.
 - `eatingMs`, `completionPauseMs`: accepted-item travel and final feedback timing.
 
-DOM pointer and item positions are converted to Phaser world coordinates. The
-controller then converts the item center to character coordinates, including
-container scale. Anticipation starts once the pointer moves beyond the existing
+DOM pointer positions and the rendered card's bounds are converted to Phaser world
+coordinates. The controller checks overlap with the full body rectangle in character
+coordinates, accounting for card shrink and container scale. Acceptance happens on
+release; moving over the monster alone does not pack an item. The food destination
+remains at the mouth. Anticipation starts once the pointer moves beyond the existing
 7px drag threshold and holds for the whole drag, regardless of proximity. Canceling
 or dropping outside the insertion area closes the mouth. Anticipation only changes
 visual state. On accepted insertion, the item card is drawn in the character's food layer, above the body and behind
@@ -76,7 +79,8 @@ ratio; unloaded or external images use the existing item emoji fallback.
 ## Checks
 
 Run `npm test`, `npm run lint`, and `npm run build`. Controller regression tests
-cover scaled insertion geometry, drag anticipation, reversal/cancellation, double
+cover whole-figure drops, partial card overlap and rejection beyond each edge at
+different scales, drag anticipation, reversal/cancellation, double
 open-mouth size, eye clearance, opening before eating, single callbacks, a stable
 body during closed-mouth chewing, scaled and bounded gaze, eye-only blinking,
 double-blink limits, shutdown, both variants, and reduced motion.

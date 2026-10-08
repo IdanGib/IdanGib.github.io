@@ -923,6 +923,18 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             this.dragPreview = null;
           }
 
+          cardOverlapsMonster(): boolean {
+            if (!this.dragPreview) return false;
+            // Measure the rendered card so shrink, grab offsets, and responsive
+            // CSS sizing all share the same world coordinates as the monster.
+            const bounds = this.dragPreview.getBoundingClientRect();
+            const topLeft = this.pointerPosition({ clientX: bounds.left, clientY: bounds.top });
+            const bottomRight = this.pointerPosition({ clientX: bounds.right, clientY: bounds.bottom });
+            return this.monster.canInsert({
+              x: (topLeft.x + bottomRight.x) / 2, y: (topLeft.y + bottomRight.y) / 2,
+            }, { width: bottomRight.x - topLeft.x, height: bottomRight.y - topLeft.y });
+          }
+
           restartGame() {
             hasInteracted = true;
             this.scene.restart({});
@@ -1032,7 +1044,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                 this.suppressClickUntil = performance.now() + 400;
                 const pointer = this.pointerPosition(event);
                 this.updateDraggedCard(card, pointer);
-                if (this.monster.canInsert(card.container)) void this.pack(card);
+                if (this.cardOverlapsMonster()) void this.pack(card);
                 else this.returnHome(card);
               },
               options,

@@ -158,7 +158,7 @@ export class MonsterBag {
   }
 
   get target(): Point {
-    // A fixed fully-open target avoids moving the drop area during the animation.
+    // Food always travels into the fully-open mouth after an accepted body drop.
     const open = MONSTER.mouth.open.frames[MONSTER.mouth.open.frames.length - 1];
     const y = this.mouthTop + open[3] * MONSTER.mouth.width * MONSTER.mouth.openScale / open[2] / 2;
     return {
@@ -173,6 +173,7 @@ export class MonsterBag {
   }
 
   distance(point: Point): number {
+    // Mouth proximity controls card shrinking, independently of drop acceptance.
     const local = this.toLocal(point);
     const target = this.toLocal(this.target);
     return Math.hypot(
@@ -181,7 +182,16 @@ export class MonsterBag {
     );
   }
 
-  canInsert(point: Point): boolean { return this.distance(point) <= 1; }
+  canInsert(point: Point, size = { width: 0, height: 0 }): boolean {
+    const local = this.toLocal(point);
+    const [, , width, height] = this.variant.bodyBounds;
+    const bodyScale = 1080 / height;
+    // Use the entire figure's bounds, never the container's bounds (which also
+    // include animated eyes, mouth, and incoming food). Any card overlap counts.
+    const halfWidth = width * bodyScale / 2 + size.width / (2 * Math.abs(this.container.scaleX));
+    const halfHeight = height * bodyScale / 2 + size.height / (2 * Math.abs(this.container.scaleY));
+    return Math.abs(local.x) <= halfWidth && Math.abs(local.y) <= halfHeight;
+  }
 
   /** A world-space card center, or null to ease the gaze back to neutral. */
   trackTarget(point: Point | null): void {

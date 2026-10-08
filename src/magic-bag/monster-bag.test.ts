@@ -28,21 +28,20 @@ function fixture(gender: "boy" | "girl" = "boy", reducedMotion = false, random =
   const eyeRig = (monster.container as unknown as ObjectStub).children[1];
   const [brows, eyes, eyelids] = eyeRig.children;
   const tick = (ms: number) => { for (let elapsed = 0; elapsed < ms; elapsed += 10) monster.update(10); };
-  const pointAt = (distance: number) => ({
-    x: monster.target.x + distance * MONSTER.proximity.radiusX * monster.container.scaleX,
-    y: monster.target.y,
+  const worldPoint = (x: number, y: number) => ({
+    x: monster.container.x + x * monster.container.scaleX,
+    y: monster.container.y + y * monster.container.scaleY,
   });
-  return { monster, mouth, eyeRig, brows, eyes, eyelids, tick, pointAt };
+  return { monster, mouth, eyeRig, brows, eyes, eyelids, tick, worldPoint };
 }
 
 test("drag anticipation holds open anywhere without moving or enlarging the insertion area", () => {
-  const { monster, mouth, tick, pointAt } = fixture();
+  const { monster, mouth, tick, worldPoint } = fixture();
   monster.container.setScale(0.5);
   monster.container.x = 100; monster.container.y = 200;
-  assert.equal(monster.canInsert(pointAt(0.99)), true);
-  assert.equal(monster.canInsert(pointAt(1.1)), false);
+  assert.equal(monster.canInsert(worldPoint(450, -450)), true);
+  assert.equal(monster.canInsert(worldPoint(650, -450)), false);
   const target = monster.target;
-  assert.equal(monster.canInsert(pointAt(4)), false);
   monster.anticipate(true);
   tick(120);
   const intermediateFrame = mouth.frame;
@@ -51,7 +50,8 @@ test("drag anticipation holds open anywhere without moving or enlarging the inse
   assert.equal(mouth.frame, "4");
   assert.notEqual(mouth.frame, intermediateFrame);
   assert.deepEqual(monster.target, target);
-  assert.equal(monster.canInsert(pointAt(1.1)), false);
+  assert.equal(monster.canInsert(worldPoint(450, -450)), true);
+  assert.equal(monster.canInsert(worldPoint(650, -450)), false);
   tick(1000);
   assert.equal(monster.state, "anticipating");
   monster.anticipate(false);
@@ -75,6 +75,25 @@ test("canceling and starting another drag reverse from the current frame", () =>
 });
 
 for (const gender of ["boy", "girl"] as const) {
+  test(`${gender}: drops cover the whole figure and accept partial card overlap at different scales`, () => {
+    const { monster, worldPoint } = fixture(gender);
+    monster.container.setPosition(370, 620);
+    for (const scale of [0.18, 0.27, 0.5]) {
+      monster.container.setScale(scale);
+      // Head/handle, hands, and feet all count, even far from the mouth.
+      for (const [x, y] of [[0, -530], [-490, 0], [490, 0], [-250, 520], [250, 520]])
+        assert.equal(monster.canInsert(worldPoint(x, y)), true);
+      const card = { width: 160 * scale, height: 160 * scale };
+      // The card center can still be outside when its edge enters the figure.
+      for (const [x, y] of [[-570, 0], [570, 0], [0, -600], [0, 600]]) {
+        assert.equal(monster.canInsert(worldPoint(x, y)), false);
+        assert.equal(monster.canInsert(worldPoint(x, y), card), true);
+      }
+      for (const [x, y] of [[-610, 0], [610, 0], [0, -630], [0, 630]])
+        assert.equal(monster.canInsert(worldPoint(x, y), card), false);
+    }
+  });
+
   test(`${gender}: tap opening precedes eating; chewing holds the closed middle frame and a stable body`, () => {
     const { monster, mouth, eyeRig, eyes, tick } = fixture(gender);
     let opened = 0, chewed = 0;
