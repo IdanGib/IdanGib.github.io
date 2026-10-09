@@ -29,8 +29,8 @@ actual PNGs found:
 | `monster-bag-boy-eyes.png` | 1536 × 1024, RGBA | Required eye layer |
 | `monster-bag-girl-eyes.png` | 886 × 864, RGBA | Required eye layer |
 | `mouth.png` | 840 × 815, RGBA | Resting smile |
-| `mouth-open.png` | 2170 × 725, RGBA | Five unevenly spaced poses, opens left to right; frame 4 holds open |
-| `mouth-chewing.png` | 2172 × 724, RGBA | Seven unevenly spaced poses; frame 3 is the closed middle mouth |
+| `mouth-open.png` | 2172 × 724, RGBA | Eighteen unevenly spaced poses, opens left to right; frame 17 holds open |
+| `mouth-chewing.png` | 2172 × 724, RGBA | Nineteen unevenly spaced poses; frame 9 is the closed middle mouth |
 | `monster-bag-boy.png`, `monster-bag-girl.png` | 1254 × 1254, RGB | Assembled reference images, opaque backgrounds; not loaded |
 
 Frame numbers are zero-based. There are faint alpha artifacts beyond the visible
@@ -39,8 +39,11 @@ rectangles in `MONSTER.mouth` follow each visible pose, allowing edge padding.
 Equal-width spritesheet slicing cuts into adjacent poses. Textures are cropped
 with Phaser frames, without altering the source PNGs. All poses share one face
 coordinate system. The resting/chewing mouth keeps its original
-width; opening frames gradually grow to twice that width. The upper lip stays
-anchored while the mouth grows downward, and the eyes lift enough to leave a gap.
+width; opening frames gradually grow to twice that width. Width, height, and eye
+lift interpolate on every scene update between the nearest sprite poses, so
+uneven crops do not cause size jumps. The upper lip stays anchored while the mouth
+grows downward, and the eyes lift enough to leave a gap. Reversing a drag continues
+from the current fractional pose. Opening takes 360ms regardless of frame count.
 Body bounds are normalized to a height of 1080 in character space; eyes have variant-specific
 placement and scale. All layers share the character container's uniform scale.
 
@@ -55,10 +58,13 @@ eating/chewing; active blinks finish. Downward gaze is included in mouth clearan
 Both effects run in the scene update loop, without extra listeners or tweens.
 Reduced motion disables decorative gaze movement and blinking.
 
-Chewing closes through frames 0 → 1 → 2 → 3, holds **frame 3** for three subtle
-vertical cycles, then returns through 2 → 1 → 0 to the resting smile. The body
-stays still. The full seven-frame strip is never played as a repeated chewing
-loop. Reduced motion skips the vertical cycles and shortens entry motion.
+Chewing closes through frames 0 → … → 9 in 240ms, holds **frame 9** for three
+subtle vertical cycles, then uses the remaining return poses 10 → … → 18 over 240ms
+and settles into the resting smile over 60ms. This lets the last pose render
+before the animation completes. Mouth height interpolates between these
+poses, and the body stays still. Each strip pose is used once per sequence;
+the closed-mouth bob remains the repeated chewing motion. Reduced motion skips
+the vertical cycles and opens immediately.
 
 ## Tuning
 
@@ -70,7 +76,9 @@ Adjust the exported `MONSTER` configuration in `monster-bag.ts`:
 - `eyes`: gaze limits, response speed, lid curve/stroke, blink interval/duration,
   and double-blink chance/gap.
 - `mouth`: exact frame rectangles, resting width, `openScale` (2× fully open),
-  `eyeGap`, frame rates, closed frame, chewing amplitude, cycles, and cycle duration.
+  `eyeGap`, opening/chewing transition durations, closed frame, chewing amplitude,
+  cycles, and cycle duration. When replacing a strip with more poses, update its
+  crop rectangles and the closed frame; the transition durations stay constant.
 - `variants.*.bodyBounds`: the full figure's drop area, normalized with the same
   scale as its body artwork. Partial overlap with the visible card accepts a drop.
 - `proximity`: mouth-centered distance and range for the visual drag shrink only.
@@ -94,7 +102,8 @@ Run `npm test`, `npm run lint`, and `npm run build`. Controller regression tests
 cover whole-figure drops, partial card overlap and rejection beyond each edge at
 different scales, drag anticipation, reversal/cancellation, double
 open-mouth size, eye clearance, opening before eating, single callbacks, a stable
-body during closed-mouth chewing, scaled and bounded gaze, eye-only blinking,
+body during closed-mouth chewing, all return poses, interpolation within one
+sprite, consistent timing with irregular updates, scaled and bounded gaze, eye-only blinking,
 double-blink limits, shutdown, both variants, and reduced motion.
 
 In a browser, check both genders on desktop and mobile: approach without dropping,
