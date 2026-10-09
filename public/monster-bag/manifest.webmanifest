@@ -1,0 +1,21 @@
+{
+  "id": "../monster-bag-app.html",
+  "name": "תיק המפלצת",
+  "short_name": "תיק המפלצת",
+  "description": "מכינים את תיק המפלצת לבית הספר",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "../monster-bag-app.html",
+  "scope": "../",
+  "display": "standalone",
+  "background_color": "#fff8fd",
+  "theme_color": "#9d73df",
+  "icons": [
+    {
+      "src": "../magic-school-bag/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

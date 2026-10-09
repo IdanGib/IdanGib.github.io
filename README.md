@@ -8,6 +8,7 @@ The root page is **IG Apps**, an iOS-style home screen (React + TypeScript + Vit
 - **Malawah** (`/malawah-app.html`) — a Malawah recipe calculator: enter the flour weight and get honey, salt and water amounts from a tunable ratio vector, persisted in localStorage. Vanilla TypeScript, no framework.
 - **Timetable** (`/timetable-app.html`) — a Hebrew, right-to-left school-bag packing list: pick today or tomorrow and get the daily items, the kit for that day's lessons and any one-off extras, ticked off into a filling backpack. Content lives in `src/timetable/config.ts`. Vanilla TypeScript, no framework.
 - **Magic Bag** (`/magic-bag-app.html`) — a school-bag packing app with locally stored progress.
+- **Monster Bag** (`/monster-bag-app.html`) — a separate packing game with an animated monster that eats the school items. Reuses the data, images, audio, and Phaser bundle in `public/magic-school-bag/`, with its own profile storage and install identity. See [the monster guide](src/monster-bag/MONSTER.md).
 - **Magic Bag Editor** (`/magic-bag-editor.html`) — a React page showing that editing is currently unavailable, with links back to Magic Bag and the home screen. See [the editor guide](README.magic-bag-editor.md).
 - **CV** (`/cv/`) — a CV download page.
 
@@ -42,5 +43,5 @@ The site auto-deploys via GitHub Actions on push to `main` or `master`.
 - **React** 18 + **TypeScript** for the home screen and Magic Bag Editor
 - **Vanilla TypeScript** for standalone app pages
 - **Tailwind CSS 4** + **daisyUI 5** for all styling (four custom themes: `igapps`, `igtracker`, `igmalawah`, `igtimetable`)
-- **Vite** multi-page build (home, tracker, malawah, timetable, Magic Bag, editor, CV, 404)
+- **Vite** multi-page build (home, tracker, malawah, timetable, Magic Bag, Monster Bag, editor, CV, 404)
 - **GitHub Pages** for hosting

@@ -32,6 +32,7 @@ export default defineConfig({
         malawah: entry("malawah-app.html"),
         timetable: entry("timetable-app.html"),
         magicBag: entry("magic-bag-app.html"),
+        monsterBag: entry("monster-bag-app.html"),
         magicBagEditor: entry("magic-bag-editor.html"),
         notFound: entry("404.html"),
         cv: entry("cv/index.html"),

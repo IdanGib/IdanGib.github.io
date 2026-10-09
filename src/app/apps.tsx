@@ -66,6 +66,21 @@ export const apps: AppDefinition[] = [
     ),
   },
   {
+    name: "Monster Bag",
+    href: "/monster-bag-app.html",
+    iconClass: "bg-linear-145 from-[#58c7df] to-[#2789c7]",
+    icon: (
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-11 w-11">
+        <path d="M14 12a6 6 0 0 1 12 0" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
+        <rect x="6" y="11" width="28" height="25" rx="9" fill="#fff" />
+        <circle cx="15" cy="20" r="3" fill="#2789c7" />
+        <circle cx="25" cy="20" r="3" fill="#2789c7" />
+        <path d="M12 26h16a8 8 0 0 1-16 0Z" fill="#2789c7" />
+        <path d="m16 26 2 3 2-3m2 0 2 3 2-3" fill="#fff" />
+      </svg>
+    ),
+  },
+  {
     name: "Bag Editor",
     href: "/magic-bag-editor.html",
     iconClass: "bg-linear-145 from-[#38bdf8] to-[#2563eb]",
