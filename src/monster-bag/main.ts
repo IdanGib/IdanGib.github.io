@@ -433,6 +433,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           returningCard: CardState | null = null;
           suppressClickUntil = 0;
           dragPreview: HTMLButtonElement | null = null;
+          private cardFeedback: Animation | null = null;
           monster!: MonsterBag;
           packingCard: CardState | null = null;
           progressMeter: HTMLDivElement | null = null;
@@ -457,6 +458,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
 
           update(_time: number, delta: number): void {
             const card = this.activeDragCard ?? (this.packingCard?.phase === "packing" ? this.packingCard : null);
+            this.monster?.anticipate(this.activeDragCard?.container ?? null);
             this.monster?.trackTarget(card?.container ?? null);
             this.monster?.update(delta);
           }
@@ -753,6 +755,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                   event.button !== 0
                 )
                   return;
+                this.acknowledgeCard(button);
                 this.pendingDrag = {
                   card,
                   pointerId: event.pointerId,
@@ -769,6 +772,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                 )
                   return;
                 hasInteracted = true;
+                this.acknowledgeCard(button);
                 const audioUrl = item.audioUrl?.trim();
                 // A card tap is an explicit request from the child. Do not drop
                 // it just because the longer welcome recording is still playing.
@@ -873,6 +877,8 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           }
 
           prepareCard(card: CardState): void {
+            // Measure the resting card, not the temporary acknowledgement tilt.
+            this.cardFeedback?.cancel();
             const bounds = card.button.getBoundingClientRect();
             const position = this.pointerPosition({
               clientX: bounds.left + bounds.width / 2,
@@ -906,6 +912,26 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             this.dragPreview = preview;
             card.container.setVisible(false);
             this.positionDragPreview(card);
+            // Dragging and Arrow Down hide the original button immediately.
+            // Keep their acknowledgement visible on the card that is now on screen.
+            this.acknowledgeCard(preview);
+          }
+
+          acknowledgeCard(button: HTMLButtonElement): void {
+            this.cardFeedback?.cancel();
+            this.cardFeedback = button.animate(
+              reducedMotion
+                ? [{ opacity: 1 }, { opacity: 0.75 }, { opacity: 1 }]
+                : [
+                    { rotate: "0deg" },
+                    { rotate: "-3deg" },
+                    { rotate: "3deg" },
+                    { rotate: "-1.5deg" },
+                    { rotate: "0deg" },
+                  ],
+              // Independent rotation leaves the deck and drag transforms intact.
+              { duration: reducedMotion ? 120 : 220, easing: "ease-out" },
+            );
           }
 
           positionDragPreview(card: CardState): void {
@@ -919,6 +945,8 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           }
 
           clearDragPreview() {
+            this.cardFeedback?.cancel();
+            this.cardFeedback = null;
             this.dragPreview?.remove();
             this.dragPreview = null;
           }
@@ -988,7 +1016,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               releaseCapture(pending);
               if (!card) return;
               this.suppressClickUntil = performance.now() + 400;
-              this.monster.anticipate(false);
+              this.monster.anticipate(null);
               this.returnHome(card);
             };
             window.addEventListener(
@@ -1015,7 +1043,6 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                   this.showDragPreview(pending.card);
                   this.activeDragCard = pending.card;
                   pending.card.phase = "dragging";
-                  this.monster.anticipate(true);
                   this.activeDragPointerId = event.pointerId;
                   const start = this.pointerPosition({
                     clientX: pending.x,
@@ -1172,7 +1199,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           }
 
           returnHome(card: CardState): void {
-            this.monster.anticipate(false);
+            this.monster.anticipate(null);
             this.tweens.killTweensOf(card.container);
             this.returningCard = card;
             card.phase = "returning";

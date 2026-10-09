@@ -17,6 +17,13 @@ after that sequence (or resolves `false` on scene shutdown). Arrow Down, drag,
 and the browser packing tool all use this flow. Taps only play the item's audio
 and leave the card in the deck without advancing packing progress.
 
+An accepted pointer press immediately gives the card a short acknowledgement
+shake (touch, mouse, or pen). Taps, clicks, and Enter/Space restart the feedback
+while playing audio. The visible drag/packing preview repeats that feedback for
+dragging and Arrow Down. Independent rotation keeps the positioning transform
+intact; feedback is canceled before measuring the resting card and on cleanup.
+Reduced motion uses a brief opacity pulse instead of a shake.
+
 ## Supplied artwork
 
 The assets are under `public/magic-school-bag/assets/monster/`. Inspection of the
@@ -37,13 +44,17 @@ Frame numbers are zero-based. There are faint alpha artifacts beyond the visible
 mouths, so whole-image alpha bounds do not describe frame boundaries. Explicit
 rectangles in `MONSTER.mouth` follow each visible pose, allowing edge padding.
 Equal-width spritesheet slicing cuts into adjacent poses. Textures are cropped
-with Phaser frames, without altering the source PNGs. All poses share one face
+with Phaser frames, without altering the source PNGs. Mouth textures use nearest
+sampling to preserve sharp details at the small early-opening sizes; the existing
+2–3× supersampled canvas smooths their edges. Body and eye filtering is unchanged.
+All poses share one face
 coordinate system. The resting/chewing mouth keeps its original
 width; opening frames gradually grow to twice that width. Width, height, and eye
 lift interpolate on every scene update between the nearest sprite poses, so
 uneven crops do not cause size jumps. The upper lip stays anchored while the mouth
 grows downward, and the eyes lift enough to leave a gap. Reversing a drag continues
-from the current fractional pose. Opening takes 360ms regardless of frame count.
+from the current fractional pose. Accepted insertions open in up to 360ms
+regardless of frame count; dragging selects the fractional pose directly by distance.
 Body bounds are normalized to a height of 1080 in character space; eyes have variant-specific
 placement and scale. All layers share the character container's uniform scale.
 
@@ -81,7 +92,9 @@ Adjust the exported `MONSTER` configuration in `monster-bag.ts`:
   crop rectangles and the closed frame; the transition durations stay constant.
 - `variants.*.bodyBounds`: the full figure's drop area, normalized with the same
   scale as its body artwork. Partial overlap with the visible card accepts a drop.
-- `proximity`: mouth-centered distance and range for the visual drag shrink only.
+- `proximity`: mouth-centered distance and range for opening and visual card shrink.
+  The mouth is fully open within normalized distance 1, rests at or beyond
+  `shrinkDistance` (2.8), and moves through all opening poses between those limits.
 - `eatingMs`, `completionPauseMs`: accepted-item travel and final feedback timing.
 
 DOM pointer positions and the rendered card's bounds are converted to Phaser world
@@ -89,7 +102,10 @@ coordinates. The controller checks overlap with the full body rectangle in chara
 coordinates, accounting for card shrink and container scale. Acceptance happens on
 release; moving over the monster alone does not pack an item. The food destination
 remains at the mouth. Anticipation starts once the pointer moves beyond the existing
-7px drag threshold and holds for the whole drag, regardless of proximity. Canceling
+7px drag threshold. Each scene update selects the opening-strip position from the
+card center's mouth distance, in character coordinates so responsive scaling does
+not change the response. A stationary card holds its pose; moving away reverses
+the strip, and a distant card keeps the resting mouth. Canceling
 or dropping outside the insertion area closes the mouth. Anticipation only changes
 visual state. On accepted insertion, the item card is drawn in the character's food
 layer above the body and mouth, then shrinks and fades into the face. Local item
@@ -100,14 +116,16 @@ item emoji fallback.
 
 Run `npm test`, `npm run lint`, and `npm run build`. Controller regression tests
 cover whole-figure drops, partial card overlap and rejection beyond each edge at
-different scales, drag anticipation, reversal/cancellation, double
+different scales, all distance-driven opening poses in both directions and along
+horizontal, vertical and diagonal approaches, stationary holds, cancellation, double
 open-mouth size, eye clearance, opening before eating, single callbacks, a stable
 body during closed-mouth chewing, all return poses, interpolation within one
 sprite, consistent timing with irregular updates, scaled and bounded gaze, eye-only blinking,
 double-blink limits, shutdown, both variants, and reduced motion.
 
 In a browser, check both genders on desktop and mobile: approach without dropping,
-move away while holding the card (mouth stays open), cancel a drag, release just
+move away while holding the card (mouth closes), hold a card at an intermediate
+distance (opening stays fixed), cancel a drag, release just
 outside insertion range, accept a drop, tap rapidly, use Arrow Down, complete the
 last item, and replay. Also restart/change
 profile or resize across the mobile breakpoint during an animation. Existing
