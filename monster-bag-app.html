@@ -1,0 +1,906 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>תיק המפלצת ✨</title>
+    <meta
+      name="description"
+      content="מכינים את תיק המפלצת — גוררים את הציוד לתיק, אוספים כוכבים וחוגגים כשהכול מוכן."
+    />
+    <meta name="theme-color" content="#9d73df" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="תיק המפלצת" />
+    <link rel="manifest" href="%BASE_URL%monster-bag/manifest.webmanifest" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2218%22%20fill%3D%22%239d73df%22%2F%3E%3Cpath%20d%3D%22m32%2010%206%2014%2016%202-12%2010%204%2016-14-8-14%208%204-16L10%2026l16-2z%22%20fill%3D%22%23fff1a5%22%2F%3E%3C%2Fsvg%3E"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      :root {
+        --page: #fff8fd;
+        --glow-start: #ffe3f1;
+        --glow-end: #e7e0ff;
+        --ink: #51425f;
+        --ink-strong: #5f4976;
+        --ink-soft: #80698f;
+        --accent: #9d73df;
+        --accent-dark: #68439b;
+        --accent-border: #c6b1e4;
+        --accent-pale: #f1e7ff;
+        --accent-hover: #f7efff;
+        --dialog-border: #ffadd2;
+        --field-border: #d8c6e8;
+        --surface-border: #e3d4ef;
+        --focus-fill: #f4eaff;
+        --shadow: rgba(83, 52, 103, 0.18);
+        --shadow-strong: rgba(83, 52, 103, 0.3);
+        --backdrop: rgba(74, 53, 87, 0.48);
+      }
+      :root[data-gender="boy"] {
+        --page: #f4fbff;
+        --glow-start: #d9f3ff;
+        --glow-end: #dceaff;
+        --ink: #24465f;
+        --ink-strong: #24516f;
+        --ink-soft: #527087;
+        --accent: #2789c7;
+        --accent-dark: #12628f;
+        --accent-border: #8fc7e5;
+        --accent-pale: #dff3ff;
+        --accent-hover: #eaf8ff;
+        --dialog-border: #60c8dd;
+        --field-border: #afd5e8;
+        --surface-border: #c6e3ef;
+        --focus-fill: #e4f6ff;
+        --shadow: rgba(27, 83, 112, 0.18);
+        --shadow-strong: rgba(27, 83, 112, 0.3);
+        --backdrop: rgba(22, 60, 80, 0.48);
+      }
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        min-height: 100%;
+      }
+      html {
+        background: var(--page);
+      }
+      body {
+        font-family: Arial, "Noto Sans Hebrew", sans-serif;
+        padding: 16px;
+        overflow-x: hidden;
+        background:
+          radial-gradient(circle at 16% 16%, var(--glow-start) 0, transparent 35%),
+          radial-gradient(circle at 84% 84%, var(--glow-end) 0, transparent 36%),
+          var(--page);
+      }
+      #game {
+        width: 100%;
+        height: calc(100svh - 112px);
+        min-height: 620px;
+        max-width: 1440px;
+        margin: 0 auto;
+        position: relative;
+        display: grid;
+        place-items: center;
+      }
+      canvas {
+        display: block;
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 28px;
+        touch-action: none;
+        box-shadow: 0 28px 80px var(--shadow);
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .packing-toolbar {
+        width: 100%;
+        max-width: 1440px;
+        margin: 0 auto 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        color: var(--ink-strong);
+        font-size: 16px;
+      }
+      .packing-toolbar strong {
+        font-size: 18px;
+      }
+      .packing-toolbar select {
+        min-width: 0;
+        min-height: 44px;
+        font: inherit;
+        font-size: 18px;
+        font-weight: bold;
+        color: var(--ink-strong);
+        padding: 8px 12px;
+        border-radius: 18px;
+        border: 3px solid var(--accent);
+        background: white;
+        box-shadow: 0 6px 18px var(--shadow);
+        cursor: pointer;
+        transition: transform 160ms ease, box-shadow 160ms ease;
+      }
+      .packing-toolbar select:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 9px 22px var(--shadow);
+      }
+      .packing-toolbar select:focus-visible {
+        outline: 3px solid var(--accent-dark);
+        outline-offset: 3px;
+      }
+      .timetable-button {
+        display: inline-flex;
+        flex: none;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-height: 44px;
+        padding: 8px 12px;
+        border: 2px solid var(--surface-border);
+        border-radius: 18px;
+        color: var(--ink-strong);
+        background: #fff;
+        font: inherit;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      .timetable-button:hover:not(:disabled),
+      .timetable-button[aria-expanded="true"] {
+        border-color: var(--accent-border);
+        background: var(--accent-pale);
+      }
+      .timetable-button:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      .timetable-button svg {
+        flex: none;
+      }
+      .timetable-chevron {
+        transition: transform 180ms ease;
+      }
+      .timetable-button[aria-expanded="true"] .timetable-chevron {
+        transform: rotate(180deg);
+      }
+      .timetable-panel {
+        display: grid;
+        grid-template-rows: 0fr;
+        width: 100%;
+        max-width: 1440px;
+        margin: 0 auto;
+        opacity: 0;
+        transition: grid-template-rows 180ms ease, opacity 180ms ease;
+      }
+      .timetable-panel[data-open="true"] {
+        grid-template-rows: 1fr;
+        opacity: 1;
+      }
+      .timetable-inner {
+        min-height: 0;
+        overflow: hidden;
+      }
+      .timetable-content {
+        margin-bottom: 12px;
+        padding: 16px;
+        border: 2px solid var(--surface-border);
+        border-radius: 18px;
+        color: var(--ink);
+        background: #fff;
+        text-align: start;
+      }
+      .timetable-content h2 {
+        margin: 0 0 12px;
+        color: var(--ink-strong);
+        font-size: 18px;
+        line-height: 1.4;
+      }
+      .timetable-lessons {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .timetable-lessons li {
+        display: grid;
+        grid-template-columns: 72px minmax(0, 1fr);
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--surface-border);
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+      }
+      .lesson-number {
+        color: var(--ink-soft);
+        font-weight: bold;
+      }
+      .settings-button {
+        flex: none;
+        display: inline-grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border: 0;
+        border-radius: 14px;
+        color: var(--ink-strong);
+        background: #fff;
+        font-size: 21px;
+        cursor: pointer;
+      }
+      .settings-button:hover {
+        background: var(--accent-hover);
+      }
+      .settings-button:focus-visible,
+      .timetable-button:focus-visible,
+      .profile-dialog button:focus-visible,
+      .profile-dialog input:focus-visible,
+      .day-start-dialog button:focus-visible {
+        outline: 3px solid var(--accent-dark);
+        outline-offset: 3px;
+      }
+      .profile-dialog {
+        width: min(440px, calc(100% - 32px));
+        padding: 0;
+        overflow: hidden;
+        color: var(--ink);
+        border: 4px solid var(--dialog-border);
+        border-radius: 36px;
+        background: #fff;
+        box-shadow: 0 28px 80px var(--shadow-strong);
+      }
+      .profile-dialog::backdrop {
+        background: var(--backdrop);
+        backdrop-filter: blur(5px);
+      }
+      .day-start-dialog {
+        width: min(500px, calc(100% - 32px));
+        padding: 0;
+        overflow: hidden;
+        color: var(--ink);
+        border: 4px solid var(--dialog-border);
+        border-radius: 36px;
+        background: #fff;
+        box-shadow: 0 28px 80px var(--shadow-strong);
+      }
+      .day-start-dialog::backdrop {
+        background: var(--backdrop);
+        backdrop-filter: blur(7px);
+      }
+      .install-dialog {
+        width: min(440px, calc(100% - 32px));
+        padding: 0;
+        overflow: hidden;
+        color: var(--ink);
+        border: 4px solid var(--dialog-border);
+        border-radius: 36px;
+        background: #fff;
+        box-shadow: 0 28px 80px var(--shadow-strong);
+      }
+      .install-dialog::backdrop {
+        background: var(--backdrop);
+        backdrop-filter: blur(7px);
+      }
+      .install-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        padding: 30px;
+        text-align: center;
+      }
+      .install-content h2,
+      .install-content p {
+        margin: 0;
+      }
+      .install-content h2 {
+        color: var(--ink-strong);
+        font-size: 28px;
+      }
+      .install-content p {
+        color: var(--ink-soft);
+        font-size: 18px;
+        line-height: 1.5;
+      }
+      .install-actions {
+        display: flex;
+        width: 100%;
+        gap: 10px;
+      }
+      .install-actions button {
+        min-height: 50px;
+        flex: 1;
+        border: 0;
+        border-radius: 999px;
+        font: inherit;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      .install-confirm {
+        color: #fff;
+        background: var(--accent);
+      }
+      .install-dismiss {
+        color: var(--ink-strong);
+        background: var(--accent-pale);
+      }
+      .day-start-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+        padding: 34px 30px 30px;
+        text-align: center;
+      }
+      .day-start-icon {
+        font-size: 64px;
+        line-height: 1;
+      }
+      .day-start-content h2,
+      .day-start-content p {
+        margin: 0;
+      }
+      .day-start-content h2 {
+        color: var(--ink-strong);
+        font-size: clamp(28px, 7vw, 38px);
+      }
+      .day-start-content p {
+        color: var(--ink-soft);
+        font-size: 20px;
+        line-height: 1.5;
+      }
+      .day-start-button {
+        width: 100%;
+        min-height: 64px;
+        margin-top: 4px;
+        padding: 14px 28px;
+        border: 0;
+        border-radius: 999px;
+        color: #fff;
+        background: var(--accent);
+        box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 30%, transparent);
+        font: inherit;
+        font-size: 24px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      .day-start-button:hover {
+        filter: brightness(1.06);
+        transform: translateY(-1px);
+      }
+      .profile-form {
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+        padding: 30px;
+        text-align: center;
+      }
+      .profile-form h2,
+      .profile-form p {
+        margin: 0;
+      }
+      .profile-form h2 {
+        color: var(--ink-strong);
+        font-size: 30px;
+      }
+      .profile-form p {
+        color: var(--ink-soft);
+        line-height: 1.5;
+      }
+      .profile-name {
+        display: grid;
+        gap: 8px;
+        text-align: right;
+        font-weight: bold;
+      }
+      .profile-name input {
+        width: 100%;
+        padding: 12px 14px;
+        color: var(--ink);
+        border: 2px solid var(--field-border);
+        border-radius: 14px;
+        font: inherit;
+      }
+      .gender-options {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin: 0;
+        padding: 0;
+        border: 0;
+      }
+      .gender-options legend {
+        width: 100%;
+        margin-bottom: 10px;
+        font-weight: bold;
+        text-align: right;
+      }
+      .gender-options label {
+        display: grid;
+        place-items: center;
+        min-height: 72px;
+        border: 2px solid var(--field-border);
+        border-radius: 18px;
+        background: var(--page);
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      .gender-options label:has(input:checked) {
+        border-color: var(--accent);
+        background: var(--accent-pale);
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 16%, transparent);
+      }
+      .gender-options input {
+        position: absolute;
+        opacity: 0;
+      }
+      .save-profile {
+        padding: 13px 24px;
+        border: 0;
+        border-radius: 999px;
+        color: #fff;
+        background: var(--accent);
+        font: inherit;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      .cancel-profile {
+        border: 0;
+        color: var(--ink-strong);
+        background: transparent;
+        font: inherit;
+        cursor: pointer;
+      }
+      .end-time {
+        margin: 12px 0 0;
+        color: var(--ink-strong);
+      }
+      .end-time output {
+        font-weight: bold;
+        color: var(--ink);
+      }
+      .item-button:focus,
+      .keyboard-control:focus {
+        outline: none;
+      }
+      .item-button:focus-visible {
+        background: var(--focus-fill);
+      }
+      .packing-panel {
+        position: absolute;
+        min-height: 170px;
+        overflow: visible;
+        pointer-events: none;
+      }
+      .magic-meter {
+        position: absolute;
+        z-index: 4;
+        display: grid;
+        gap: 8px;
+        direction: rtl;
+        color: var(--ink-strong);
+        font-weight: bold;
+        text-align: center;
+        transform: translateX(-50%);
+        pointer-events: none;
+      }
+      .magic-meter[hidden],
+      .day-selection-prompt[hidden] {
+        display: none;
+      }
+      .day-selection-prompt {
+        position: absolute;
+        z-index: 4;
+        margin: 0;
+        color: var(--ink-strong);
+        font-size: clamp(30px, 7vw, 44px);
+        font-weight: bold;
+        line-height: 1.15;
+        text-align: center;
+        transform: translateX(-50%);
+        pointer-events: none;
+      }
+      .magic-meter-summary {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        min-width: 0;
+        font-size: 18px;
+        line-height: 1.25;
+        white-space: nowrap;
+      }
+      .magic-meter-star {
+        flex: none;
+        color: #f0b93e;
+        font-size: 29px;
+        line-height: 1;
+        filter: drop-shadow(0 2px 2px rgba(83, 52, 103, 0.12));
+      }
+      .magic-meter-bar {
+        width: 100%;
+        height: 12px;
+        overflow: hidden;
+        direction: rtl;
+        appearance: none;
+        border: 0;
+        border-radius: 999px;
+        background: var(--accent-pale);
+      }
+      .magic-meter-bar::-webkit-progress-bar {
+        border-radius: 999px;
+        background: var(--accent-pale);
+      }
+      .magic-meter-bar::-webkit-progress-value {
+        border-radius: 999px;
+        background: var(--accent);
+        transition: width 420ms ease;
+      }
+      .magic-meter-bar::-moz-progress-bar {
+        border-radius: 999px;
+        background: var(--accent);
+        transition: width 420ms ease;
+      }
+      .item-button {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 16px 18px;
+        color: var(--ink);
+        background: white;
+        border: 2px solid var(--item-border);
+        border-radius: 28px;
+        box-shadow: 0 8px 0 #513d5c0d;
+        text-align: center;
+        font: inherit;
+        cursor: grab;
+        user-select: none;
+        touch-action: none;
+        -webkit-tap-highlight-color: transparent;
+        transform: translateY(var(--deck-y, 0px)) scale(var(--deck-scale, 1));
+        transform-origin: top center;
+        pointer-events: none;
+        transition:
+          transform 220ms ease,
+          box-shadow 220ms ease;
+      }
+      .item-button[data-deck-front="true"] {
+        pointer-events: auto;
+      }
+      /* Keep the next card readable as soon as the front card is dragged away. */
+      .item-button[data-deck-depth="2"] > * {
+        visibility: hidden;
+      }
+      .item-copy {
+        display: flex;
+        min-width: 0;
+        flex: 1;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+      .item-icon {
+        display: grid;
+        place-items: center;
+        width: 112px;
+        height: 142px;
+        flex-shrink: 0;
+        background: var(--item-tint);
+        border: 2px solid var(--item-border);
+        border-radius: 20px;
+        box-shadow: 0 8px 18px #513d5c1a;
+        font-size: 52px;
+        line-height: 1;
+      }
+      .item-icon.has-image {
+        width: 112px;
+        height: 90%;
+        overflow: hidden;
+        background: transparent;
+        border: 0;
+        border-radius: 18px;
+        box-shadow: none;
+      }
+      .item-icon img {
+        display: none;
+        width: 100%;
+        height: 100%;
+        border-radius: inherit;
+        pointer-events: none;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+      .item-icon.has-image img {
+        display: block;
+      }
+      .item-label {
+        font-size: 22px;
+        font-weight: bold;
+        line-height: 1.25;
+      }
+      .item-action {
+        color: var(--ink-soft);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+      .drag-preview {
+        position: absolute;
+        inset: auto;
+        transform-origin: center;
+        z-index: 5;
+        pointer-events: none !important;
+        transition: none;
+        box-shadow: 0 12px 25px #513d5c26;
+      }
+      .drag-preview[aria-hidden="true"] > * {
+        visibility: visible;
+      }
+      .jumping-star {
+        position: absolute;
+        z-index: 20;
+        pointer-events: none;
+        user-select: none;
+        font-size: var(--star-size);
+        line-height: 1;
+        filter: drop-shadow(0 5px 5px rgba(83, 52, 103, 0.2));
+        animation: star-jump 710ms ease-out both;
+      }
+      @keyframes star-jump {
+        0% {
+          transform: translate(-50%, -50%) scale(0);
+          opacity: 1;
+        }
+        46% {
+          transform: translate(-50%, calc(-50% - var(--star-mid))) scale(1.4)
+            rotate(18deg);
+          opacity: 1;
+        }
+        100% {
+          transform: translate(-50%, calc(-50% - var(--star-rise))) scale(1.4)
+            rotate(18deg);
+          opacity: 0;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .item-button,
+        .timetable-panel,
+        .timetable-chevron {
+          transition: none;
+        }
+        .item-button.item-button-clicked {
+          animation-duration: 1ms;
+        }
+        .jumping-star {
+          animation-duration: 200ms;
+        }
+        .magic-meter-bar::-webkit-progress-value,
+        .magic-meter-bar::-moz-progress-bar {
+          transition: none;
+        }
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        border: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+      #keyboard-controls {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 2;
+      }
+      .keyboard-control {
+        position: absolute;
+        transform: translate(-50%, -50%);
+        background: transparent;
+        color: transparent;
+        border: 0;
+        border-radius: 26px;
+        pointer-events: none;
+      }
+      .keyboard-control:focus-visible {
+        background: rgba(255, 255, 255, 0.2);
+      }
+      #loading {
+        position: absolute;
+        left: 50%;
+        top: 45%;
+        transform: translate(-50%, -50%);
+        color: var(--ink-strong);
+        text-align: center;
+        font-size: 18px;
+      }
+      @media (max-width: 760px) {
+        html,
+        body {
+          height: 100%;
+        }
+        body {
+          padding: 8px;
+          height: auto;
+          min-height: 100svh;
+          min-height: 100dvh;
+          overflow-y: auto;
+        }
+        main {
+          display: flex;
+          min-height: 100%;
+          flex-direction: column;
+        }
+        .packing-toolbar,
+        .timetable-panel {
+          flex: none;
+        }
+        .packing-toolbar select {
+          flex: 1;
+          padding: 8px;
+          font-size: 16px;
+        }
+        .timetable-button {
+          padding: 8px;
+        }
+        #game {
+          flex: none;
+          height: calc(100svh - 80px);
+          height: calc(100dvh - 80px);
+          min-height: 580px;
+        }
+        canvas {
+          border-radius: 24px;
+        }
+        .item-button {
+          gap: 12px;
+          padding: 14px;
+        }
+        .item-icon {
+          width: 102px;
+          height: 132px;
+        }
+        .item-label {
+          font-size: 19px;
+        }
+      }
+      @media (max-width: 360px) {
+        .packing-toolbar {
+          flex-wrap: wrap;
+        }
+        .packing-toolbar select {
+          flex-basis: 100%;
+        }
+        .timetable-button {
+          flex: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main aria-label="תיק המפלצת">
+      <h1 id="page-title" class="sr-only">משימת תיק המפלצת</h1>
+      <div class="packing-toolbar">
+        <select id="school-day" aria-label="יום הלימודים"></select>
+        <button id="toggle-timetable" class="timetable-button" type="button" aria-expanded="false" aria-controls="timetable-panel" disabled>
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M8 2v4M16 2v4M3 10h18" />
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+          </svg>
+          <span>מה לומדים?</span>
+          <svg class="timetable-chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </button>
+        <button id="open-settings" class="settings-button" type="button" aria-label="הגדרות ילד או ילדה">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </button>
+      </div>
+      <section id="timetable-panel" class="timetable-panel" aria-labelledby="timetable-heading" aria-hidden="true" inert>
+        <div class="timetable-inner">
+          <div class="timetable-content">
+            <header class="packing-toolbar">
+              <h2 id="timetable-heading"></h2>
+              <button id="close-timetable" class="settings-button" type="button" aria-label="סגירת מערכת השעות" aria-controls="timetable-panel">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                  <path d="m6 6 12 12M18 6 6 18" />
+                </svg>
+              </button>
+            </header>
+            <ol id="timetable-lessons" class="timetable-lessons" role="list"></ol>
+            <p class="end-time"><output id="end-time"></output></p>
+          </div>
+        </div>
+      </section>
+      <div id="game">
+        <p id="loading" role="status">תיק המפלצת נפתח… ✨</p>
+        <div id="keyboard-controls"></div>
+      </div>
+      <p id="game-status" class="sr-only" role="status" aria-live="polite"></p>
+    </main>
+    <dialog id="profile-dialog" class="profile-dialog" aria-labelledby="profile-title">
+      <form id="profile-form" class="profile-form">
+        <div aria-hidden="true" style="font-size: 48px">✨🎒✨</div>
+        <h2 id="profile-title">למי מכינים את תיק המפלצת?</h2>
+        <label class="profile-name">
+          שם הילד או הילדה
+          <input id="kid-name" name="kidName" type="text" maxlength="30" autocomplete="name" required />
+        </label>
+        <fieldset class="gender-options">
+          <legend>איך לפנות אליך?</legend>
+          <label><input type="radio" name="gender" value="boy" required /> 👦 ילד</label>
+          <label><input type="radio" name="gender" value="girl" required /> 👧 ילדה</label>
+        </fieldset>
+        <button class="save-profile" type="submit">מתחילים ✨</button>
+        <button id="cancel-settings" class="cancel-profile" type="button" hidden>ביטול</button>
+      </form>
+    </dialog>
+    <dialog id="day-start-dialog" class="day-start-dialog" aria-labelledby="day-start-title">
+      <div class="day-start-content">
+        <div class="day-start-icon" aria-hidden="true">✨🎒✨</div>
+        <h2 id="day-start-title"></h2>
+        <p id="day-start-message"></p>
+        <button id="day-start-button" class="day-start-button" type="button">בואו נתחיל ✨</button>
+      </div>
+    </dialog>
+    <dialog id="install-dialog" class="install-dialog" aria-labelledby="install-title">
+      <div class="install-content">
+        <div class="day-start-icon" aria-hidden="true">📲</div>
+        <h2 id="install-title">רוצים להגיע ישר לתיק המפלצת?</h2>
+        <p id="install-message">
+          הוסיפו את האפליקציה למסך הבית כדי לפתוח אותה בפעם הבאה בלי להיכנס לדפדפן.
+        </p>
+        <div class="install-actions">
+          <button id="install-app" class="install-confirm" type="button">הוספה למסך הבית</button>
+          <button id="dismiss-install" class="install-dismiss" type="button">לא עכשיו</button>
+        </div>
+      </div>
+    </dialog>
+    <noscript><p>כדי לשחק בתיק המפלצת, יש להפעיל JavaScript בדפדפן.</p></noscript>
+
+    <script
+      src="%BASE_URL%magic-school-bag/vendor/phaser-4.2.1.min.js"
+      onerror="
+        document.getElementById('loading').textContent =
+          'המשחק לא נטען. נסי לרענן את הדף.'
+      "
+    ></script>
+    <script type="module" src="/src/monster-bag/main.ts"></script>
+  </body>
+</html>
