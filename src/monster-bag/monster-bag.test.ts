@@ -94,7 +94,7 @@ for (const gender of ["boy", "girl"] as const) {
     }
   });
 
-  test(`${gender}: tap opening precedes eating; chewing holds the closed middle frame and a stable body`, () => {
+  test(`${gender}: accepted insertion opens before eating; chewing holds the closed middle frame and a stable body`, () => {
     const { monster, mouth, eyeRig, eyes, tick } = fixture(gender);
     let opened = 0, chewed = 0;
     const idleWidth = mouth.scaleX * MONSTER.mouth.idle.frames[0][2];
