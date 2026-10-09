@@ -35,6 +35,80 @@ function fixture(gender: "boy" | "girl" = "boy", reducedMotion = false, random =
   return { monster, mouth, eyeRig, brows, eyes, eyelids, tick, worldPoint };
 }
 
+function mouthSize(mouth: ObjectStub) {
+  const pose = mouth.key === "monster-mouth-idle" ? "idle" : mouth.key === "monster-mouth-open" ? "open" : "chew";
+  const rect = MONSTER.mouth[pose].frames[Number(mouth.frame)];
+  return { width: rect[2] * mouth.scaleX, height: rect[3] * mouth.scaleY };
+}
+
+test("opening interpolates geometry between sprites and reverses without a size jump", () => {
+  const { monster, mouth, eyeRig } = fixture("girl");
+  monster.anticipate(true);
+  monster.update(70);
+  const frame = mouth.frame;
+  const before = mouthSize(mouth);
+  const lipY = mouth.y - before.height / 2;
+  const eyeY = eyeRig.y;
+  monster.update(4);
+  const after = mouthSize(mouth);
+  assert.equal(mouth.frame, frame);
+  assert.ok(after.width > before.width);
+  assert.ok(after.height > before.height);
+  assert.ok(eyeRig.y < eyeY);
+  assert.ok(Math.abs(mouth.y - after.height / 2 - lipY) < 0.001);
+  monster.anticipate(false);
+  assert.deepEqual(mouthSize(mouth), after);
+  monster.update(4);
+  const reversed = mouthSize(mouth);
+  assert.ok(Math.abs(reversed.width - before.width) < 0.001);
+  assert.ok(Math.abs(reversed.height - before.height) < 0.001);
+});
+
+test("chewing uses every closing and return pose with continuous height and one completion", () => {
+  const { monster, mouth } = fixture();
+  let completed = 0;
+  monster.chew(() => completed++);
+  const seen = new Set([mouth.frame]);
+  const before = mouthSize(mouth);
+  monster.update(4);
+  const after = mouthSize(mouth);
+  assert.equal(mouth.frame, "0");
+  assert.notEqual(after.height, before.height);
+  assert.ok(Math.abs(after.width - before.width) < 0.001);
+  const duration = MONSTER.mouth.chewCloseMs + MONSTER.mouth.chewCycles * MONSTER.mouth.chewCycleMs + MONSTER.mouth.chewOpenMs + MONSTER.mouth.chewRestMs;
+  for (let elapsed = 4; elapsed < duration + 100; elapsed += 4) {
+    monster.update(4);
+    if (mouth.key === "monster-mouth-chew") seen.add(mouth.frame);
+  }
+  assert.deepEqual([...seen], MONSTER.mouth.chew.frames.map((_, index) => String(index)));
+  assert.equal(monster.state, "idle");
+  assert.equal(completed, 1);
+  monster.update(1000);
+  assert.equal(completed, 1);
+});
+
+test("irregular update intervals preserve opening and chewing duration", () => {
+  const { monster, mouth } = fixture();
+  let opened = 0, chewed = 0;
+  monster.eat(() => opened++);
+  monster.update(MONSTER.mouth.openMs - 1);
+  assert.equal(opened, 0);
+  monster.update(1);
+  assert.equal(opened, 1);
+  assert.equal(mouth.frame, String(MONSTER.mouth.open.frames.length - 1));
+  monster.chew(() => chewed++);
+  const duration = MONSTER.mouth.chewCloseMs + MONSTER.mouth.chewCycles * MONSTER.mouth.chewCycleMs + MONSTER.mouth.chewOpenMs;
+  monster.update(duration);
+  assert.equal(chewed, 0);
+  assert.equal(mouth.frame, String(MONSTER.mouth.chew.frames.length - 1));
+  const returnSize = mouthSize(mouth);
+  monster.update(MONSTER.mouth.chewRestMs - 1);
+  assert.equal(chewed, 0);
+  assert.ok(mouthSize(mouth).height < returnSize.height);
+  monster.update(1);
+  assert.equal(chewed, 1);
+});
+
 test("drag anticipation holds open anywhere without moving or enlarging the insertion area", () => {
   const { monster, mouth, tick, worldPoint } = fixture();
   monster.container.setScale(0.5);
@@ -47,7 +121,7 @@ test("drag anticipation holds open anywhere without moving or enlarging the inse
   const intermediateFrame = mouth.frame;
   for (let i = 0; i < 8; i++) { monster.anticipate(true); tick(30); }
   assert.equal(monster.state, "anticipating");
-  assert.equal(mouth.frame, "4");
+  assert.equal(mouth.frame, String(MONSTER.mouth.open.frames.length - 1));
   assert.notEqual(mouth.frame, intermediateFrame);
   assert.deepEqual(monster.target, target);
   assert.equal(monster.canInsert(worldPoint(450, -450)), true);
@@ -57,8 +131,8 @@ test("drag anticipation holds open anywhere without moving or enlarging the inse
   monster.anticipate(false);
   tick(60);
   assert.equal(monster.state, "returning");
-  assert.equal(mouth.frame, "3");
-  tick(300);
+  assert.ok(Number(mouth.frame) < MONSTER.mouth.open.frames.length - 1);
+  tick(MONSTER.mouth.openMs);
   assert.equal(monster.state, "idle");
   assert.equal(mouth.key, "monster-mouth-idle");
 });
@@ -66,10 +140,11 @@ test("drag anticipation holds open anywhere without moving or enlarging the inse
 test("canceling and starting another drag reverse from the current frame", () => {
   const { monster, mouth, tick } = fixture();
   monster.anticipate(true); tick(180);
+  const frame = mouth.frame;
   monster.anticipate(false); tick(60);
-  assert.equal(mouth.frame, "1");
+  assert.ok(Number(mouth.frame) < Number(frame));
   monster.anticipate(true); tick(60);
-  assert.equal(mouth.frame, "2");
+  assert.equal(mouth.frame, frame);
   monster.anticipate(false); tick(400);
   assert.equal(monster.state, "idle");
 });
@@ -102,7 +177,7 @@ for (const gender of ["boy", "girl"] as const) {
     monster.anticipate(false); // Pointer cancellation cannot interrupt an accepted item.
     tick(100);
     assert.equal(opened, 0);
-    tick(250);
+    tick(MONSTER.mouth.openMs);
     assert.equal(opened, 1);
     const openFrame = MONSTER.mouth.open.frames.at(-1)!;
     assert.ok(Math.abs(mouth.scaleX * openFrame[2] - idleWidth * 2) < 0.001);
@@ -117,12 +192,12 @@ for (const gender of ["boy", "girl"] as const) {
     monster.eat(() => opened++); // Reentrant input is ignored.
     const bodyY = monster.container.y;
     monster.chew(() => chewed++);
-    tick(150);
+    tick(MONSTER.mouth.chewCloseMs);
     const heights = new Set<number>();
     for (let i = 0; i < 50; i++) {
       tick(10);
       assert.equal(mouth.key, "monster-mouth-chew");
-      assert.equal(mouth.frame, "3");
+      assert.equal(mouth.frame, String(MONSTER.mouth.closedFrame));
       assert.equal(monster.container.y, bodyY);
       heights.add(mouth.y);
       assert.equal(chewed, 0);
@@ -151,7 +226,7 @@ for (const gender of ["boy", "girl"] as const) {
     assert.equal(brows.y, neutral.browY);
     const eyeHeight = variant.eyeBounds[1] + variant.eyeBounds[3] - variant.eyeSplitY;
     const eyeBottom = eyeRig.y + eyes.y + eyeHeight * eyes.scaleY / 2;
-    const mouthTop = mouth.y - MONSTER.mouth.open.frames[4][3] * mouth.scaleY / 2;
+    const mouthTop = mouth.y - MONSTER.mouth.open.frames.at(-1)![3] * mouth.scaleY / 2;
     assert.ok(eyeBottom <= mouthTop - MONSTER.mouth.eyeGap + 0.001);
     const liftedY = eyeRig.y;
     monster.trackTarget({ x: -950, y: 0 }); tick(600);
@@ -229,6 +304,7 @@ test("reduced motion still opens, consumes, and completes without a bob", () => 
   monster.chew(() => { complete = true; });
   const initialY = mouth.y;
   for (let i = 0; i < 50; i++) { tick(10); assert.equal(mouth.y, initialY); }
+  tick(MONSTER.mouth.chewRestMs);
   assert.equal(complete, true);
   assert.equal(monster.state, "idle");
 });

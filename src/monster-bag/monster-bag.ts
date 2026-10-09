@@ -31,20 +31,30 @@ export const MONSTER = {
   mouth: {
     idle: { file: "mouth.png", frames: [[145, 328, 579, 285] as Rect] },
     open: { file: "mouth-open.png", frames: [
-      [10, 277, 412, 162], [435, 262, 403, 180], [848, 233, 407, 219],
-      [1258, 208, 429, 269], [1693, 162, 468, 342],
+      [12, 348, 121, 47], [139, 345, 118, 51], [260, 343, 116, 54],
+      [381, 340, 115, 58], [499, 339, 114, 60], [614, 336, 113, 63],
+      [732, 334, 112, 66], [847, 330, 114, 72], [965, 328, 116, 75],
+      [1085, 327, 117, 77], [1205, 323, 117, 83], [1325, 321, 113, 88],
+      [1440, 317, 118, 94], [1561, 312, 119, 100], [1681, 309, 118, 104],
+      [1800, 304, 117, 110], [1918, 299, 120, 117], [2038, 294, 126, 123],
     ] as Rect[] },
     chew: { file: "mouth-chewing.png", frames: [
-      [25, 277, 331, 168], [365, 298, 277, 142], [655, 317, 269, 114],
-      [931, 357, 312, 56], [1250, 320, 276, 110], [1542, 298, 265, 139],
-      [1818, 277, 328, 167],
+      [11, 309, 123, 105], [137, 315, 114, 95], [253, 320, 110, 86],
+      [370, 326, 108, 78], [481, 331, 107, 69], [594, 338, 106, 59],
+      [711, 342, 100, 50], [822, 346, 98, 45], [931, 350, 97, 40],
+      [1035, 353, 102, 24], [1143, 349, 98, 41], [1250, 343, 101, 50],
+      [1361, 341, 104, 55], [1475, 336, 107, 62], [1587, 328, 110, 74],
+      [1700, 322, 109, 82], [1815, 317, 110, 91], [1925, 312, 114, 99],
+      [2040, 308, 123, 106],
     ] as Rect[] },
     width: 242,
     openScale: 2,
     eyeGap: 18,
-    closedFrame: 3,
-    openFps: 18,
-    chewFps: 20,
+    closedFrame: 9,
+    openMs: 360,
+    chewCloseMs: 240,
+    chewOpenMs: 240,
+    chewRestMs: 60,
     chewCycles: 3,
     chewCycleMs: 200,
     chewAmplitude: 8, // Body-space pixels: about 2 screen pixels at normal size.
@@ -91,8 +101,7 @@ export class MonsterBag {
   private blinkFollowup = false;
   state: MonsterState = "idle";
   private variant: typeof MONSTER.variants[keyof typeof MONSTER.variants];
-  private opening = 0; // 0 = resting image; 1..5 = opening strip poses.
-  private frameElapsed = 0;
+  private opening = 0; // Fractional strip position: 0 = rest, frames.length = fully open.
   private chewElapsed = 0;
   private onOpen?: () => void;
   private onChewed?: () => void;
@@ -203,7 +212,6 @@ export class MonsterBag {
     const next = dragging ? "anticipating" : this.opening > 0 ? "returning" : "idle";
     if (this.state === next) return;
     this.state = next;
-    this.frameElapsed = 0;
   }
 
   eat(onOpen: () => void): void {
@@ -229,18 +237,22 @@ export class MonsterBag {
   private updateMouth(delta: number): void {
     if (this.state === "chewing") {
       this.chewElapsed += delta;
-      const frameMs = 1000 / MONSTER.mouth.chewFps;
-      const closeMs = MONSTER.mouth.closedFrame * frameMs;
+      const { closedFrame, chewCloseMs, chewOpenMs, chewRestMs } = MONSTER.mouth;
       const bobMs = this.reducedMotion ? 0 : MONSTER.mouth.chewCycles * MONSTER.mouth.chewCycleMs;
-      const bobTime = this.chewElapsed - closeMs;
+      const bobTime = this.chewElapsed - chewCloseMs;
       if (bobTime < 0) {
-        this.showPose("chew", Math.floor(this.chewElapsed / frameMs));
+        this.showPose("chew", closedFrame * this.chewElapsed / chewCloseMs);
       } else if (bobTime < bobMs) {
-        this.showPose("chew", MONSTER.mouth.closedFrame);
+        this.showPose("chew", closedFrame);
         this.mouth.y = this.variant.mouthY - MONSTER.mouth.chewAmplitude *
           Math.sin(bobTime / MONSTER.mouth.chewCycleMs * Math.PI * 2);
-      } else if (bobTime < bobMs + closeMs) {
-        this.showPose("chew", Math.max(0, MONSTER.mouth.closedFrame - 1 - Math.floor((bobTime - bobMs) / frameMs)));
+      } else if (bobTime < bobMs + chewOpenMs) {
+        const returnFrames = MONSTER.mouth.chew.frames.length - 1 - closedFrame;
+        this.showPose("chew", closedFrame + returnFrames * (bobTime - bobMs) / chewOpenMs);
+      } else if (bobTime < bobMs + chewOpenMs + chewRestMs) {
+        // Give the last return pose time to render before easing into the smile.
+        this.showPose("chew", MONSTER.mouth.chew.frames.length - 1 +
+          (bobTime - bobMs - chewOpenMs) / chewRestMs);
       } else {
         this.state = "idle";
         this.opening = 0;
@@ -253,16 +265,12 @@ export class MonsterBag {
     }
     const destination = this.state === "anticipating" || this.state === "eating" ? MONSTER.mouth.open.frames.length : 0;
     if (this.opening !== destination) {
-      this.frameElapsed += delta;
-      const frameMs = this.reducedMotion ? 1 : 1000 / MONSTER.mouth.openFps;
-      while (this.frameElapsed >= frameMs && this.opening !== destination) {
-        this.frameElapsed -= frameMs;
-        this.opening += Math.sign(destination - this.opening);
-      }
-      this.showPose(this.opening === 0 ? "idle" : "open", Math.max(0, this.opening - 1));
+      const step = this.reducedMotion ? MONSTER.mouth.open.frames.length :
+        delta * MONSTER.mouth.open.frames.length / MONSTER.mouth.openMs;
+      this.opening += Math.sign(destination - this.opening) * Math.min(step, Math.abs(destination - this.opening));
+      this.showPose(this.opening === 0 ? "idle" : "open", this.opening - 1);
     }
     if (this.opening === destination) {
-      this.frameElapsed = 0;
       if (this.state === "returning") this.state = "idle";
       if (this.state === "eating") {
         const open = this.onOpen;
@@ -272,19 +280,36 @@ export class MonsterBag {
     }
   }
 
-  private showPose(pose: "idle" | "open" | "chew", index: number): void {
-    if (this.pose === `${pose}:${index}`) {
-      if (pose === "chew") this.mouth.y = this.variant.mouthY;
-      return;
+  private showPose(pose: "idle" | "open" | "chew", position: number): void {
+    const frames = MONSTER.mouth[pose].frames;
+    // Bridge the resting smile at either end of the relevant strip.
+    position = Math.max(pose === "open" ? -1 : 0,
+      Math.min(frames.length - (pose === "chew" ? 0 : 1), position));
+    const nearest = Math.round(position);
+    const displayedPose = nearest < 0 || nearest >= frames.length ? "idle" : pose;
+    const index = displayedPose === "idle" ? 0 : nearest;
+    if (this.pose !== `${displayedPose}:${index}`) {
+      this.pose = `${displayedPose}:${index}`;
+      this.mouth.setTexture(mouthKey(displayedPose), String(index));
     }
-    this.pose = `${pose}:${index}`;
-    const rect = MONSTER.mouth[pose].frames[index];
-    const opening = pose === "open" ? (index + 1) / MONSTER.mouth.open.frames.length : 0;
-    const scale = MONSTER.mouth.width * (1 + opening * (MONSTER.mouth.openScale - 1)) / rect[2];
-    this.mouth.setTexture(mouthKey(pose), String(index)).setScale(scale);
-    // Keep the upper lip anchored as the enlarged opening grows downward.
-    this.mouth.y = pose === "open" ? this.mouthTop + rect[3] * scale / 2 : this.variant.mouthY;
-    this.eyeOpening = opening;
+    const layout = (step: number) => {
+      const rect = step < 0 || step >= frames.length ? MONSTER.mouth.idle.frames[0] : frames[step];
+      const opening = pose === "open" ? (step + 1) / frames.length : 0;
+      const width = MONSTER.mouth.width * (1 + opening * (MONSTER.mouth.openScale - 1));
+      const height = rect[3] * width / rect[2];
+      return { width, height, opening };
+    };
+    const from = layout(Math.floor(position));
+    const to = layout(Math.ceil(position));
+    const fraction = position - Math.floor(position);
+    const width = from.width + (to.width - from.width) * fraction;
+    const height = from.height + (to.height - from.height) * fraction;
+    const rect = MONSTER.mouth[displayedPose].frames[index];
+    // Interpolate the displayed geometry even while the selected sprite stays
+    // the same, avoiding size jumps at the unevenly cropped frame boundaries.
+    this.mouth.setScale(width / rect[2], height / rect[3]);
+    this.mouth.y = pose === "open" ? this.mouthTop + height / 2 : this.variant.mouthY;
+    this.eyeOpening = from.opening + (to.opening - from.opening) * fraction;
   }
 
   private nextBlinkDelay(): number {
