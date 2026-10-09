@@ -877,7 +877,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           }
 
           prepareCard(card: CardState): void {
-            // Measure the resting card, not the temporary acknowledgement tilt.
+            // Measure the resting card, not the temporary touch pulse.
             this.cardFeedback?.cancel();
             const bounds = card.button.getBoundingClientRect();
             const position = this.pointerPosition({
@@ -923,14 +923,14 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               reducedMotion
                 ? [{ opacity: 1 }, { opacity: 0.75 }, { opacity: 1 }]
                 : [
-                    { rotate: "0deg" },
-                    { rotate: "-3deg" },
-                    { rotate: "3deg" },
-                    { rotate: "-1.5deg" },
-                    { rotate: "0deg" },
+                    { scale: "1", offset: 0 },
+                    { scale: "0.96", offset: 0.18 },
+                    { scale: "1.025", offset: 0.48 },
+                    { scale: "0.992", offset: 0.72 },
+                    { scale: "1", offset: 1 },
                   ],
-              // Independent rotation leaves the deck and drag transforms intact.
-              { duration: reducedMotion ? 120 : 220, easing: "ease-out" },
+              // Independent scale preserves the deck and distance-based drag transforms.
+              { duration: reducedMotion ? 120 : 360, easing: "ease-out" },
             );
           }
 
@@ -971,22 +971,13 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             );
           }
 
-          dragScaleAt(x: number, y: number): number {
-            const distance = this.monster.distance({ x, y });
-            const proximity = Math.max(0, Math.min(1,
-              (MONSTER.proximity.shrinkDistance - distance) / (MONSTER.proximity.shrinkDistance - 1),
-            ));
-            const eased = proximity * proximity * (3 - 2 * proximity);
-            return 1 - 0.55 * eased;
-          }
-
           updateDraggedCard(card: CardState, pointer: Point): void {
-            // Measure proximity before scaling so the effect cannot feed back
-            // into itself. Scale the grab offset to keep that point under the pointer.
-            const scale = this.dragScaleAt(
-              pointer.x - card.dragOffsetX,
-              pointer.y - card.dragOffsetY,
-            );
+            // Normalize the remaining distance by this card's starting distance.
+            // Use the unscaled grab offset so shrinking cannot feed back into itself.
+            const scale = this.monster.cardScaleAt({
+              x: pointer.x - card.dragOffsetX,
+              y: pointer.y - card.dragOffsetY,
+            }, { x: card.homeX, y: card.homeY });
             card.container.setScale(scale);
             card.container.x = pointer.x - card.dragOffsetX * scale;
             card.container.y = pointer.y - card.dragOffsetY * scale;
@@ -1209,8 +1200,8 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               x: card.homeX,
               y: card.homeY,
               scale: 1,
-              duration: 420,
-              ease: "Bounce.easeOut",
+              duration: reducedMotion ? 100 : 420,
+              ease: "Cubic.easeOut",
               onUpdate: () => this.positionDragPreview(card),
               onComplete: () => {
                 this.clearDragPreview();
@@ -1223,15 +1214,6 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                 daySelect.disabled =
                   !!this.activeDragCard;
               },
-            });
-
-            this.tweens.add({
-              targets: card.container,
-              angle: { from: -4, to: 4 },
-              duration: 65,
-              yoyo: true,
-              repeat: 3,
-              onComplete: () => card.container.setAngle(0),
             });
           }
 

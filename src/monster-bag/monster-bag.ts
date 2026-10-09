@@ -48,7 +48,7 @@ export const MONSTER = {
       [2040, 308, 123, 106],
     ] as Rect[] },
     width: 242,
-    openScale: 2,
+    openScale: 1.75,
     eyeGap: 18,
     closedFrame: 9,
     openMs: 360,
@@ -60,6 +60,8 @@ export const MONSTER = {
     chewAmplitude: 8, // Body-space pixels: about 2 screen pixels at normal size.
   },
   proximity: { radiusX: 285, radiusY: 210, shrinkDistance: 2.8 },
+  dropArea: { width: 480, height: 340 }, // Body-space bounds centered on the mouth.
+  card: { minDragScale: 0.45 },
   eatingMs: 480,
   completionPauseMs: 180,
 } as const;
@@ -172,7 +174,7 @@ export class MonsterBag {
   }
 
   get target(): Point {
-    // Food always travels into the fully-open mouth after an accepted body drop.
+    // The fully-open mouth is a stable target throughout the gesture.
     const open = MONSTER.mouth.open.frames[MONSTER.mouth.open.frames.length - 1];
     const y = this.mouthTop + open[3] * MONSTER.mouth.width * MONSTER.mouth.openScale / open[2] / 2;
     return {
@@ -187,7 +189,7 @@ export class MonsterBag {
   }
 
   distance(point: Point): number {
-    // Mouth proximity controls opening and card shrinking, independently of drops.
+    // Mouth proximity controls opening, independently of card scaling and drops.
     const local = this.toLocal(point);
     const target = this.toLocal(this.target);
     return Math.hypot(
@@ -196,15 +198,24 @@ export class MonsterBag {
     );
   }
 
+  cardScaleAt(point: Point, start: Point): number {
+    const target = this.target;
+    const startDistance = Math.hypot(start.x - target.x, start.y - target.y);
+    if (startDistance < 1) return 1;
+    const distance = Math.hypot(point.x - target.x, point.y - target.y);
+    const progress = Math.max(0, Math.min(1, 1 - distance / startDistance));
+    const eased = progress * progress * (3 - 2 * progress);
+    return 1 - (1 - MONSTER.card.minDragScale) * eased;
+  }
+
   canInsert(point: Point, size = { width: 0, height: 0 }): boolean {
     const local = this.toLocal(point);
-    const [, , width, height] = this.variant.bodyBounds;
-    const bodyScale = 1080 / height;
-    // Use the entire figure's bounds, never the container's bounds (which also
-    // include animated eyes, mouth, and incoming food). Any card overlap counts.
-    const halfWidth = width * bodyScale / 2 + size.width / (2 * Math.abs(this.container.scaleX));
-    const halfHeight = height * bodyScale / 2 + size.height / (2 * Math.abs(this.container.scaleY));
-    return Math.abs(local.x) <= halfWidth && Math.abs(local.y) <= halfHeight;
+    const target = this.toLocal(this.target);
+    // Keep the smaller drop area fixed while the mouth animates. Visible card
+    // overlap near the mouth counts, rather than overlap anywhere on the figure.
+    const halfWidth = MONSTER.dropArea.width / 2 + size.width / (2 * Math.abs(this.container.scaleX));
+    const halfHeight = MONSTER.dropArea.height / 2 + size.height / (2 * Math.abs(this.container.scaleY));
+    return Math.abs(local.x - target.x) <= halfWidth && Math.abs(local.y - target.y) <= halfHeight;
   }
 
   /** A world-space card center, or null to ease the gaze back to neutral. */

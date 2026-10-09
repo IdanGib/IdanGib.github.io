@@ -133,7 +133,7 @@ for (const gender of ["boy", "girl"] as const) {
       monster.container.setScale(scale);
       monster.container.setPosition(100, 200);
       const target = monster.target;
-      assert.equal(monster.canInsert(worldPoint(450, -450)), true);
+      assert.equal(monster.canInsert(monster.target), true);
       assert.equal(monster.canInsert(worldPoint(650, -450)), false);
       monster.anticipate(pointAtDistance(MONSTER.proximity.shrinkDistance));
       tick(1000);
@@ -159,7 +159,7 @@ for (const gender of ["boy", "girl"] as const) {
       assert.equal(mouth.frame, String(count - 1));
       monster.anticipate(pointAtDistance(4)); tick(10);
       assert.equal(mouth.key, "monster-mouth-idle");
-      assert.equal(monster.canInsert(worldPoint(450, -450)), true);
+      assert.equal(monster.canInsert(monster.target), true);
       assert.equal(monster.canInsert(worldPoint(650, -450)), false);
     }
   });
@@ -179,22 +179,50 @@ for (const gender of ["boy", "girl"] as const) {
     assert.equal(mouth.key, "monster-mouth-idle");
   });
 
-  test(`${gender}: drops cover the whole figure and accept partial card overlap at different scales`, () => {
+  test(`${gender}: drops require overlap with the smaller mouth area at different scales`, () => {
     const { monster, worldPoint } = fixture(gender);
     monster.container.setPosition(370, 620);
     for (const scale of [0.18, 0.27, 0.5]) {
       monster.container.setScale(scale);
-      // Head/handle, hands, and feet all count, even far from the mouth.
+      // Head/handle, hands, and feet are outside the smaller drop area.
       for (const [x, y] of [[0, -530], [-490, 0], [490, 0], [-250, 520], [250, 520]])
-        assert.equal(monster.canInsert(worldPoint(x, y)), true);
-      const card = { width: 160 * scale, height: 160 * scale };
-      // The card center can still be outside when its edge enters the figure.
-      for (const [x, y] of [[-570, 0], [570, 0], [0, -600], [0, 600]]) {
         assert.equal(monster.canInsert(worldPoint(x, y)), false);
-        assert.equal(monster.canInsert(worldPoint(x, y), card), true);
+      const target = monster.toLocal(monster.target);
+      const nearMouth = (x: number, y: number) => worldPoint(target.x + x, target.y + y);
+      assert.equal(monster.canInsert(monster.target), true);
+      for (const [x, y] of [[-235, 0], [235, 0], [0, -165], [0, 165]])
+        assert.equal(monster.canInsert(nearMouth(x, y)), true);
+      const card = { width: 160 * scale, height: 160 * scale };
+      // The card center can still be outside when its edge enters the mouth area.
+      for (const [x, y] of [[-315, 0], [315, 0], [0, -245], [0, 245]]) {
+        assert.equal(monster.canInsert(nearMouth(x, y)), false);
+        assert.equal(monster.canInsert(nearMouth(x, y), card), true);
       }
-      for (const [x, y] of [[-610, 0], [610, 0], [0, -630], [0, 630]])
-        assert.equal(monster.canInsert(worldPoint(x, y), card), false);
+      for (const [x, y] of [[-325, 0], [325, 0], [0, -255], [0, 255]])
+        assert.equal(monster.canInsert(nearMouth(x, y), card), false);
+    }
+  });
+
+  test(`${gender}: shrinking follows progress from each starting position to the mouth`, () => {
+    const { monster } = fixture(gender);
+    for (const scale of [0.18, 0.27, 0.5]) {
+      monster.container.setScale(scale);
+      const target = monster.target;
+      for (const [dx, dy] of [[0, -300], [180, -140], [-220, 80]]) {
+        const start = { x: target.x + dx, y: target.y + dy };
+        const at = (progress: number) => ({
+          x: start.x - dx * progress, y: start.y - dy * progress,
+        });
+        assert.equal(monster.cardScaleAt(start, start), 1);
+        assert.equal(monster.cardScaleAt(at(-0.5), start), 1);
+        assert.ok(monster.cardScaleAt(at(0.1), start) < 1);
+        const halfway = monster.cardScaleAt(at(0.5), start);
+        assert.ok(Math.abs(halfway - 0.725) < 0.001);
+        assert.ok(monster.cardScaleAt(at(0.75), start) < halfway);
+        assert.ok(Math.abs(monster.cardScaleAt(target, start) - 0.45) < 0.001);
+        assert.equal(monster.cardScaleAt(start, start), 1); // Moving back restores size.
+      }
+      assert.equal(monster.cardScaleAt(target, target), 1); // Degenerate start stays finite.
     }
   });
 
@@ -209,7 +237,7 @@ for (const gender of ["boy", "girl"] as const) {
     tick(MONSTER.mouth.openMs);
     assert.equal(opened, 1);
     const openFrame = MONSTER.mouth.open.frames.at(-1)!;
-    assert.ok(Math.abs(mouth.scaleX * openFrame[2] - idleWidth * 2) < 0.001);
+    assert.ok(Math.abs(mouth.scaleX * openFrame[2] - idleWidth * 1.75) < 0.001);
     const variant = MONSTER.variants[gender];
     const eyeHeight = variant.eyeBounds[1] + variant.eyeBounds[3] - variant.eyeSplitY;
     const eyeBottom = eyeRig.y + eyes.y + eyeHeight * eyes.scaleY / 2;

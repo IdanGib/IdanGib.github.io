@@ -17,12 +17,12 @@ after that sequence (or resolves `false` on scene shutdown). Arrow Down, drag,
 and the browser packing tool all use this flow. Taps only play the item's audio
 and leave the card in the deck without advancing packing progress.
 
-An accepted pointer press immediately gives the card a short acknowledgement
-shake (touch, mouse, or pen). Taps, clicks, and Enter/Space restart the feedback
+An accepted pointer press gives the card a subtle elastic scale pulse over 360ms
+(touch, mouse, or pen): 1 → 0.96 → 1.025 → 0.992 → 1. Taps, clicks, and Enter/Space restart the feedback
 while playing audio. The visible drag/packing preview repeats that feedback for
-dragging and Arrow Down. Independent rotation keeps the positioning transform
+dragging and Arrow Down. Independent scale keeps the positioning transform
 intact; feedback is canceled before measuring the resting card and on cleanup.
-Reduced motion uses a brief opacity pulse instead of a shake.
+Reduced motion uses a brief opacity pulse. Missed drops return smoothly without shaking.
 
 ## Supplied artwork
 
@@ -49,7 +49,7 @@ sampling to preserve sharp details at the small early-opening sizes; the existin
 2–3× supersampled canvas smooths their edges. Body and eye filtering is unchanged.
 All poses share one face
 coordinate system. The resting/chewing mouth keeps its original
-width; opening frames gradually grow to twice that width. Width, height, and eye
+width; opening frames gradually grow to 1.75 times that width. Width, height, and eye
 lift interpolate on every scene update between the nearest sprite poses, so
 uneven crops do not cause size jumps. The upper lip stays anchored while the mouth
 grows downward, and the eyes lift enough to leave a gap. Reversing a drag continues
@@ -86,22 +86,27 @@ Adjust the exported `MONSTER` configuration in `monster-bag.ts`:
   centers/half-widths (source pixels), lid color, eye size, and face anchors.
 - `eyes`: gaze limits, response speed, lid curve/stroke, blink interval/duration,
   and double-blink chance/gap.
-- `mouth`: exact frame rectangles, resting width, `openScale` (2× fully open),
+- `mouth`: exact frame rectangles, resting width, `openScale` (1.75× fully open),
   `eyeGap`, opening/chewing transition durations, closed frame, chewing amplitude,
   cycles, and cycle duration. When replacing a strip with more poses, update its
   crop rectangles and the closed frame; the transition durations stay constant.
-- `variants.*.bodyBounds`: the full figure's drop area, normalized with the same
-  scale as its body artwork. Partial overlap with the visible card accepts a drop.
-- `proximity`: mouth-centered distance and range for opening and visual card shrink.
+- `dropArea`: a 480 × 340 character-space rectangle centered on the fully-open
+  mouth. Partial overlap with the visible card accepts a drop.
+- `card.minDragScale`: the minimum card scale at the mouth (0.45).
+- `proximity`: mouth-centered distance and range for opening.
   The mouth is fully open within normalized distance 1, rests at or beyond
   `shrinkDistance` (2.8), and moves through all opening poses between those limits.
 - `eatingMs`, `completionPauseMs`: accepted-item travel and final feedback timing.
 
 DOM pointer positions and the rendered card's bounds are converted to Phaser world
-coordinates. The controller checks overlap with the full body rectangle in character
+coordinates. The controller checks overlap with the smaller mouth rectangle in character
 coordinates, accounting for card shrink and container scale. Acceptance happens on
 release; moving over the monster alone does not pack an item. The food destination
-remains at the mouth. Anticipation starts once the pointer moves beyond the existing
+remains at the mouth. Card shrinking starts as it moves closer, based on its remaining
+distance divided by its starting distance to the mouth, smoothly going from full size
+to 45%. Moving away restores its size. The unscaled grab offset measures progress,
+so shrinking does not feed back into the distance calculation.
+Anticipation starts once the pointer moves beyond the existing
 7px drag threshold. Each scene update selects the opening-strip position from the
 card center's mouth distance, in character coordinates so responsive scaling does
 not change the response. A stationary card holds its pose; moving away reverses
@@ -115,9 +120,10 @@ item emoji fallback.
 ## Checks
 
 Run `npm test`, `npm run lint`, and `npm run build`. Controller regression tests
-cover whole-figure drops, partial card overlap and rejection beyond each edge at
-different scales, all distance-driven opening poses in both directions and along
-horizontal, vertical and diagonal approaches, stationary holds, cancellation, double
+cover mouth-area drops, partial card overlap and rejection beyond each edge at
+different scales, card shrinking from different starting positions, all distance-driven
+opening poses in both directions and along horizontal, vertical and diagonal
+approaches, stationary holds, cancellation, smaller
 open-mouth size, eye clearance, opening before eating, single callbacks, a stable
 body during closed-mouth chewing, all return poses, interpolation within one
 sprite, consistent timing with irregular updates, scaled and bounded gaze, eye-only blinking,
