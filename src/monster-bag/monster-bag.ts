@@ -102,6 +102,7 @@ export class MonsterBag {
   state: MonsterState = "idle";
   private variant: typeof MONSTER.variants[keyof typeof MONSTER.variants];
   private opening = 0; // Fractional strip position: 0 = rest, frames.length = fully open.
+  private anticipatedOpening = 0;
   private chewElapsed = 0;
   private onOpen?: () => void;
   private onChewed?: () => void;
@@ -122,8 +123,12 @@ export class MonsterBag {
     // Slice in the transparent gap, preserving the original assembled placement.
     addFrame(scene, eyesKey(selected), "brows", [eyeX, eyeY, eyeWidth, browHeight]);
     addFrame(scene, eyesKey(selected), "eyes", [eyeX, this.variant.eyeSplitY, eyeWidth, eyeHeight - browHeight]);
-    for (const pose of ["idle", "open", "chew"] as const)
+    for (const pose of ["idle", "open", "chew"] as const) {
+      // NEAREST (Phaser FilterMode = 1) keeps the mouth artwork crisp at the
+      // small early-opening sizes. The supersampled game canvas smooths edges.
+      scene.textures.get(mouthKey(pose)).setFilter(1);
       MONSTER.mouth[pose].frames.forEach((rect, i) => addFrame(scene, mouthKey(pose), String(i), rect));
+    }
 
     this.container = scene.add.container(x, MONSTER.centerY).setScale(MONSTER.height / 1080);
     const body = scene.add.image(0, 0, bodyKey(selected), "body")
@@ -182,7 +187,7 @@ export class MonsterBag {
   }
 
   distance(point: Point): number {
-    // Mouth proximity controls card shrinking, independently of drop acceptance.
+    // Mouth proximity controls opening and card shrinking, independently of drops.
     const local = this.toLocal(point);
     const target = this.toLocal(this.target);
     return Math.hypot(
@@ -207,9 +212,14 @@ export class MonsterBag {
     if (!this.disposed) this.eyeTarget = point ? this.toLocal(point) : null;
   }
 
-  anticipate(dragging: boolean): void {
+  /** Select an opening pose from the world-space card center; null ends a drag. */
+  anticipate(point: Point | null): void {
     if (this.disposed || this.busy) return;
-    const next = dragging ? "anticipating" : this.opening > 0 ? "returning" : "idle";
+    const proximity = point ? Math.max(0, Math.min(1,
+      (MONSTER.proximity.shrinkDistance - this.distance(point)) / (MONSTER.proximity.shrinkDistance - 1),
+    )) : 0;
+    this.anticipatedOpening = proximity * MONSTER.mouth.open.frames.length;
+    const next = point ? "anticipating" : this.opening > 0 ? "returning" : "idle";
     if (this.state === next) return;
     this.state = next;
   }
@@ -263,7 +273,14 @@ export class MonsterBag {
       }
       return;
     }
-    const destination = this.state === "anticipating" || this.state === "eating" ? MONSTER.mouth.open.frames.length : 0;
+    if (this.state === "anticipating") {
+      // Scrub the strip with distance, without a timed animation that keeps
+      // opening while the card is stationary or lags behind a reversing drag.
+      this.opening = this.anticipatedOpening;
+      this.showPose(this.opening === 0 ? "idle" : "open", this.opening - 1);
+      return;
+    }
+    const destination = this.state === "eating" ? MONSTER.mouth.open.frames.length : 0;
     if (this.opening !== destination) {
       const step = this.reducedMotion ? MONSTER.mouth.open.frames.length :
         delta * MONSTER.mouth.open.frames.length / MONSTER.mouth.openMs;

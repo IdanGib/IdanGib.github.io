@@ -18,6 +18,7 @@ declare namespace Phaser {
       exists(key: string): boolean;
       addImage(key: string, source: HTMLImageElement): void;
       get(key: string): {
+        setFilter(mode: number): void;
         has(frame: string): boolean;
         add(name: string, sourceIndex: number, x: number, y: number, width: number, height: number): void;
       };
