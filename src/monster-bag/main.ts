@@ -712,7 +712,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               button.style.setProperty("--item-tint", `${color}22`);
               button.setAttribute(
                 "aria-label",
-                `${item.label}, ${item.subject}, ${this.lessonLabel(item)}. ${genderText("גררי", "גרור")} לתיק או לחצו לאריזה. חץ מטה אורז מהמקלדת`,
+                `${item.label}, ${item.subject}, ${this.lessonLabel(item)}. ${genderText("גררי", "גרור")} לתיק או לחצו להאזנה. חץ מטה אורז מהמקלדת`,
               );
               button.setAttribute("aria-keyshortcuts", "ArrowDown");
               const icon = document.createElement("span");
@@ -740,7 +740,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               label.textContent = item.label;
               const action = document.createElement("span");
               action.className = "item-action";
-              action.textContent = genderText("גררי לתיק או לחצי לאריזה", "גרור לתיק או לחץ לאריזה");
+              action.textContent = genderText("גררי לתיק או לחצי להאזנה", "גרור לתיק או לחץ להאזנה");
               const copy = document.createElement("span");
               copy.className = "item-copy";
               copy.append(label, action);
@@ -773,7 +773,6 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                 // A card tap is an explicit request from the child. Do not drop
                 // it just because the longer welcome recording is still playing.
                 if (audioUrl) this.speak(audioUrl, true);
-                void this.pack(card);
               });
               button.addEventListener("keydown", (event) => {
                 if (event.key !== "ArrowDown" || !this.canPack(card)) return;
@@ -1066,7 +1065,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
 
           eatingCard(card: CardState): Phaser.GameObjects.Container {
             // Dragging keeps the accessible DOM card. Accepted items enter the
-            // Phaser character's food layer so its mouth can actually occlude them.
+            // Phaser character's food layer, above the mouth as they shrink away.
             const food = this.add.container(0, 0);
             const width = portrait ? 304 : 380;
             const background = this.add.graphics();

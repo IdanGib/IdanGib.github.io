@@ -13,8 +13,9 @@ scope is limited to `monster-bag-app.html` so it cannot replace Magic Bag’s wo
 `monster-bag.ts` owns the Phaser layers and visual states. `main.ts` still owns
 acceptance, card order, progress, audio, and completion. `packingCard` locks the
 existing one-at-a-time flow until chewing ends; the packing promise resolves only
-after that sequence (or resolves `false` on scene shutdown). Tap, Arrow Down, drag,
-and the browser packing tool all use this flow. Taps also retain their item audio.
+after that sequence (or resolves `false` on scene shutdown). Arrow Down, drag,
+and the browser packing tool all use this flow. Taps only play the item's audio
+and leave the card in the deck without advancing packing progress.
 
 ## Supplied artwork
 
@@ -82,9 +83,10 @@ release; moving over the monster alone does not pack an item. The food destinati
 remains at the mouth. Anticipation starts once the pointer moves beyond the existing
 7px drag threshold and holds for the whole drag, regardless of proximity. Canceling
 or dropping outside the insertion area closes the mouth. Anticipation only changes
-visual state. On accepted insertion, the item card is drawn in the character's food layer, above the body and behind
-the mouth, so it disappears into the face. Local item images retain their aspect
-ratio; unloaded or external images use the existing item emoji fallback.
+visual state. On accepted insertion, the item card is drawn in the character's food
+layer above the body and mouth, then shrinks and fades into the face. Local item
+images retain their aspect ratio; unloaded or external images use the existing
+item emoji fallback.
 
 ## Checks
 

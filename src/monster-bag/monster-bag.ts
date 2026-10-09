@@ -142,8 +142,8 @@ export class MonsterBag {
     this.eyeRig.add([brows, this.eyes, this.eyelids]);
     this.foodLayer = scene.add.container(0, 0);
     this.mouth = scene.add.image(this.variant.mouthX, this.variant.mouthY, mouthKey("idle"), "0");
-    // Food passes over the body, but behind the mouth/lips as it disappears.
-    this.container.add([body, this.eyeRig, this.foodLayer, this.mouth]);
+    // Keep incoming cards above the mouth/lips while they shrink and fade away.
+    this.container.add([body, this.eyeRig, this.mouth, this.foodLayer]);
     this.showPose("idle", 0);
     this.updateEyes(0);
   }
