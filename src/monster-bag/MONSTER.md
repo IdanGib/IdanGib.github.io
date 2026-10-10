@@ -17,12 +17,15 @@ after that sequence (or resolves `false` on scene shutdown). Arrow Down, drag,
 and the browser packing tool all use this flow. Taps only play the item's audio
 and leave the card in the deck without advancing packing progress.
 
-An accepted pointer press gives the card a subtle elastic scale pulse over 360ms
-(touch, mouse, or pen): 1 → 0.96 → 1.025 → 0.992 → 1. Taps, clicks, and Enter/Space restart the feedback
-while playing audio. The visible drag/packing preview repeats that feedback for
-dragging and Arrow Down. Independent scale keeps the positioning transform
-intact; feedback is canceled before measuring the resting card and on cleanup.
-Reduced motion uses a brief opacity pulse. Missed drops return smoothly without shaking.
+An accepted pointer press (touch, mouse, or pen) scales the card from 1 to 1.03
+over 100ms and holds that size until pointer-up or cancellation. Dragging carries
+the held scale onto the visible preview; release, blur, lost pointer capture,
+packing, and cleanup clear it. Independent scale keeps the deck positioning and
+distance-based drag transforms intact, and resting bounds are measured without
+the press scale. Reduced motion applies the held scale immediately. Taps, clicks,
+and Enter/Space still play audio without restarting a pulse. Missed drops return
+smoothly without shaking. The card pack begins at world y = 216, leaving more
+space above the monster.
 
 ## Supplied artwork
 
