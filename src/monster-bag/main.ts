@@ -433,7 +433,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           returningCard: CardState | null = null;
           suppressClickUntil = 0;
           dragPreview: HTMLButtonElement | null = null;
-          private cardFeedback: Animation | null = null;
+          private cardPress: Animation | null = null;
           monster!: MonsterBag;
           packingCard: CardState | null = null;
           progressMeter: HTMLDivElement | null = null;
@@ -755,7 +755,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                   event.button !== 0
                 )
                   return;
-                this.acknowledgeCard(button);
+                this.pressCard(button);
                 this.pendingDrag = {
                   card,
                   pointerId: event.pointerId,
@@ -772,7 +772,6 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                 )
                   return;
                 hasInteracted = true;
-                this.acknowledgeCard(button);
                 const audioUrl = item.audioUrl?.trim();
                 // A card tap is an explicit request from the child. Do not drop
                 // it just because the longer welcome recording is still playing.
@@ -853,7 +852,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             if (this.stackPanel) {
               Object.assign(this.stackPanel.style, {
                 left: `${canvas.left - bounds.left + (W / 2 - (portrait ? 152 : 190)) * sx}px`,
-                top: `${canvas.top - bounds.top + 240 * sy}px`,
+                top: `${canvas.top - bounds.top + 216 * sy}px`,
                 width: `${(portrait ? 304 : 380) * sx}px`,
                 height: `${210 * sy}px`,
               });
@@ -877,8 +876,8 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           }
 
           prepareCard(card: CardState): void {
-            // Measure the resting card, not the temporary touch pulse.
-            this.cardFeedback?.cancel();
+            // Measure the resting card before applying the held press scale to its preview.
+            this.releaseCardPress();
             const bounds = card.button.getBoundingClientRect();
             const position = this.pointerPosition({
               clientX: bounds.left + bounds.width / 2,
@@ -912,26 +911,22 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             this.dragPreview = preview;
             card.container.setVisible(false);
             this.positionDragPreview(card);
-            // Dragging and Arrow Down hide the original button immediately.
-            // Keep their acknowledgement visible on the card that is now on screen.
-            this.acknowledgeCard(preview);
+            // Carry the held pointer press onto the visible card without restarting it.
+            if (this.pendingDrag) this.pressCard(preview, true);
           }
 
-          acknowledgeCard(button: HTMLButtonElement): void {
-            this.cardFeedback?.cancel();
-            this.cardFeedback = button.animate(
-              reducedMotion
-                ? [{ opacity: 1 }, { opacity: 0.75 }, { opacity: 1 }]
-                : [
-                    { scale: "1", offset: 0 },
-                    { scale: "0.96", offset: 0.18 },
-                    { scale: "1.025", offset: 0.48 },
-                    { scale: "0.992", offset: 0.72 },
-                    { scale: "1", offset: 1 },
-                  ],
+          pressCard(button: HTMLButtonElement, immediate = false): void {
+            this.releaseCardPress();
+            this.cardPress = button.animate(
+              [{ scale: "1" }, { scale: "1.03" }],
               // Independent scale preserves the deck and distance-based drag transforms.
-              { duration: reducedMotion ? 120 : 360, easing: "ease-out" },
+              { duration: reducedMotion || immediate ? 0 : 100, easing: "ease-out", fill: "forwards" },
             );
+          }
+
+          releaseCardPress(): void {
+            this.cardPress?.cancel();
+            this.cardPress = null;
           }
 
           positionDragPreview(card: CardState): void {
@@ -945,8 +940,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
           }
 
           clearDragPreview() {
-            this.cardFeedback?.cancel();
-            this.cardFeedback = null;
+            this.releaseCardPress();
             this.dragPreview?.remove();
             this.dragPreview = null;
           }
@@ -1004,6 +998,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
               this.pendingDrag = null;
               this.activeDragCard = null;
               this.activeDragPointerId = null;
+              this.releaseCardPress();
               releaseCapture(pending);
               if (!card) return;
               this.suppressClickUntil = performance.now() + 400;
@@ -1057,6 +1052,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
                 this.pendingDrag = null;
                 this.activeDragCard = null;
                 this.activeDragPointerId = null;
+                this.releaseCardPress();
                 releaseCapture(pending);
                 if (!card) return;
                 this.suppressClickUntil = performance.now() + 400;
@@ -1123,6 +1119,7 @@ function requiredElement<T extends HTMLElement>(id: string): T {
             this.pendingDrag = null;
             this.activeDragCard = null;
             this.activeDragPointerId = null;
+            this.releaseCardPress();
             if (pending?.card.button.hasPointerCapture(pending.pointerId))
               pending.card.button.releasePointerCapture(pending.pointerId);
             let settle!: (completed: boolean) => void;
